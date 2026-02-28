@@ -301,19 +301,27 @@ const app = {
                     
                     ${this.user.type === 'SME' ? `
                     <div class="glass-card">
-                        <h3>Your Profile</h3>
-                        <p class="subtext" style="margin-bottom: 1rem;">Complete your details to increase trust.</p>
-                        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                            <div style="display: flex; justify-content: space-between;">
-                                <span>Status</span> <span style="color: var(--accent); font-weight: bold;">Verified</span>
-                            </div>
-                            <div style="display: flex; justify-content: space-between;">
-                                <span>Company Type</span> <span>Pty Ltd</span>
+                        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
+                            <div class="icon-circle" style="background: rgba(59, 130, 246, 0.1); color: var(--primary); margin: 0; width: 50px; height: 50px; font-size: 1.2rem;">🏢</div>
+                            <div>
+                                <h3 style="margin: 0;">${this.user.name}</h3>
+                                <p class="subtext" style="font-size: 0.8rem;">SME Representative</p>
                             </div>
                         </div>
-                        <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
-                            <button class="btn btn-outline" style="width: 50%;" onclick="app.showProfileEdit()">Edit Profile</button>
-                            <button class="btn btn-secondary" style="width: 50%;" onclick="app.showDocumentRepo()">Doc Vault</button>
+                        <div style="display: flex; flex-direction: column; gap: 0.8rem; border-top: 1px solid var(--border); padding-top: 1rem;">
+                            <div style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+                                <span class="subtext">Account Status</span> <span style="color: var(--accent); font-weight: 600;">Verified Platform SME</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+                                <span class="subtext">Official Email</span> <span>${this.user.email}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+                                <span class="subtext">Fanya ID</span> <span style="font-family: monospace; font-size: 0.8rem;">FP-${this.user.id.substring(0, 8).toUpperCase()}</span>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                            <button class="btn btn-outline" style="flex: 1; padding: 0.5rem;" onclick="app.showProfileEdit()">Edit Details</button>
+                            <button class="btn btn-secondary" style="flex: 1; padding: 0.5rem;" onclick="app.showDocumentRepo()">My Vault</button>
                         </div>
                     </div>
                     ` : ''}
@@ -482,27 +490,46 @@ const app = {
                         </div>
                     </div>
 
-                    <div class="glass-card" style="grid-column: 1 / -1; margin-bottom: 20px;">
+                    <div class="glass-card" style="grid-column: 1 / -1; margin-bottom: 2rem;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
                             <div>
-                                <h3>Platform Configuration Engine</h3>
-                                <p class="subtext">Manage core logic, compliance routing, and supplier matching criteria.</p>
+                                <h3 style="font-family: 'Outfit', sans-serif; font-weight: 700;">Platform Control Center</h3>
+                                <p class="subtext">System-wide management of compliance, categories, and users.</p>
                             </div>
-                            <span class="badge" style="background: rgba(220, 38, 38, 0.1); color: #dc2626; border-color: rgba(220, 38, 38, 0.2);">Super Admin Access</span>
+                            <span class="badge" style="background: rgba(220, 38, 38, 0.1); color: #dc2626; border: 1px solid rgba(220, 38, 38, 0.2);">Root Admin Access</span>
                         </div>
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
-                            <div class="glass-card" style="background: var(--bg-color); cursor: pointer; border: 1px solid var(--border); transition: border-color 0.2s;" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'" onclick="app.showAdminDashboard()">
-                                <h4 style="margin-bottom: 0.5rem;">Compliance Documents &rarr;</h4>
-                                <p class="subtext" style="font-size: 0.85rem;">Dictate mandatory Vault uploads (CSD, Tax, FICA) dynamically enforced for SMEs and Suppliers.</p>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem;">
+                            <div class="glass-card admin-module-card" onclick="app.showAdminDashboard()">
+                                <div class="icon-circle" style="background: rgba(59, 130, 246, 0.1); color: var(--primary);">📄</div>
+                                <h4 style="margin: 1rem 0 0.5rem 0;">Compliance Engine</h4>
+                                <p class="subtext" style="font-size: 0.85rem;">Manage mandatory CSD, Tax, and FICA document requirements across all roles.</p>
                             </div>
-                            <div class="glass-card" style="background: var(--bg-color); cursor: pointer; border: 1px solid var(--border); transition: border-color 0.2s;" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'" onclick="app.showAdminCategories()">
-                                <h4 style="margin-bottom: 0.5rem;">Funding Categories &rarr;</h4>
-                                <p class="subtext" style="font-size: 0.85rem;">Manage platform taxonomies used for AI matching between SME Requests, RFQs, and Funder Mandates.</p>
+                            <div class="glass-card admin-module-card" onclick="app.showAdminCategories()">
+                                <div class="icon-circle" style="background: rgba(16, 185, 129, 0.1); color: var(--accent);">🏷️</div>
+                                <h4 style="margin: 1rem 0 0.5rem 0;">Funding Categories</h4>
+                                <p class="subtext" style="font-size: 0.85rem;">Update the platform taxonomy and matching logic for SME funding requests.</p>
+                            </div>
+                            <div class="glass-card admin-module-card" onclick="app.showAdminUsers()">
+                                <div class="icon-circle" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;">👥</div>
+                                <h4 style="margin: 1rem 0 0.5rem 0;">User Management</h4>
+                                <p class="subtext" style="font-size: 0.85rem;">Audit the entire user base including SMEs, Funders, and Suppliers.</p>
+                            </div>
+                            <div class="glass-card admin-module-card" onclick="app.showAdminFunderApproval()">
+                                <div class="icon-circle" style="background: rgba(139, 92, 246, 0.1); color: #8b5cf6;">🛡️</div>
+                                <h4 style="margin: 1rem 0 0.5rem 0;">Funder Verification</h4>
+                                <p class="subtext" style="font-size: 0.85rem;">Approve or reject high-net-worth individuals and corporate funding entities.</p>
                             </div>
                         </div>
                     </div>
                 ` : ''}
 
+                    <div style="margin-top: 4rem; grid-column: 1 / -1; text-align: center; border-top: 1px solid var(--border); padding-top: 2rem;">
+                        <p class="subtext" style="font-size: 0.8rem; margin-bottom: 1.5rem;">Fanya Pesa Engine v12.66 &bull; Status: Operational</p>
+                        <div style="display: flex; justify-content: center; gap: 1rem;">
+                            <button class="btn btn-outline btn-sm" onclick="app.logout()" style="color: #ef4444; border-color: rgba(239,68,68,0.2);">Sign Out</button>
+                            <button class="btn btn-outline btn-sm" onclick="if(confirm('This will reload the latest platform engine and clear temporary data. Proceed?')){ localStorage.clear(); sessionStorage.clear(); location.reload(true); }">Hard Refresh Engine</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         `);
@@ -649,14 +676,14 @@ const app = {
 
     showSubscriptionCheckout() {
         this.setView(`
-    < div class="hero-enter" style = "max-width: 500px; margin: 4rem auto; text-align: center;" >
+    <div class="hero-enter" style = "max-width: 500px; margin: 4rem auto; text-align: center;">
         <div class="glass-card" id="checkout-container" style="padding: 3rem 2rem;">
             <div class="spinner" style="margin: 0 auto 1.5rem auto; width: 40px; height: 40px; border: 4px solid rgba(59, 130, 246, 0.1); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite;"></div>
             <style>@keyframes spin {to {transform: rotate(360deg); } }</style>
             <h3 style="margin-bottom: 0.5rem;">Connecting to PayFast...</h3>
             <p class="subtext">Please wait while we transfer you to our secure payment gateway to process your R499 subscription.</p>
         </div>
-             </div >
+             </div>
     `);
 
         // Simulate identical Yoco/PayFast redirection delay and success callback
@@ -664,9 +691,9 @@ const app = {
             const container = document.getElementById('checkout-container');
             if (container) {
                 container.innerHTML = `
-    < div style = "background: rgba(16, 185, 129, 0.1); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem auto;" >
+    <div style="background: rgba(16, 185, 129, 0.1); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem auto;">
         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                    </div >
+                    </div>
                     <h3 style="margin-bottom: 0.5rem; color: var(--accent);">Payment Successful!</h3>
                     <p class="subtext">Your account is now verified. Redirecting to Live RFQs...</p>
 `;
@@ -690,7 +717,7 @@ const app = {
 
     showFundingRequest() {
         this.setView(`
-    < div class="hero-enter" style = "max-width: 600px; margin: 2rem auto;" >
+    <div class="hero-enter" style = "max-width: 600px; margin: 2rem auto;">
                 <button class="btn btn-secondary" style="margin-bottom: 2rem;" onclick="app.showDashboard()">&larr; Back</button>
                 <h2>Apply for Funding</h2>
                 <p class="subtext" style="margin-bottom: 2rem;">Submit details to be matched with our verified funders.</p>
@@ -719,13 +746,13 @@ const app = {
                         <button type="submit" class="btn btn-primary btn-large" style="width: 100%; margin-top: 1rem;">Submit Request</button>
                     </form>
                 </div>
-             </div >
+             </div>
     `);
     },
 
     showQuoteRequest() {
         this.setView(`
-    < div class="hero-enter" style = "max-width: 600px; margin: 2rem auto;" >
+    <div class="hero-enter" style = "max-width: 600px; margin: 2rem auto;">
                 <button class="btn btn-secondary" style="margin-bottom: 2rem;" onclick="app.showDashboard()">&larr; Back</button>
                 
                 <span class="badge" style="background: rgba(16, 185, 129, 0.1); color: var(--accent); border-color: rgba(16, 185, 129, 0.2);">Supplier Network</span>
@@ -758,12 +785,12 @@ const app = {
                         </button>
                     </form>
                 </div>
-             </div >
+             </div>
     `);
     },
     showMilestones() {
         this.setView(`
-    < div class="hero-enter" style = "max-width: 600px; margin: 2rem auto;" >
+    <div class="hero-enter" style = "max-width: 600px; margin: 2rem auto;">
                 <button class="btn btn-secondary" style="margin-bottom: 2rem;" onclick="app.showDashboard()">&larr; Back to Dashboard</button>
                 
                 <h2>Active Funding & Payments</h2>
@@ -806,13 +833,13 @@ const app = {
                         </div>
                     </div>
                 </div>
-             </div >
+             </div>
     `);
     },
 
     showFunderOffer() {
         this.setView(`
-    < div class="hero-enter" style = "max-width: 700px; margin: 2rem auto;" >
+    <div class="hero-enter" style = "max-width: 700px; margin: 2rem auto;">
                 <button class="btn btn-secondary" style="margin-bottom: 2rem;" onclick="app.showDashboard()">&larr; Back to Pipeline</button>
                 
                 <h2>Structure Deal: My Awesome SME</h2>
@@ -1003,7 +1030,7 @@ const app = {
         if (!rfq) return alert("RFQ not found!");
 
         this.setView(`
-    < div class="hero-enter" style = "max-width: 600px; margin: 2rem auto;" >
+    <div class="hero-enter" style = "max-width: 600px; margin: 2rem auto;">
                 <button class="btn btn-secondary" style="margin-bottom: 2rem;" onclick="app.showDashboard()">&larr; Back</button>
                 
                 <span class="badge" style="background: rgba(59, 130, 246, 0.1); color: var(--primary); border-color: rgba(59, 130, 246, 0.2);">Quote Request</span>
@@ -1038,7 +1065,7 @@ const app = {
                         </button>
                     </form>
                 </div>
-             </div >
+             </div>
     `);
     },
 
@@ -1118,7 +1145,7 @@ const app = {
         }
 
         this.setView(`
-    < div class="hero-enter" style = "max-width: 600px; margin: 2rem auto;" >
+    <div class="hero-enter" style = "max-width: 600px; margin: 2rem auto;">
                 <button class="btn btn-secondary" style="margin-bottom: 2rem;" onclick="app.showDashboard()">&larr; Back to Dashboard</button>
                 
                 <h2>Active Contract: ${deal.category}</h2>
@@ -1158,7 +1185,7 @@ const app = {
                         </div>
                     </div>
                 </div>
-             </div >
+             </div>
     `);
     },
 
@@ -1168,7 +1195,7 @@ const app = {
         const renderSmeDocs = () => {
             if (smeDocs.length === 0) return '<p class="subtext">No documents required for this SME.</p>';
             return smeDocs.map(doc => `
-    < div style = "background: var(--bg-color); border: 1px solid var(--border); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;" >
+    <div style="background: var(--bg-color); border: 1px solid var(--border); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
                     <div>
                         <strong style="display: block; margin-bottom: 0.2rem;">${doc.name}</strong>
                         <span class="subtext" style="font-size: 0.85rem;">Uploaded on 12 Oct 2026</span>
@@ -1176,12 +1203,12 @@ const app = {
                     <div>
                         <button class="btn btn-outline btn-sm" onclick="alert('Downloading ${doc.name} (Simulated)...')">View File</button>
                     </div>
-                </div >
+                </div>
     `).join('');
         };
 
         this.setView(`
-    < div class="hero-enter" style = "max-width: 700px; margin: 2rem auto;" >
+    <div class="hero-enter" style = "max-width: 700px; margin: 2rem auto;">
                 <button class="btn btn-secondary" style="margin-bottom: 2rem;" onclick="app.showDashboard()">&larr; Back to Pipeline</button>
                 
                 <h2>Review Documents: My Awesome SME</h2>
@@ -1200,14 +1227,14 @@ const app = {
                         <button class="btn btn-primary" style="flex: 1;" onclick="app.showFunderOffer()">Approve & Structure Deal</button>
                     </div>
                 </div>
-             </div >
+             </div>
     `);
     },
 
     showAdminDashboard() {
         const renderDocTypes = () => {
             return this.docTypes.map(doc => `
-    < div style = "background: var(--bg-color); border: 1px solid var(--border); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;" >
+                <div style="background: var(--bg-color); border: 1px solid var(--border); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
                     <div>
                         <h4 style="margin: 0; margin-bottom: 0.2rem;">${doc.name}</h4>
                         <p class="subtext" style="margin: 0;">${doc.description}</p>
@@ -1216,12 +1243,12 @@ const app = {
                         </div>
                     </div>
                     <button class="btn btn-secondary btn-sm" onclick="app.docTypes = app.docTypes.filter(d => d.id !== ${doc.id}); app.saveDocTypes(); app.showAdminDashboard();">Remove</button>
-                </div >
-    `).join('');
+                </div>
+            `).join('');
         };
 
         this.setView(`
-    < div class="hero-enter" style = "max-width: 800px; margin: 2rem auto;" >
+            <div class="hero-enter" style="max-width: 800px; margin: 2rem auto;">
                 <button class="btn btn-secondary" style="margin-bottom: 2rem;" onclick="app.showDashboard()">&larr; Back to Admin Panel</button>
                 
                 <h2>Compliance Document Types</h2>
@@ -1255,10 +1282,9 @@ const app = {
                                 <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Add Requirement</button>
                             </form>
                         </div>
-                    </div>
                 </div>
-             </div >
-    `);
+            </div>
+        `);
     },
 
     addDocType(form) {
@@ -1282,18 +1308,18 @@ const app = {
     showAdminCategories() {
         const renderCategories = () => {
             return this.fundingCategories.map(cat => `
-    < div style = "background: var(--bg-color); border: 1px solid var(--border); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;" >
+                <div style="background: var(--bg-color); border: 1px solid var(--border); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
                     <div>
                         <h4 style="margin: 0; margin-bottom: 0.2rem;">${cat.name}</h4>
                         <p class="subtext" style="margin: 0;">${cat.description}</p>
                     </div>
                     <button class="btn btn-secondary btn-sm" onclick="app.fundingCategories = app.fundingCategories.filter(c => c.id !== ${cat.id}); app.saveFundingCategories(); app.showAdminCategories();">Remove</button>
-                </div >
-    `).join('');
+                </div>
+            `).join('');
         };
 
         this.setView(`
-    < div class="hero-enter" style = "max-width: 800px; margin: 2rem auto;" >
+            <div class="hero-enter" style="max-width: 800px; margin: 2rem auto;">
                 <button class="btn btn-secondary" style="margin-bottom: 2rem;" onclick="app.showDashboard()">&larr; Back to Admin Panel</button>
                 
                 <h2>Funding Categories</h2>
@@ -1320,10 +1346,9 @@ const app = {
                                 <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Add Category</button>
                             </form>
                         </div>
-                    </div>
                 </div>
-             </div >
-    `);
+            </div>
+        `);
     },
 
     addFundingCategory(form) {
@@ -1365,10 +1390,10 @@ const app = {
                 });
 
                 btnContainer.innerHTML = `
-    < div style = "display: flex; gap: 0.5rem;" >
+    <div style="display: flex; gap: 0.5rem;">
                         <a href="${downloadURL}" target="_blank" class="btn btn-outline btn-sm">View</a>
                         <button class="btn btn-secondary btn-sm" onclick="window.handleCloudDelete('${docId}', '${filePath}', this.parentElement.parentElement)">Delete</button>
-                    </div >
+                    </div>
     `;
             } catch (error) {
                 console.error("Upload failed", error);
@@ -1389,7 +1414,7 @@ const app = {
                 await deleteDoc(doc(db, "user_documents", `${this.user.id}_${docId} `));
 
                 containerElement.innerHTML = `
-    < input type = "file" id = "file-${docId}" style = "display: none;" onchange = "window.handleCloudUpload(${docId}, this);" >
+    <input type = "file" id = "file-${docId}" style = "display: none;" onchange = "window.handleCloudUpload(${docId}, this);" >
         <button class="btn btn-primary btn-sm" onclick="document.getElementById('file-${docId}').click();">Upload File</button>
 `;
             } catch (error) {
@@ -1401,11 +1426,11 @@ const app = {
 
         const renderDocs = () => {
             if (requiredDocs.length === 0) {
-                return `< p class="subtext" > No compliance documents are required currently.</p > `;
+                return `<p class="subtext" > No compliance documents are required currently.</p> `;
             }
 
             return requiredDocs.map(docType => `
-    < div style = "background: var(--bg-color); border: 1px solid var(--border); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;" >
+    <div style="background: var(--bg-color); border: 1px solid var(--border); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
                     <div>
                         <strong style="display: block; margin-bottom: 0.2rem;">${docType.name}</strong>
                         <span class="subtext" style="font-size: 0.85rem;">${docType.description}</span>
@@ -1414,12 +1439,12 @@ const app = {
                         <input type="file" id="file-${docType.id}" style="display: none;" onchange="window.handleCloudUpload(${docType.id}, this);">
                         <button class="btn btn-primary btn-sm" onclick="document.getElementById('file-${docType.id}').click();">Upload File</button>
                     </div>
-                </div >
+                </div>
     `).join('');
         };
 
         this.setView(`
-    < div class="hero-enter" style = "max-width: 600px; margin: 2rem auto;" >
+    <div class="hero-enter" style = "max-width: 600px; margin: 2rem auto;">
                 <button class="btn btn-secondary" style="margin-bottom: 2rem;" onclick="app.showDashboard()">&larr; Back to Dashboard</button>
                 
                 <h2>Secure Document Vault</h2>
@@ -1439,7 +1464,7 @@ const app = {
                         <p class="subtext" style="font-size: 0.85rem;">Your uploaded files are encrypted at rest using AES-256 and stored securely via Google Cloud Storage.</p>
                     </div>
                 </div>
-             </div >
+             </div>
     `);
     },
 
@@ -1453,7 +1478,7 @@ const app = {
             if (this.notifications.length === 0) return '<p class="subtext" style="text-align: center; padding: 2rem;">No new notifications</p>';
 
             return this.notifications.map(n => `
-    < div style = "padding: 1rem; border-bottom: 1px solid var(--border); display: flex; gap: 1rem; align-items: start;" >
+    <div style="padding: 1rem; border-bottom: 1px solid var(--border); display: flex; gap: 1rem; align-items: start;">
                     <div style="background: rgba(59, 130, 246, 0.1); color: var(--primary); border-radius: 50%; padding: 0.5rem; display: flex; align-items: center; justify-content: center;">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
                     </div>
@@ -1461,12 +1486,12 @@ const app = {
                         <p style="margin: 0; font-size: 0.95rem; color: var(--text-color);">${n.text}</p>
                         <span class="subtext" style="font-size: 0.8rem; display: block; margin-top: 0.2rem;">${n.time}</span>
                     </div>
-                </div >
+                </div>
     `).join('');
         };
 
         this.setView(`
-    < div class="hero-enter" style = "max-width: 600px; margin: 2rem auto;" >
+    <div class="hero-enter" style = "max-width: 600px; margin: 2rem auto;">
                 <button class="btn btn-secondary" style="margin-bottom: 2rem;" onclick="app.showDashboard()">&larr; Back to Dashboard</button>
                 
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
@@ -1477,13 +1502,13 @@ const app = {
                 <div class="glass-card" style="padding: 0;">
                     ${renderNotifs()}
                 </div>
-             </div >
+             </div>
     `);
     },
 
     showHowItWorks() {
         this.setView(`
-    < div class="hero-enter" style = "max-width: 800px; margin: 2rem auto;" >
+    <div class="hero-enter" style = "max-width: 800px; margin: 2rem auto;">
                 <button class="btn btn-secondary" style="margin-bottom: 2rem;" onclick="app.renderHome()">&larr; Home</button>
                 <h2>How Fanya Pesa Works</h2>
                 <p class="subtext" style="margin-bottom: 2rem;">A seamless ecosystem empowering SMEs, connecting Funders, and managing Verified Suppliers built on escrow security.</p>
@@ -1502,13 +1527,13 @@ const app = {
                         <p class="subtext">Capital is locked into Fanya Pesa escrow. Instead of cash hitting the SME's account, Fanya Pesa directly pays the Verified Supplier upon proof of dispatch/waybill upload, neutralizing fund mismanagement.</p>
                     </div>
                 </div>
-            </div >
+            </div>
     `);
     },
 
     showFundingCategories() {
         this.setView(`
-    < div class="hero-enter" style = "max-width: 800px; margin: 2rem auto;" >
+    <div class="hero-enter" style = "max-width: 800px; margin: 2rem auto;">
                 <button class="btn btn-secondary" style="margin-bottom: 2rem;" onclick="app.renderHome()">&larr; Home</button>
                 <h2>Funding Categories</h2>
                 <p class="subtext" style="margin-bottom: 2rem;">Explore the capital structures and mandates available on the Fanya Pesa platform.</p>
@@ -1530,13 +1555,13 @@ const app = {
                         <button class="btn btn-primary" style="margin-top: 1rem; width: 100%;" onclick="app.showAuth('SME')">Apply</button>
                     </div>
                 </div>
-            </div >
+            </div>
     `);
     },
 
     showVerifiedSuppliers() {
         this.setView(`
-    < div class="hero-enter" style = "max-width: 800px; margin: 2rem auto;" >
+    <div class="hero-enter" style = "max-width: 800px; margin: 2rem auto;">
                 <button class="btn btn-secondary" style="margin-bottom: 2rem;" onclick="app.renderHome()">&larr; Home</button>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
                     <div>
@@ -1560,8 +1585,107 @@ const app = {
                         <span class="badge" style="background: rgba(16, 185, 129, 0.1); color: var(--accent); margin: 0;">Verified</span>
                     </div>
                 </div>
-            </div >
-    `);
+            </div>
+        `);
+    },
+
+    async showAdminUsers() {
+        // Fetch all users from Firestore
+        const userSnapshot = await getDocs(collection(db, "users"));
+        const allUsers = [];
+        userSnapshot.forEach(docSnap => allUsers.push(docSnap.data()));
+
+        this.setView(`
+            <div class="hero-enter" style="max-width: 900px; margin: 2rem auto;">
+                <button class="btn btn-secondary" style="margin-bottom: 2rem;" onclick="app.showDashboard()">&larr; Back to Admin Panel</button>
+                <h2>User Management Dashboard</h2>
+                <p class="subtext" style="margin-bottom: 2rem;">Audit and manage all platform participants including SMEs, Funders, and Suppliers.</p>
+
+                <div class="glass-card" style="padding: 0; overflow: hidden;">
+                    <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                        <thead style="background: var(--bg-hover); color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase;">
+                            <tr>
+                                <th style="padding: 1.2rem;">User Identity</th>
+                                <th style="padding: 1.2rem;">Role Type</th>
+                                <th style="padding: 1.2rem;">Account Status</th>
+                                <th style="padding: 1.2rem; text-align: right;">Admin Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${allUsers.length > 0 ? allUsers.map(u => `
+                                <tr style="border-bottom: 1px solid var(--border); transition: background 0.2s;" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background='transparent'">
+                                    <td style="padding: 1.2rem;">
+                                        <div style="font-weight: 600;">${u.name || 'Anonymous User'}</div>
+                                        <div class="subtext" style="font-size: 0.8rem;">${u.email || u.id}</div>
+                                    </td>
+                                    <td style="padding: 1.2rem;"><span class="badge" style="background: rgba(59, 130, 246, 0.1); color: var(--primary);">${u.type || 'SME'}</span></td>
+                                    <td style="padding: 1.2rem;">
+                                        <span class="status ${u.verified !== false ? 'pulse' : ''}" 
+                                              style="background: ${u.verified !== false ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)'}; 
+                                                     color: ${u.verified !== false ? 'var(--accent)' : '#ef4444'};">
+                                            ${u.verified !== false ? 'Active & Verified' : 'Application Pending'}
+                                        </span>
+                                    </td>
+                                    <td style="padding: 1.2rem; text-align: right;">
+                                        <button class="btn btn-secondary btn-sm" onclick="alert('Viewing comprehensive profile for ${u.name}')">View Profile</button>
+                                    </td>
+                                </tr>
+                            `).join('') : '<tr><td colspan="4" style="padding: 3rem; text-align: center; color: var(--text-muted);">No platform users found in database.</td></tr>'}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `);
+    },
+
+    async showAdminFunderApproval() {
+        const userSnapshot = await getDocs(collection(db, "users"));
+        const pendingFunders = [];
+        userSnapshot.forEach(docSnap => {
+            const data = docSnap.data();
+            if (data.type === 'FUNDER' && data.verified === false) {
+                pendingFunders.push(data);
+            }
+        });
+
+        this.setView(`
+            <div class="hero-enter" style="max-width: 800px; margin: 2rem auto;">
+                <button class="btn btn-secondary" style="margin-bottom: 2rem;" onclick="app.showDashboard()">&larr; Back to Admin Panel</button>
+                <h2>Funder Escalation Board</h2>
+                <p class="subtext" style="margin-bottom: 2rem;">Approve or reject capital partners who have joined through the Google Gateway.</p>
+
+                ${pendingFunders.length > 0 ? pendingFunders.map(funder => `
+                    <div class="glass-card" style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #8b5cf6;">
+                        <div>
+                            <h4 style="margin: 0 0 0.3rem 0; font-family: 'Outfit', sans-serif;">${funder.name}</h4>
+                            <p class="subtext" style="margin: 0 0 0.5rem 0;">${funder.email}</p>
+                            <span class="badge" style="background: rgba(139, 92, 246, 0.1); color: #8b5cf6; margin: 0;">Funder Identity Check Pending</span>
+                        </div>
+                        <div style="display: flex; gap: 0.8rem;">
+                            <button class="btn btn-outline btn-sm" onclick="alert('Rejected ${funder.name} for platform access.')">Reject</button>
+                            <button class="btn btn-primary btn-sm" onclick="app.verifyFunder('${funder.id}')">Verify & Enable</button>
+                        </div>
+                    </div>
+                `).join('') : `
+                    <div class="glass-card" style="text-align: center; padding: 5rem 2rem;">
+                        <h4 style="color: var(--text-muted); font-weight: 500;">Zero Pending Funder Approvals</h4>
+                        <p class="subtext">All funding entities currently on the platform are fully verified.</p>
+                    </div>
+                `}
+            </div>
+        `);
+    },
+
+    async verifyFunder(uid) {
+        try {
+            const userRef = doc(db, "users", uid);
+            await setDoc(userRef, { verified: true }, { merge: true });
+            alert("Verification Success: Funder is now active and can structure deals!");
+            this.showAdminFunderApproval();
+        } catch (error) {
+            console.error("Verification Error:", error);
+            alert("Platform Error: Verification update failed.");
+        }
     }
 };
 
