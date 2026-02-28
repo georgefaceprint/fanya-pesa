@@ -24,10 +24,15 @@ const STORE_KEY = 'fanya_pesa_user';
 const app = {
     user: JSON.parse(localStorage.getItem(STORE_KEY)) || null,
     docTypes: [],
+    fundingCategories: [],
     notifications: [],
 
     saveDocTypes() {
         setDoc(doc(db, "system_config", "doctypes"), { data: this.docTypes }).catch(console.error);
+    },
+
+    saveFundingCategories() {
+        setDoc(doc(db, "system_config", "categories"), { data: this.fundingCategories }).catch(console.error);
     },
 
     saveNotifications() {
@@ -48,6 +53,20 @@ const app = {
                     { id: 4, name: 'Directors ID Copies', description: 'Certified copies of all active directors', requiredFor: ['SME', 'SUPPLIER'] }
                 ];
                 this.saveDocTypes();
+            }
+        });
+
+        onSnapshot(doc(db, "system_config", "categories"), (docSnap) => {
+            if (docSnap.exists()) {
+                this.fundingCategories = docSnap.data().data;
+            } else {
+                this.fundingCategories = [
+                    { id: 1, name: 'Tender Execution (PO Financing)', description: 'Government or corporate purchase orders' },
+                    { id: 2, name: 'Asset Finance (Equipment/Vehicles)', description: 'Machinery and commercial vehicles' },
+                    { id: 3, name: 'Working Capital / Cash Flow', description: 'Short-term bridging finance' },
+                    { id: 4, name: 'Merchant Cash Advance', description: 'Based on card terminal sales' }
+                ];
+                this.saveFundingCategories();
             }
         });
 
@@ -380,9 +399,9 @@ const app = {
                                 <h4>Compliance Documents</h4>
                                 <p class="subtext">Configure required documents for SMEs and Suppliers</p>
                             </div>
-                            <div class="glass-card" style="background: var(--bg-color); opacity: 0.7;">
-                                <h4>User Management</h4>
-                                <p class="subtext">Review platform applicants</p>
+                            <div class="glass-card" style="background: var(--bg-color); cursor: pointer;" onclick="app.showAdminCategories()">
+                                <h4>Funding Categories</h4>
+                                <p class="subtext">Manage platform funding options</p>
                             </div>
                         </div>
                     </div>
@@ -899,6 +918,63 @@ const app = {
         this.docTypes.push({ id: newId, name, description: desc, requiredFor });
         this.saveDocTypes();
         this.showAdminDashboard();
+    },
+
+    showAdminCategories() {
+        const renderCategories = () => {
+            return this.fundingCategories.map(cat => `
+                <div style="background: var(--bg-color); border: 1px solid var(--border); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h4 style="margin: 0; margin-bottom: 0.2rem;">${cat.name}</h4>
+                        <p class="subtext" style="margin: 0;">${cat.description}</p>
+                    </div>
+                    <button class="btn btn-secondary btn-sm" onclick="app.fundingCategories = app.fundingCategories.filter(c => c.id !== ${cat.id}); app.saveFundingCategories(); app.showAdminCategories();">Remove</button>
+                </div>
+            `).join('');
+        };
+
+        this.setView(`
+             <div class="hero-enter" style="max-width: 800px; margin: 2rem auto;">
+                <button class="btn btn-secondary" style="margin-bottom: 2rem;" onclick="app.showDashboard()">&larr; Back to Admin Panel</button>
+                
+                <h2>Funding Categories</h2>
+                <p class="subtext" style="margin-bottom: 2rem;">Manage the funding options that SMEs can apply for.</p>
+
+                <div style="display: grid; grid-template-columns: 1fr 300px; gap: 2rem;">
+                    <div>
+                        <h3>Current Categories</h3>
+                        ${renderCategories()}
+                    </div>
+                    
+                    <div>
+                        <div class="glass-card" style="position: sticky; top: 100px;">
+                            <h3>Add New Category</h3>
+                            <form onsubmit="event.preventDefault(); app.addFundingCategory(this);">
+                                <div class="form-group">
+                                    <label>Category Name</label>
+                                    <input type="text" name="name" class="form-control" required placeholder="e.g. Invoice Factoring">
+                                </div>
+                                <div class="form-group">
+                                    <label>Brief Description</label>
+                                    <textarea name="desc" class="form-control" rows="2" required placeholder="Unlocking cash from unpaid invoices"></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Add Category</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+             </div>
+        `);
+    },
+
+    addFundingCategory(form) {
+        const name = form.name.value;
+        const desc = form.desc.value;
+        const newId = this.fundingCategories.length ? Math.max(...this.fundingCategories.map(c => c.id)) + 1 : 1;
+
+        this.fundingCategories.push({ id: newId, name, description: desc });
+        this.saveFundingCategories();
+        this.showAdminCategories();
     },
 
     showDocumentRepo() {
