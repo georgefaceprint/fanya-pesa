@@ -104,7 +104,7 @@ const app = {
             this.init();
         } catch (error) {
             console.error("Auth Error:", error);
-            alert("Login canceled or failed.");
+            alert("Login Failed: " + error.message);
         }
     },
 
