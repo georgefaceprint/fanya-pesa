@@ -445,22 +445,37 @@ const app = {
             ) : ''}
 
                 ${this.user.type === 'ADMIN' ? `
-                    <div class="glass-card" style="grid-column: 1 / -1; margin-bottom: 20px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                            <div>
-                                <h3>Platform Administration</h3>
-                                <p class="subtext">Manage system configurations and compliance requirements.</p>
-                            </div>
-                            <span class="badge" style="background: rgba(220, 38, 38, 0.1); color: #dc2626; border-color: rgba(220, 38, 38, 0.2);">Super Admin</span>
+                    <div style="grid-column: 1 / -1; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 0.5rem;">
+                        <div class="glass-card" style="text-align: center; border-left: 4px solid var(--primary);">
+                            <h3 style="font-size: 2.2rem; margin: 0; color: var(--primary);">${this.deals.length}</h3>
+                            <p class="subtext">Active Funding Deals</p>
                         </div>
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
-                            <div class="glass-card" style="background: var(--bg-color); cursor: pointer;" onclick="app.showAdminDashboard()">
-                                <h4>Compliance Documents</h4>
-                                <p class="subtext">Configure required documents for SMEs and Suppliers</p>
+                        <div class="glass-card" style="text-align: center; border-left: 4px solid var(--accent);">
+                            <h3 style="font-size: 2.2rem; margin: 0; color: var(--accent);">${this.rfqs.length}</h3>
+                            <p class="subtext">Live Escrow RFQs</p>
+                        </div>
+                        <div class="glass-card" style="text-align: center; border-left: 4px solid #f59e0b;">
+                            <h3 style="font-size: 2.2rem; margin: 0; color: #f59e0b;">${app.fundingCategories ? app.fundingCategories.length : 0}</h3>
+                            <p class="subtext">Mandate Categories</p>
+                        </div>
+                    </div>
+
+                    <div class="glass-card" style="grid-column: 1 / -1; margin-bottom: 20px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                            <div>
+                                <h3>Platform Configuration Engine</h3>
+                                <p class="subtext">Manage core logic, compliance routing, and supplier matching criteria.</p>
                             </div>
-                            <div class="glass-card" style="background: var(--bg-color); cursor: pointer;" onclick="app.showAdminCategories()">
-                                <h4>Funding Categories</h4>
-                                <p class="subtext">Manage platform funding options</p>
+                            <span class="badge" style="background: rgba(220, 38, 38, 0.1); color: #dc2626; border-color: rgba(220, 38, 38, 0.2);">Super Admin Access</span>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+                            <div class="glass-card" style="background: var(--bg-color); cursor: pointer; border: 1px solid var(--border); transition: border-color 0.2s;" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'" onclick="app.showAdminDashboard()">
+                                <h4 style="margin-bottom: 0.5rem;">Compliance Documents &rarr;</h4>
+                                <p class="subtext" style="font-size: 0.85rem;">Dictate mandatory Vault uploads (CSD, Tax, FICA) dynamically enforced for SMEs and Suppliers.</p>
+                            </div>
+                            <div class="glass-card" style="background: var(--bg-color); cursor: pointer; border: 1px solid var(--border); transition: border-color 0.2s;" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'" onclick="app.showAdminCategories()">
+                                <h4 style="margin-bottom: 0.5rem;">Funding Categories &rarr;</h4>
+                                <p class="subtext" style="font-size: 0.85rem;">Manage platform taxonomies used for AI matching between SME Requests, RFQs, and Funder Mandates.</p>
                             </div>
                         </div>
                     </div>
