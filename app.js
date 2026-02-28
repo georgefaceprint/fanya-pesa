@@ -408,7 +408,7 @@ const app = {
                                             <li>Submit Unlimited Quotes</li>
                                             <li>Guaranteed Milestone Payouts</li>
                                         </ul>
-                                        <button class="btn btn-primary" style="width: 100%;" onclick="app.user.subscribed = true; app.showDashboard();">Become Verified</button>
+                                        <button class="btn btn-primary" style="width: 100%;" onclick="app.showSubscriptionCheckout()">Become Verified</button>
                                     </div>
                                 </div>
                             </div>
@@ -647,6 +647,47 @@ const app = {
                 </div >
              </div >
     `);
+    },
+
+    showSubscriptionCheckout() {
+        this.setView(`
+    < div class="hero-enter" style = "max-width: 500px; margin: 4rem auto; text-align: center;" >
+        <div class="glass-card" id="checkout-container" style="padding: 3rem 2rem;">
+            <div class="spinner" style="margin: 0 auto 1.5rem auto; width: 40px; height: 40px; border: 4px solid rgba(59, 130, 246, 0.1); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+            <style>@keyframes spin {to {transform: rotate(360deg); } }</style>
+            <h3 style="margin-bottom: 0.5rem;">Connecting to PayFast...</h3>
+            <p class="subtext">Please wait while we transfer you to our secure payment gateway to process your R499 subscription.</p>
+        </div>
+             </div >
+    `);
+
+        // Simulate identical Yoco/PayFast redirection delay and success callback
+        setTimeout(async () => {
+            const container = document.getElementById('checkout-container');
+            if(container) {
+                container.innerHTML = `
+    < div style = "background: rgba(16, 185, 129, 0.1); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem auto;" >
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    </div >
+                    <h3 style="margin-bottom: 0.5rem; color: var(--accent);">Payment Successful!</h3>
+                    <p class="subtext">Your account is now verified. Redirecting to Live RFQs...</p>
+`;
+                
+                // Update Firestore DB seamlessly and mutate global user state
+                try {
+                    await setDoc(doc(db, "users", this.user.id), { subscribed: true }, { merge: true });
+                    this.user.subscribed = true;
+                    localStorage.setItem(STORE_KEY, JSON.stringify(this.user));
+                    
+                    setTimeout(() => {
+                        this.showDashboard();
+                    }, 2000); // Allow them to read the success message
+                } catch (error) {
+                    console.error("Subscription activation failed", error);
+                    alert("Payment succeeded but activation failed. Contact support.");
+                }
+            }
+        }, 3000);
     },
 
     showFundingRequest() {
