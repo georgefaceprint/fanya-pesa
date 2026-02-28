@@ -28,6 +28,25 @@ const app = {
     docTypes: [],
     fundingCategories: [],
     notifications: [],
+    deals: [],
+    rfqs: [],
+    currentView: 'home',
+
+    async notifySupplierCategory(category, message) {
+        try {
+            const usersSnap = await getDocs(collection(db, "users"));
+            usersSnap.forEach(async (uSnap) => {
+                const ud = uSnap.data();
+                if (ud.type === 'SUPPLIER' && (ud.industry === category || category === 'All')) {
+                    const docRef = doc(db, "user_notifications", ud.id);
+                    const notifSnap = await getDoc(docRef);
+                    let notifs = notifSnap.exists() ? notifSnap.data().data : [];
+                    notifs.unshift({ id: Date.now(), text: message, read: false, time: "Just now" });
+                    await setDoc(docRef, { data: notifs }, { merge: true });
+                }
+            });
+        } catch (error) { console.error(error); }
+    },
 
     saveDocTypes() {
         setDoc(doc(db, "system_config", "doctypes"), { data: this.docTypes }).catch(console.error);
@@ -81,6 +100,16 @@ const app = {
                     this.saveNotifications();
                 }
                 this.renderNavbar();
+            });
+
+            onSnapshot(collection(db, "deals"), (snapshot) => {
+                this.deals = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                if (this.currentView === 'dashboard') this.showDashboard();
+            });
+
+            onSnapshot(collection(db, "rfqs"), (snapshot) => {
+                this.rfqs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                if (this.currentView === 'dashboard') this.showDashboard();
             });
         }
     },
@@ -197,6 +226,12 @@ const app = {
                     </div>
                 </div>
             </section>
+            
+            <footer style="text-align: center; padding: 2rem; border-top: 1px solid var(--border); margin-top: 4rem;">
+                <p class="subtext">
+                    &copy; 2026 Fanya Pesa. <a href="#" onclick="event.preventDefault(); app.showAuth('ADMIN')" style="color: var(--primary); text-decoration: none; margin-left: 1rem;">Admin Portal Access</a>
+                </p>
+            </footer>
         `);
     },
 
@@ -976,7 +1011,6 @@ const app = {
         const userType = this.user.type; // 'SME' or 'SUPPLIER'
         const requiredDocs = this.docTypes.filter(doc => doc.requiredFor.includes(userType));
 
-        // Let's attach our upload function to the global scope since it's triggered via inline HTML onclicks 
         window.handleCloudUpload = async (docId, fileInput) => {
             const file = fileInput.files[0];
             if (!file) return;
@@ -986,19 +1020,19 @@ const app = {
 
             try {
                 // Upload to Storage
-                const storageRef = ref(storage, \`userData/\${this.user.id}/documents/\${docId}_\${file.name}\`);
+                const storageRef = ref(storage, `userData/${this.user.id}/documents/${docId}_${file.name}`);
                 await uploadBytes(storageRef, file);
                 const downloadURL = await getDownloadURL(storageRef);
 
                 // Save reference link to DB
-                await setDoc(doc(db, "user_documents", \`\${this.user.id}_\${docId}\`), {
+                await setDoc(doc(db, "user_documents", `${this.user.id}_${docId}`), {
                     uid: this.user.id,
                     docTypeId: docId,
                     url: downloadURL,
                     uploadedAt: new Date().toISOString()
                 });
 
-                btnContainer.innerHTML = \`<a href="\${downloadURL}" target="_blank" class="status" style="background: rgba(16, 185, 129, 0.1); color: var(--accent); text-decoration: none;">View Document</a>\`;
+                btnContainer.innerHTML = `<a href="${downloadURL}" target="_blank" class="status" style="background: rgba(16, 185, 129, 0.1); color: var(--accent); text-decoration: none;">View Document</a>`;
             } catch (error) {
                 console.error("Upload failed", error);
                 btnContainer.innerHTML = '<span class="status pulse" style="background: rgba(220, 38, 38, 0.1); color: #dc2626;">Upload Failed</span>';
@@ -1007,21 +1041,21 @@ const app = {
 
         const renderDocs = () => {
             if (requiredDocs.length === 0) {
-                return \`<p class="subtext">No compliance documents are required currently.</p>\`;
+                return `<p class="subtext">No compliance documents are required currently.</p>`;
             }
 
-            return requiredDocs.map(docType => \`
+            return requiredDocs.map(docType => `
                 <div style="background: var(--bg-color); border: 1px solid var(--border); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
                     <div>
-                        <strong style="display: block; margin-bottom: 0.2rem;">\${docType.name}</strong>
-                        <span class="subtext" style="font-size: 0.85rem;">\${docType.description}</span>
+                        <strong style="display: block; margin-bottom: 0.2rem;">${docType.name}</strong>
+                        <span class="subtext" style="font-size: 0.85rem;">${docType.description}</span>
                     </div>
                     <div style="text-align: right;">
-                        <input type="file" id="file-\${docType.id}" style="display: none;" onchange="window.handleCloudUpload(\${docType.id}, this);">
-                        <button class="btn btn-primary btn-sm" onclick="document.getElementById('file-\${docType.id}').click();">Upload File</button>
+                        <input type="file" id="file-${docType.id}" style="display: none;" onchange="window.handleCloudUpload(${docType.id}, this);">
+                        <button class="btn btn-primary btn-sm" onclick="document.getElementById('file-${docType.id}').click();">Upload File</button>
                     </div>
                 </div>
-            \`).join('');
+            `).join('');
         };
 
         this.setView(\`
@@ -1047,18 +1081,18 @@ const app = {
                 </div>
              </div>
         `);
-            },
+    },
 
-            showNotifications() {
-                // Mark all as read when opening
-                this.notifications.forEach(n => n.read = true);
-                this.saveNotifications();
-                this.renderNavbar(); // Update bell icon
+    showNotifications() {
+        // Mark all as read when opening
+        this.notifications.forEach(n => n.read = true);
+        this.saveNotifications();
+        this.renderNavbar(); // Update bell icon
 
-                const renderNotifs = () => {
-                    if (this.notifications.length === 0) return '<p class="subtext" style="text-align: center; padding: 2rem;">No new notifications</p>';
+        const renderNotifs = () => {
+            if (this.notifications.length === 0) return '<p class="subtext" style="text-align: center; padding: 2rem;">No new notifications</p>';
 
-                    return this.notifications.map(n => `
+            return this.notifications.map(n => `
                 <div style="padding: 1rem; border-bottom: 1px solid var(--border); display: flex; gap: 1rem; align-items: start;">
                     <div style="background: rgba(59, 130, 246, 0.1); color: var(--primary); border-radius: 50%; padding: 0.5rem; display: flex; align-items: center; justify-content: center;">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
@@ -1069,9 +1103,9 @@ const app = {
                     </div>
                 </div>
             `).join('');
-                };
+        };
 
-                this.setView(`
+        this.setView(`
              <div class="hero-enter" style="max-width: 600px; margin: 2rem auto;">
                 <button class="btn btn-secondary" style="margin-bottom: 2rem;" onclick="app.showDashboard()">&larr; Back to Dashboard</button>
                 
@@ -1085,10 +1119,10 @@ const app = {
                 </div>
              </div>
         `);
-            },
+    },
 
-            showHowItWorks() {
-                this.setView(`
+    showHowItWorks() {
+        this.setView(`
             <div class="hero-enter" style="max-width: 800px; margin: 2rem auto;">
                 <button class="btn btn-secondary" style="margin-bottom: 2rem;" onclick="app.renderHome()">&larr; Home</button>
                 <h2>How Fanya Pesa Works</h2>
@@ -1110,10 +1144,10 @@ const app = {
                 </div>
             </div>
         `);
-            },
+    },
 
-            showFundingCategories() {
-                this.setView(`
+    showFundingCategories() {
+        this.setView(`
             <div class="hero-enter" style="max-width: 800px; margin: 2rem auto;">
                 <button class="btn btn-secondary" style="margin-bottom: 2rem;" onclick="app.renderHome()">&larr; Home</button>
                 <h2>Funding Categories</h2>
@@ -1138,10 +1172,10 @@ const app = {
                 </div>
             </div>
         `);
-            },
+    },
 
-            showVerifiedSuppliers() {
-                this.setView(`
+    showVerifiedSuppliers() {
+        this.setView(`
             <div class="hero-enter" style="max-width: 800px; margin: 2rem auto;">
                 <button class="btn btn-secondary" style="margin-bottom: 2rem;" onclick="app.renderHome()">&larr; Home</button>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
@@ -1168,8 +1202,8 @@ const app = {
                 </div>
             </div>
         `);
-            }
-        };
+    }
+};
 
-        window.app = app;
-        document.addEventListener('DOMContentLoaded', () => app.init());
+window.app = app;
+document.addEventListener('DOMContentLoaded', () => app.init());
