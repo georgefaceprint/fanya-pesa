@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#1a1a2e">
+    <meta name="description"
+        content="Fanya Pesa - Business and Tender Funding for South African SMEs. Connect with verified funders and suppliers.">
+    <title>Fanya Pesa | SME Funding Platform</title>
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="assets/icon-192.png">
+
+    <!-- Google Fonts: Inter and Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@500;700;800&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" href="styles.css">
+    <!-- Google Identity Services for Mock/Real Sign-in -->
+    <script src="https://accounts.google.com/gsi/client" async></script>
+</head>
+
+<body class="dark-theme">
+    <div id="app">
+        <nav class="navbar">
+            <div class="logo" onclick="app.renderHome()">
+                <span class="logo-icon">💸</span> Fanya Pesa
+            </div>
+            <div class="nav-links">
+                <a href="#about" onclick="app.showHowItWorks()">How it Works</a>
+                <a href="#categories" onclick="app.showFundingCategories()">Funding Categories</a>
+                <a href="#suppliers" onclick="app.showVerifiedSuppliers()">Verified Suppliers</a>
+            </div>
+            <div class="auth-buttons" id="auth-container">
+                <button class="btn btn-secondary" onclick="app.login()">Sign In</button>
+                <button class="btn btn-primary" onclick="app.login()">Get Started</button>
+            </div>
+        </nav>
+
+        <main class="content-view" id="main-view">
+            <!-- Dynamic Content Injected Here -->
+            <section class="hero hero-enter">
+                <div class="hero-content">
+                    <span class="badge">South Africa's #1 SME Platform</span>
+                    <h1 class="gradient-text">Empowering South African Businesses.</h1>
+                    <p>Fast, transparent business and tender funding. Get matched directly with verified funders or pay
+                        national database suppliers.</p>
+                    <div class="hero-actions">
+                        <button class="btn btn-primary btn-large" onclick="app.showSMEOnboarding()">Apply as
+                            SME</button>
+                        <button class="btn btn-outline btn-large" onclick="app.showFunderOnboarding()">I am a
+                            Funder</button>
+                    </div>
+                </div>
+                <div class="hero-visual">
+                    <div class="glass-card float-anim">
+                        <div class="card-header">
+                            <span class="status pulse">Active Request</span>
+                        </div>
+                        <h3>R250,000 Tender Funding</h3>
+                        <p class="subtext">Category: Construction Equipment</p>
+                        <div class="progress-bar">
+                            <div class="progress" style="width: 85%"></div>
+                        </div>
+                        <p class="status-text">Matched with 3 Funders</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script type="module" src="app.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('SW Registered!', reg))
+                    .catch(err => console.error('SW Registration Failed!', err));
+            });
+        }
+    </script>
+</body>
+
+</html>
