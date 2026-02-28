@@ -420,6 +420,27 @@ const app = {
                             </div>
                             `).join('') || '<p class="subtext">No RFQs matching your category currently.</p>'}
                         </div>
+
+                        <div class="glass-card" style="grid-column: 1 / -1; margin-top: 1rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                                <div>
+                                    <h3>Escrow Payouts & Active Contracts</h3>
+                                    <p class="subtext">Upload proof of delivery (waybills) to trigger automatic milestone releases from the Funder Escrow.</p>
+                                </div>
+                            </div>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
+                                ${this.deals.filter(d => (d.status === 'Capital Secured' || d.status === 'Delivery Confirmed') && d.supplierName === this.user.name).map(deal => `
+                                <div class="glass-card" style="background: var(--bg-color); border: 1px solid var(--accent);">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                        <strong>Active Contract: ${deal.category}</strong>
+                                        <span class="status" style="background: rgba(16, 185, 129, 0.1); color: var(--accent);">${deal.status === 'Delivery Confirmed' ? '100% Paid' : '30% Paid (Upfront)'}</span>
+                                    </div>
+                                    <p class="subtext" style="margin-bottom: 1rem;">Funder: ${deal.funderName}<br>SME: ${deal.smeName}</p>
+                                    <button class="btn btn-${deal.status === 'Delivery Confirmed' ? 'outline' : 'secondary'}" style="width: 100%; padding: 0.5rem;" onclick="app.showSupplierMilestones('${deal.id}')">${deal.status === 'Delivery Confirmed' ? 'View Details' : 'Upload Waybill'}</button>
+                                </div>
+                                `).join('') || '<p class="subtext">No active funded contracts yet.</p>'}
+                            </div>
+                        </div>
                         `
             ) : ''}
 
@@ -652,8 +673,7 @@ const app = {
                         <div style="position: relative; margin-bottom: 2rem; z-index: 2;">
                             <div style="position: absolute; left: -24px; top: 4px; width: 14px; height: 14px; border-radius: 50%; background: var(--accent); border: 2px solid var(--bg-color);"></div>
                             <h4 style="margin: 0;">Milestone 1: Deposit Paid</h4>
-                            <p class="subtext">30% upfront payment (R45,000) sent directly to AfriTek Solutions by BlueCape Capital.</p>
-                            <span style="font-size: 0.8rem; color: var(--accent); font-weight: bold;">Completed on 12/10/2026</span>
+                            <p class="subtext">30% upfront payment sent directly to Supplier.</p>
                         </div>
 
                         <!-- Milestone 2 -->
@@ -685,7 +705,7 @@ const app = {
                 <p class="subtext" style="margin-bottom: 2rem;">Draft the funding terms for this R250,000 IT Hardware Tender request. Once approved, the platform automatically generates a tripartite contract involving you, the SME, and the selected Verified Supplier.</p>
 
                 <div class="glass-card">
-                    <form id="funderDealForm" onsubmit="event.preventDefault(); app.generateContract();">
+                    <form id="funderDealForm" onsubmit="app.generateContract('${dealId}')">
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
                             <div class="form-group">
                                 <label>Principal Amount (ZAR)</label>
@@ -711,9 +731,10 @@ const app = {
                         </div>
                         
                         <div class="form-group" style="margin-top: 1rem;">
-                            <label>Link to Verified Supplier</label>
+                            <label>Link to Verified Supplier (Currently Hardcoded Example)</label>
                             <select class="form-control" id="dealSupplier" required>
-                                <option value="AfriTek Solutions (SA-9281)">AfriTek Solutions (SA-9281) - R250,000 Quote Selected by SME</option>
+                                <option value="Tech Innovators (Pty) Ltd">Tech Innovators (Pty) Ltd - R${Number(deal.amount).toLocaleString()} Quote</option>
+                                <option value="BuildItRight Construction">BuildItRight Construction</option>
                             </select>
                         </div>
 
@@ -737,18 +758,44 @@ const app = {
         `);
     },
 
-    generateContract() {
+    async generateContract(dealId) {
         // Collect mock data from form
-        const principal = document.getElementById('dealPrincipal').value || 250000;
+        const deal = this.deals.find(d => d.id === dealId) || { amount: 250000, smeName: 'My Awesome SME (Pty) Ltd' };
+        const principal = document.getElementById('dealPrincipal').value || deal.amount;
         const interest = document.getElementById('dealInterest').value || 12.5;
         const fees = document.getElementById('dealFees').value || 4500;
         const term = document.getElementById('dealTerm').value || "Net 30 Days";
-        const supplier = document.getElementById('dealSupplier').value || "AfriTek Solutions";
+        const supplierSelect = document.getElementById('dealSupplier');
+        const supplierName = supplierSelect.options[supplierSelect.selectedIndex].text;
 
         // Calculate total 
         const total = parseFloat(principal) + (parseFloat(principal) * (parseFloat(interest) / 100)) + parseFloat(fees);
 
-        this.setView(`
+        const btn = document.querySelector('#funderDealForm button[type="submit"]');
+        const ogText = btn.innerHTML;
+        btn.innerHTML = '<span class="status pulse">Generating Smart Contract...</span>';
+        btn.disabled = true;
+
+        try {
+            if (deal.id) {
+                // Lock the deal and deploy capital virtually
+                await setDoc(doc(db, "deals", deal.id), {
+                    status: 'Capital Secured',
+                    funderId: this.user.id,
+                    funderName: this.user.name,
+                    supplierName: supplierSelect.value, // Used value for simplicity
+                    dealTerms: { principal, interest, fees, total, term }
+                }, { merge: true });
+
+                // Ping the SME
+                const smeRef = doc(db, "user_notifications", deal.smeId);
+                const smeSnap = await getDoc(smeRef);
+                let smeNotifs = smeSnap.exists() ? smeSnap.data().data : [];
+                smeNotifs.unshift({ id: Date.now(), text: `🎉 Deal APPROVED! ${this.user.name} has secured R${Number(principal).toLocaleString()} in Fanya Pesa escrow for your contract.`, read: false, time: "Just now" });
+                await setDoc(smeRef, { data: smeNotifs }, { merge: true });
+            }
+
+            this.setView(`
              <div class="hero-enter" style="max-width: 800px; margin: 2rem auto;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
                     <h2>Contract Generated Successfully</h2>
@@ -801,7 +848,7 @@ const app = {
 
                     <h3 style="font-family: serif; font-size: 1.2rem; margin-bottom: 1rem;">2. Disbursement & Supplier Cession</h3>
                     <p style="font-family: serif; line-height: 1.6; color: #333; margin-bottom: 2rem;">
-                        The Funder agrees to deploy the Principal Facility directly to the Designated Supplier (${supplier}) across platform-managed milestones (30% Upfront, 40% Waybill, 30% Delivery). The SME cedes all rights to the initial tender invoice payout to the Funder until the Total Repayment Due is settled in full.
+                        The Funder agrees to deploy the Principal Facility directly to the Designated Supplier (${supplierName}) across platform-managed milestones (30% Upfront, 40% Waybill, 30% Delivery). The SME cedes all rights to the initial tender invoice payout to the Funder until the Total Repayment Due is settled in full.
                     </p>
 
                     <div style="background: rgba(59, 130, 246, 0.05); padding: 1.5rem; text-align: center; border: 1px dashed var(--primary);">
@@ -812,6 +859,12 @@ const app = {
                 </div>
              </div>
         `);
+        } catch (error) {
+            console.error("Error generating contract:", error);
+            alert("Failed to secure capital and generate contract.");
+            btn.innerHTML = ogText;
+            btn.disabled = false;
+        }
     },
 
     showSubmitQuote(rfqId) {
@@ -903,22 +956,51 @@ const app = {
         }
     },
 
-    showSupplierMilestones() {
+    showSupplierMilestones(dealId) {
+        const deal = this.deals.find(d => d.id === dealId) || { category: '20T Cement', smeName: 'SME', funderName: 'Funder', amount: 0, status: 'Capital Secured' };
+        const upfront = deal.amount * 0.30;
+        const nextPayout = deal.amount * 0.40;
+
+        window.handleWaybillUpload = async (fileInput) => {
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            const btn = document.getElementById('waybillBtn');
+            btn.innerHTML = '<span class="status pulse">Uploading...</span>';
+            btn.disabled = true;
+
+            try {
+                // Upload to Storage
+                const storageRef = ref(storage, `waybills/${deal.id}_${file.name}`);
+                await uploadBytes(storageRef, file);
+                const downloadURL = await getDownloadURL(storageRef);
+
+                // Update Deal status
+                await setDoc(doc(db, "deals", deal.id), {
+                    status: 'Delivery Confirmed',
+                    waybillUrl: downloadURL
+                }, { merge: true });
+
+                alert('Waybill uploaded! Escrow has automatically disbursed the next payment.');
+                this.showDashboard();
+            } catch (e) { console.error(e); alert('Upload failed'); btn.disabled = false; btn.innerHTML = 'Upload Waybill'; }
+        }
+
         this.setView(`
              <div class="hero-enter" style="max-width: 600px; margin: 2rem auto;">
                 <button class="btn btn-secondary" style="margin-bottom: 2rem;" onclick="app.showDashboard()">&larr; Back to Dashboard</button>
                 
-                <h2>Active Payout: 20t Cement</h2>
+                <h2>Active Contract: ${deal.category}</h2>
                 <p class="subtext" style="margin-bottom: 2rem;">Upload your proof of dispatch to unlock the next 40% milestone payment directly from the Funder's escrow layer.</p>
 
                 <div class="glass-card">
                     <div style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid var(--border); padding-bottom: 1rem; margin-bottom: 1rem;">
                         <div>
-                            <h3 style="margin: 0;">Supply of 20T Portland Cement</h3>
-                            <p class="subtext">SME: BuildItRight Construction</p>
-                            <p class="subtext">Funder: BlueCape Capital</p>
+                            <h3 style="margin: 0;">Contract Execution</h3>
+                            <p class="subtext">SME: ${deal.smeName}</p>
+                            <p class="subtext">Funder: ${deal.funderName}</p>
                         </div>
-                        <span class="badge" style="background: rgba(16, 185, 129, 0.1); color: var(--accent);">30% Upfront Paid</span>
+                        <span class="badge" style="background: rgba(16, 185, 129, 0.1); color: var(--accent);">${deal.status === 'Delivery Confirmed' ? '100% Paid' : '30% Upfront Paid'}</span>
                     </div>
 
                     <div style="position: relative; padding-left: 1.5rem; margin-top: 1.5rem;">
@@ -927,23 +1009,21 @@ const app = {
                         <div style="position: relative; margin-bottom: 2rem; z-index: 2;">
                             <div style="position: absolute; left: -24px; top: 4px; width: 14px; height: 14px; border-radius: 50%; background: var(--accent); border: 2px solid var(--bg-color);"></div>
                             <h4 style="margin: 0;">Milestone 1: Deposit (Completed)</h4>
-                            <p class="subtext">30% upfront payment (R35,000) received from BlueCape Capital.</p>
+                            <p class="subtext">30% upfront payment (R${upfront.toLocaleString()}) received.</p>
                         </div>
 
                         <div style="position: relative; margin-bottom: 2rem; z-index: 2;">
-                            <div style="position: absolute; left: -24px; top: 4px; width: 14px; height: 14px; border-radius: 50%; background: var(--primary); border: 2px solid var(--bg-color); box-shadow: 0 0 0 4px rgba(59,130,246,0.2);"></div>
-                            <h4 style="margin: 0;">Milestone 2: Dispatch Confirmation (Current)</h4>
-                            <p class="subtext">Upload proof of dispatch/waybill to request the next 40% chunk (R46,600).</p>
-                            <div style="margin-top: 1rem; padding: 1rem; background: var(--bg-color); border-radius: 8px; border: 1px dashed var(--border);">
-                                <input type="file" class="form-control" style="padding: 0.5rem; margin-bottom: 0.5rem;" accept=".pdf,.jpg,.png">
-                                <button class="btn btn-primary btn-sm" onclick="alert('Waybill uploaded! Next payout initiated.'); app.showDashboard();">Upload Waybill</button>
-                            </div>
-                        </div>
-
-                        <div style="position: relative; z-index: 2;">
-                            <div style="position: absolute; left: -24px; top: 4px; width: 14px; height: 14px; border-radius: 50%; background: var(--secondary-hover); border: 2px solid var(--bg-color);"></div>
-                            <h4 style="margin: 0;">Milestone 3: Final Delivery</h4>
-                            <p class="subtext">Remaining 30% retention to be paid upon final delivery sign-off by SME.</p>
+                            <div style="position: absolute; left: -24px; top: 4px; width: 14px; height: 14px; border-radius: 50%; ${deal.status === 'Delivery Confirmed' ? 'background: var(--accent);' : 'background: var(--primary); box-shadow: 0 0 0 4px rgba(59,130,246,0.2);'} border: 2px solid var(--bg-color);"></div>
+                            <h4 style="margin: 0;">Milestone 2: Dispatch Confirmation</h4>
+                            ${deal.status === 'Delivery Confirmed' ?
+                `<p class="subtext" style="color: var(--accent); font-weight: bold;">Waybill Confirmed! R${nextPayout.toLocaleString()} released from Escrow.</p>
+                                 <a href="${deal.waybillUrl}" target="_blank" class="btn btn-outline btn-sm">View Waybill</a>` :
+                `<p class="subtext">Upload proof of dispatch/waybill to request the next 40% chunk (R${nextPayout.toLocaleString()}).</p>
+                                <div style="margin-top: 1rem; padding: 1rem; background: var(--bg-color); border-radius: 8px; border: 1px dashed var(--border);">
+                                    <input type="file" id="waybillInput" class="form-control" style="padding: 0.5rem; margin-bottom: 0.5rem;" accept=".pdf,.jpg,.png">
+                                    <button id="waybillBtn" class="btn btn-primary btn-sm" onclick="window.handleWaybillUpload(document.getElementById('waybillInput'))">Upload Waybill</button>
+                                </div>`
+            }
                         </div>
                     </div>
                 </div>
@@ -1176,7 +1256,7 @@ const app = {
             `).join('');
         };
 
-        this.setView(\`
+        this.setView(`
              <div class="hero-enter" style="max-width: 600px; margin: 2rem auto;">
                 <button class="btn btn-secondary" style="margin-bottom: 2rem;" onclick="app.showDashboard()">&larr; Back to Dashboard</button>
                 
