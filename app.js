@@ -1,5 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-import { getFirestore, collection, getDocs, addDoc, setDoc, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { getFirestore, collection, getDocs, addDoc, setDoc, doc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { getAuth, signInWithPopup, GoogleAuthProvider, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
 // TODO: Replace this with your actual Firebase config from the console
 const firebaseConfig = {
@@ -15,6 +16,8 @@ const firebaseConfig = {
 // Initialize Firebase & Firestore
 const firebaseApp = initializeApp(firebaseConfig);
 const db = getFirestore(firebaseApp);
+const auth = getAuth(firebaseApp);
+const provider = new GoogleAuthProvider();
 
 const STORE_KEY = 'fanya_pesa_user';
 
@@ -75,24 +78,45 @@ const app = {
 
     // --- State & Auth ---
 
-    login(type = 'SME') {
-        // Mock Google login for now
-        const mockUser = {
-            id: '123' + Math.floor(Math.random() * 1000),
-            name: type === 'SME' ? 'My Awesome SME' : type === 'FUNDER' ? 'BlueCape Capital' : type === 'ADMIN' ? 'Platform Admin' : 'AfriTek Solutions',
-            email: type === 'ADMIN' ? 'admin@fanyapesa.co.za' : 'user@example.com',
-            type: type, // SME, FUNDER, SUPPLIER, or ADMIN
-            subscribed: false // For suppliers
-        };
-        this.user = mockUser;
-        localStorage.setItem(STORE_KEY, JSON.stringify(mockUser));
-        this.init();
+    async login(intentType = 'SME') {
+        try {
+            const result = await signInWithPopup(auth, provider);
+            const userRef = doc(db, "users", result.user.uid);
+            const docSnap = await getDoc(userRef);
+
+            let userData;
+            if (docSnap.exists()) {
+                userData = docSnap.data();
+            } else {
+                // First time login - set up the profile mapped to their intent 
+                userData = {
+                    id: result.user.uid,
+                    name: result.user.displayName,
+                    email: result.user.email,
+                    type: intentType, // SME, FUNDER, SUPPLIER, or ADMIN
+                    subscribed: false
+                };
+                await setDoc(userRef, userData);
+            }
+
+            this.user = userData;
+            localStorage.setItem(STORE_KEY, JSON.stringify(userData));
+            this.init();
+        } catch (error) {
+            console.error("Auth Error:", error);
+            alert("Login canceled or failed.");
+        }
     },
 
-    logout() {
-        this.user = null;
-        localStorage.removeItem(STORE_KEY);
-        this.init();
+    async logout() {
+        try {
+            await signOut(auth);
+            this.user = null;
+            localStorage.removeItem(STORE_KEY);
+            this.init();
+        } catch (error) {
+            console.error("Logout Error:", error);
+        }
     },
 
     // --- Navigation & Rendering ---
