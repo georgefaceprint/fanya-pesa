@@ -644,9 +644,6 @@ const app = {
             btn.innerHTML = ogText;
             btn.disabled = false;
         }
-                </div >
-             </div >
-    `);
     },
 
     showSubscriptionCheckout() {
@@ -664,7 +661,7 @@ const app = {
         // Simulate identical Yoco/PayFast redirection delay and success callback
         setTimeout(async () => {
             const container = document.getElementById('checkout-container');
-            if(container) {
+            if (container) {
                 container.innerHTML = `
     < div style = "background: rgba(16, 185, 129, 0.1); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem auto;" >
         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
@@ -672,13 +669,13 @@ const app = {
                     <h3 style="margin-bottom: 0.5rem; color: var(--accent);">Payment Successful!</h3>
                     <p class="subtext">Your account is now verified. Redirecting to Live RFQs...</p>
 `;
-                
+
                 // Update Firestore DB seamlessly and mutate global user state
                 try {
                     await setDoc(doc(db, "users", this.user.id), { subscribed: true }, { merge: true });
                     this.user.subscribed = true;
                     localStorage.setItem(STORE_KEY, JSON.stringify(this.user));
-                    
+
                     setTimeout(() => {
                         this.showDashboard();
                     }, 2000); // Allow them to read the success message
@@ -980,17 +977,17 @@ const app = {
              </div>
 `);
 
-        window.downloadContractPDF = () => {
-            const element = document.getElementById('fanya-contract-doc');
-            const opt = {
-                margin:       [0.5, 0.5, 0.5, 0.5],
-                filename:     'Fanya_Pesa_Contract.pdf',
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2 },
-                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+            window.downloadContractPDF = () => {
+                const element = document.getElementById('fanya-contract-doc');
+                const opt = {
+                    margin: [0.5, 0.5, 0.5, 0.5],
+                    filename: 'Fanya_Pesa_Contract.pdf',
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 2 },
+                    jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+                };
+                html2pdf().set(opt).from(element).save();
             };
-            html2pdf().set(opt).from(element).save();
-        };
 
         } catch (error) {
             console.error("Error generating contract:", error);
@@ -1076,7 +1073,7 @@ const app = {
             const notifRef = doc(db, "user_notifications", rfq.smeId);
             const notifSnap = await getDoc(notifRef);
             let notifs = notifSnap.exists() ? notifSnap.data().data : [];
-            notifs.unshift({ id: Date.now(), text: `You received a new quote of R${ Number(price).toLocaleString() } from ${ this.user.name } on your RFQ: ${ rfq.title } `, read: false, time: "Just now" });
+            notifs.unshift({ id: Date.now(), text: `You received a new quote of R${Number(price).toLocaleString()} from ${this.user.name} on your RFQ: ${rfq.title} `, read: false, time: "Just now" });
             await setDoc(notifRef, { data: notifs }, { merge: true });
 
             alert('Your formal quote was securely submitted to the SME!');
@@ -1104,7 +1101,7 @@ const app = {
 
             try {
                 // Upload to Storage
-                const storageRef = ref(storage, `waybills / ${ deal.id }_${ file.name } `);
+                const storageRef = ref(storage, `waybills / ${deal.id}_${file.name} `);
                 await uploadBytes(storageRef, file);
                 const downloadURL = await getDownloadURL(storageRef);
 
@@ -1352,13 +1349,13 @@ const app = {
             try {
                 // Upload to Storage with Timestamp to prevent overwriting
                 const timestamp = Date.now();
-                const filePath = `userData / ${ this.user.id } /documents/${ docId }_${ timestamp }_${ file.name } `;
+                const filePath = `userData / ${this.user.id} /documents/${docId}_${timestamp}_${file.name} `;
                 const storageRef = ref(storage, filePath);
                 await uploadBytes(storageRef, file);
                 const downloadURL = await getDownloadURL(storageRef);
 
                 // Save reference link to DB
-                await setDoc(doc(db, "user_documents", `${ this.user.id }_${ docId } `), {
+                await setDoc(doc(db, "user_documents", `${this.user.id}_${docId} `), {
                     uid: this.user.id,
                     docTypeId: docId,
                     url: downloadURL,
@@ -1388,7 +1385,7 @@ const app = {
                 await deleteObject(storageRef);
 
                 // Delete from Firestore
-                await deleteDoc(doc(db, "user_documents", `${ this.user.id }_${ docId } `));
+                await deleteDoc(doc(db, "user_documents", `${this.user.id}_${docId} `));
 
                 containerElement.innerHTML = `
     < input type = "file" id = "file-${docId}" style = "display: none;" onchange = "window.handleCloudUpload(${docId}, this);" >
