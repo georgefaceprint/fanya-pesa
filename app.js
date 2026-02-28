@@ -20,26 +20,49 @@ const STORE_KEY = 'fanya_pesa_user';
 
 const app = {
     user: JSON.parse(localStorage.getItem(STORE_KEY)) || null,
-    docTypes: JSON.parse(localStorage.getItem('fanya_pesa_doctypes')) || [
-        { id: 1, name: 'CSD Registration Report', description: 'Central Supplier Database summary report', requiredFor: ['SME', 'SUPPLIER'] },
-        { id: 2, name: 'Valid Tax Clearance', description: 'SARS Tax Clearance Certificate with PIN', requiredFor: ['SME', 'SUPPLIER'] },
-        { id: 3, name: '6 Months Bank Statements', description: 'Recent bank statements for affordability assessment', requiredFor: ['SME'] },
-        { id: 4, name: 'Directors ID Copies', description: 'Certified copies of all active directors', requiredFor: ['SME', 'SUPPLIER'] }
-    ],
-    notifications: JSON.parse(localStorage.getItem('fanya_pesa_notifications')) || [
-        { id: 1, text: "Welcome to Fanya Pesa! Complete your profile to get started.", read: false, time: "Just now" },
-        { id: 2, text: "New Funders have joined the Construction category.", read: true, time: "2 hours ago" }
-    ],
+    docTypes: [],
+    notifications: [],
 
     saveDocTypes() {
-        localStorage.setItem('fanya_pesa_doctypes', JSON.stringify(this.docTypes));
+        setDoc(doc(db, "system_config", "doctypes"), { data: this.docTypes }).catch(console.error);
     },
 
     saveNotifications() {
-        localStorage.setItem('fanya_pesa_notifications', JSON.stringify(this.notifications));
+        if (this.user) {
+            setDoc(doc(db, "user_notifications", this.user.id), { data: this.notifications }).catch(console.error);
+        }
+    },
+
+    initUserDB() {
+        onSnapshot(doc(db, "system_config", "doctypes"), (docSnap) => {
+            if (docSnap.exists()) {
+                this.docTypes = docSnap.data().data;
+            } else {
+                this.docTypes = [
+                    { id: 1, name: 'CSD Registration Report', description: 'Central Supplier Database summary report', requiredFor: ['SME', 'SUPPLIER'] },
+                    { id: 2, name: 'Valid Tax Clearance', description: 'SARS Tax Clearance Certificate with PIN', requiredFor: ['SME', 'SUPPLIER'] },
+                    { id: 3, name: '6 Months Bank Statements', description: 'Recent bank statements for affordability assessment', requiredFor: ['SME'] },
+                    { id: 4, name: 'Directors ID Copies', description: 'Certified copies of all active directors', requiredFor: ['SME', 'SUPPLIER'] }
+                ];
+                this.saveDocTypes();
+            }
+        });
+
+        if (this.user) {
+            onSnapshot(doc(db, "user_notifications", this.user.id), (docSnap) => {
+                if (docSnap.exists()) {
+                    this.notifications = docSnap.data().data;
+                } else {
+                    this.notifications = [{ id: 1, text: "Welcome to Fanya Pesa! Complete your profile to get started.", read: false, time: "Just now" }];
+                    this.saveNotifications();
+                }
+                this.renderNavbar();
+            });
+        }
     },
 
     init() {
+        this.initUserDB();
         this.renderNavbar();
 
         // Handle initial routing based on user state
