@@ -1,6 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
 import { getFirestore, collection, getDocs, addDoc, setDoc, doc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { getAuth, signInWithPopup, GoogleAuthProvider, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
 // TODO: Replace this with your actual Firebase config from the console
 const firebaseConfig = {
@@ -18,6 +19,7 @@ const firebaseApp = initializeApp(firebaseConfig);
 const db = getFirestore(firebaseApp);
 const auth = getAuth(firebaseApp);
 const provider = new GoogleAuthProvider();
+const storage = getStorage(firebaseApp);
 
 const STORE_KEY = 'fanya_pesa_user';
 
@@ -974,26 +976,55 @@ const app = {
         const userType = this.user.type; // 'SME' or 'SUPPLIER'
         const requiredDocs = this.docTypes.filter(doc => doc.requiredFor.includes(userType));
 
-        const renderMockDocs = () => {
-            if (requiredDocs.length === 0) {
-                return `<p class="subtext">No compliance documents are required currently.</p>`;
-            }
+        // Let's attach our upload function to the global scope since it's triggered via inline HTML onclicks 
+        window.handleCloudUpload = async (docId, fileInput) => {
+            const file = fileInput.files[0];
+            if (!file) return;
 
-            return requiredDocs.map(doc => `
-                <div style="background: var(--bg-color); border: 1px solid var(--border); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <strong style="display: block; margin-bottom: 0.2rem;">${doc.name}</strong>
-                        <span class="subtext" style="font-size: 0.85rem;">${doc.description}</span>
-                    </div>
-                    <div style="text-align: right;">
-                        <input type="file" id="file-${doc.id}" style="display: none;" onchange="alert('Simulated Upload: ' + this.files[0].name + ' uploaded successfully.'); this.parentElement.innerHTML = '<span class=\\'status pulse\\' style=\\'background: rgba(16, 185, 129, 0.1); color: var(--accent);\\'>Uploaded / Pending Verification</span>';">
-                        <button class="btn btn-primary btn-sm" onclick="document.getElementById('file-${doc.id}').click();">Upload File</button>
-                    </div>
-                </div>
-            `).join('');
+            const btnContainer = fileInput.parentElement;
+            btnContainer.innerHTML = '<span class="status pulse" style="background: rgba(59, 130, 246, 0.1); color: var(--primary);">Uploading to Cloud...</span>';
+
+            try {
+                // Upload to Storage
+                const storageRef = ref(storage, \`userData/\${this.user.id}/documents/\${docId}_\${file.name}\`);
+                await uploadBytes(storageRef, file);
+                const downloadURL = await getDownloadURL(storageRef);
+
+                // Save reference link to DB
+                await setDoc(doc(db, "user_documents", \`\${this.user.id}_\${docId}\`), {
+                    uid: this.user.id,
+                    docTypeId: docId,
+                    url: downloadURL,
+                    uploadedAt: new Date().toISOString()
+                });
+
+                btnContainer.innerHTML = \`<a href="\${downloadURL}" target="_blank" class="status" style="background: rgba(16, 185, 129, 0.1); color: var(--accent); text-decoration: none;">View Document</a>\`;
+            } catch (error) {
+                console.error("Upload failed", error);
+                btnContainer.innerHTML = '<span class="status pulse" style="background: rgba(220, 38, 38, 0.1); color: #dc2626;">Upload Failed</span>';
+            }
         };
 
-        this.setView(`
+        const renderDocs = () => {
+            if (requiredDocs.length === 0) {
+                return \`<p class="subtext">No compliance documents are required currently.</p>\`;
+            }
+
+            return requiredDocs.map(docType => \`
+                <div style="background: var(--bg-color); border: 1px solid var(--border); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <strong style="display: block; margin-bottom: 0.2rem;">\${docType.name}</strong>
+                        <span class="subtext" style="font-size: 0.85rem;">\${docType.description}</span>
+                    </div>
+                    <div style="text-align: right;">
+                        <input type="file" id="file-\${docType.id}" style="display: none;" onchange="window.handleCloudUpload(\${docType.id}, this);">
+                        <button class="btn btn-primary btn-sm" onclick="document.getElementById('file-\${docType.id}').click();">Upload File</button>
+                    </div>
+                </div>
+            \`).join('');
+        };
+
+        this.setView(\`
              <div class="hero-enter" style="max-width: 600px; margin: 2rem auto;">
                 <button class="btn btn-secondary" style="margin-bottom: 2rem;" onclick="app.showDashboard()">&larr; Back to Dashboard</button>
                 
@@ -1006,7 +1037,7 @@ const app = {
                         <span class="badge" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;">Verification Pending</span>
                     </div>
 
-                    ${renderMockDocs()}
+                    ${renderDocs()}
                     
                     <div style="margin-top: 2rem; padding: 1.5rem; background: rgba(59, 130, 246, 0.05); border: 1px dashed var(--primary); border-radius: 8px; text-align: center;">
                         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" style="margin-bottom: 0.5rem;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
@@ -1016,18 +1047,18 @@ const app = {
                 </div>
              </div>
         `);
-    },
+            },
 
-    showNotifications() {
-        // Mark all as read when opening
-        this.notifications.forEach(n => n.read = true);
-        this.saveNotifications();
-        this.renderNavbar(); // Update bell icon
+            showNotifications() {
+                // Mark all as read when opening
+                this.notifications.forEach(n => n.read = true);
+                this.saveNotifications();
+                this.renderNavbar(); // Update bell icon
 
-        const renderNotifs = () => {
-            if (this.notifications.length === 0) return '<p class="subtext" style="text-align: center; padding: 2rem;">No new notifications</p>';
+                const renderNotifs = () => {
+                    if (this.notifications.length === 0) return '<p class="subtext" style="text-align: center; padding: 2rem;">No new notifications</p>';
 
-            return this.notifications.map(n => `
+                    return this.notifications.map(n => `
                 <div style="padding: 1rem; border-bottom: 1px solid var(--border); display: flex; gap: 1rem; align-items: start;">
                     <div style="background: rgba(59, 130, 246, 0.1); color: var(--primary); border-radius: 50%; padding: 0.5rem; display: flex; align-items: center; justify-content: center;">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
@@ -1038,9 +1069,9 @@ const app = {
                     </div>
                 </div>
             `).join('');
-        };
+                };
 
-        this.setView(`
+                this.setView(`
              <div class="hero-enter" style="max-width: 600px; margin: 2rem auto;">
                 <button class="btn btn-secondary" style="margin-bottom: 2rem;" onclick="app.showDashboard()">&larr; Back to Dashboard</button>
                 
@@ -1054,10 +1085,10 @@ const app = {
                 </div>
              </div>
         `);
-    },
+            },
 
-    showHowItWorks() {
-        this.setView(`
+            showHowItWorks() {
+                this.setView(`
             <div class="hero-enter" style="max-width: 800px; margin: 2rem auto;">
                 <button class="btn btn-secondary" style="margin-bottom: 2rem;" onclick="app.renderHome()">&larr; Home</button>
                 <h2>How Fanya Pesa Works</h2>
@@ -1079,10 +1110,10 @@ const app = {
                 </div>
             </div>
         `);
-    },
+            },
 
-    showFundingCategories() {
-        this.setView(`
+            showFundingCategories() {
+                this.setView(`
             <div class="hero-enter" style="max-width: 800px; margin: 2rem auto;">
                 <button class="btn btn-secondary" style="margin-bottom: 2rem;" onclick="app.renderHome()">&larr; Home</button>
                 <h2>Funding Categories</h2>
@@ -1107,10 +1138,10 @@ const app = {
                 </div>
             </div>
         `);
-    },
+            },
 
-    showVerifiedSuppliers() {
-        this.setView(`
+            showVerifiedSuppliers() {
+                this.setView(`
             <div class="hero-enter" style="max-width: 800px; margin: 2rem auto;">
                 <button class="btn btn-secondary" style="margin-bottom: 2rem;" onclick="app.renderHome()">&larr; Home</button>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
@@ -1137,8 +1168,8 @@ const app = {
                 </div>
             </div>
         `);
-    }
-};
+            }
+        };
 
-window.app = app;
-document.addEventListener('DOMContentLoaded', () => app.init());
+        window.app = app;
+        document.addEventListener('DOMContentLoaded', () => app.init());
