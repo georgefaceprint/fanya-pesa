@@ -23,6 +23,7 @@
     <link rel="stylesheet" href="styles.css">
     <!-- Google Identity Services for Mock/Real Sign-in -->
     <script src="https://accounts.google.com/gsi/client" async></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 
 <body class="dark-theme">
@@ -37,6 +38,8 @@
                 <a href="#suppliers" onclick="app.showVerifiedSuppliers()">Verified Suppliers</a>
             </div>
             <div class="auth-buttons" id="auth-container">
+                <button class="btn btn-secondary btn-sm" onclick="app.toggleTheme()" id="theme-toggle"
+                    style="margin-right: 1rem; padding: 0.5rem; background: transparent; border: 1px solid var(--border); border-radius: 50%;">🌙</button>
                 <button class="btn btn-secondary" onclick="app.showAuth()">Sign In</button>
                 <button class="btn btn-primary" onclick="app.showAuth()">Get Started</button>
             </div>

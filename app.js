@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-import { getFirestore, collection, getDocs, addDoc, setDoc, doc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { getFirestore, collection, getDocs, addDoc, setDoc, doc, onSnapshot, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { getAuth, signInWithPopup, GoogleAuthProvider, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
+import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
 // TODO: Replace this with your actual Firebase config from the console
 const firebaseConfig = {
@@ -115,6 +115,7 @@ const app = {
     },
 
     init() {
+        this.loadTheme();
         this.initUserDB();
         this.renderNavbar();
 
@@ -127,6 +128,26 @@ const app = {
     },
 
     // --- State & Auth ---
+
+    loadTheme() {
+        const savedTheme = localStorage.getItem('fanya_pesa_theme') || 'dark-theme';
+        document.body.className = savedTheme;
+        const toggleBtn = document.getElementById('theme-toggle');
+        if (toggleBtn) {
+            toggleBtn.innerHTML = savedTheme === 'dark-theme' ? '☀️' : '🌙';
+        }
+    },
+
+    toggleTheme() {
+        const isDark = document.body.classList.contains('dark-theme');
+        const newTheme = isDark ? 'light-theme' : 'dark-theme';
+        document.body.className = newTheme;
+        localStorage.setItem('fanya_pesa_theme', newTheme);
+        const toggleBtn = document.getElementById('theme-toggle');
+        if (toggleBtn) {
+            toggleBtn.innerHTML = isDark ? '🌙' : '☀️';
+        }
+    },
 
     async login(intentType = 'SME') {
         try {
@@ -853,10 +874,13 @@ const app = {
              <div class="hero-enter" style="max-width: 800px; margin: 2rem auto;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
                     <h2>Contract Generated Successfully</h2>
-                    <button class="btn btn-secondary" onclick="app.showDashboard()">Return to Dashboard</button>
+                    <div style="display: flex; gap: 1rem;">
+                        <button class="btn btn-primary" onclick="window.downloadContractPDF()">Download Official PDF</button>
+                        <button class="btn btn-secondary" onclick="app.showDashboard()">Return to Dashboard</button>
+                    </div>
                 </div>
 
-                <div class="glass-card" style="background: white; color: black; border-radius: 4px; border-left: 8px solid var(--primary); padding: 3rem;">
+                <div id="fanya-contract-doc" class="glass-card" style="background: white; color: black; border-radius: 4px; border-left: 8px solid var(--primary); padding: 3rem;">
                     
                     <div style="text-align: center; margin-bottom: 3rem;">
                         <h1 style="font-family: serif; color: black; font-size: 2rem;">Funding Facility Agreement</h1>
@@ -911,8 +935,22 @@ const app = {
                     </div>
 
                 </div>
+                </div>
              </div>
-        `);
+`);
+
+        window.downloadContractPDF = () => {
+            const element = document.getElementById('fanya-contract-doc');
+            const opt = {
+                margin:       [0.5, 0.5, 0.5, 0.5],
+                filename:     'Fanya_Pesa_Contract.pdf',
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 },
+                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+            };
+            html2pdf().set(opt).from(element).save();
+        };
+
         } catch (error) {
             console.error("Error generating contract:", error);
             alert("Failed to secure capital and generate contract.");
@@ -926,7 +964,7 @@ const app = {
         if (!rfq) return alert("RFQ not found!");
 
         this.setView(`
-             <div class="hero-enter" style="max-width: 600px; margin: 2rem auto;">
+    < div class="hero-enter" style = "max-width: 600px; margin: 2rem auto;" >
                 <button class="btn btn-secondary" style="margin-bottom: 2rem;" onclick="app.showDashboard()">&larr; Back</button>
                 
                 <span class="badge" style="background: rgba(59, 130, 246, 0.1); color: var(--primary); border-color: rgba(59, 130, 246, 0.2);">Quote Request</span>
@@ -961,8 +999,8 @@ const app = {
                         </button>
                     </form>
                 </div>
-             </div>
-        `);
+             </div >
+    `);
     },
 
     async submitQuote(event, rfqId) {
@@ -997,7 +1035,7 @@ const app = {
             const notifRef = doc(db, "user_notifications", rfq.smeId);
             const notifSnap = await getDoc(notifRef);
             let notifs = notifSnap.exists() ? notifSnap.data().data : [];
-            notifs.unshift({ id: Date.now(), text: `You received a new quote of R${Number(price).toLocaleString()} from ${this.user.name} on your RFQ: ${rfq.title}`, read: false, time: "Just now" });
+            notifs.unshift({ id: Date.now(), text: `You received a new quote of R${ Number(price).toLocaleString() } from ${ this.user.name } on your RFQ: ${ rfq.title } `, read: false, time: "Just now" });
             await setDoc(notifRef, { data: notifs }, { merge: true });
 
             alert('Your formal quote was securely submitted to the SME!');
@@ -1025,7 +1063,7 @@ const app = {
 
             try {
                 // Upload to Storage
-                const storageRef = ref(storage, `waybills/${deal.id}_${file.name}`);
+                const storageRef = ref(storage, `waybills / ${ deal.id }_${ file.name } `);
                 await uploadBytes(storageRef, file);
                 const downloadURL = await getDownloadURL(storageRef);
 
@@ -1041,7 +1079,7 @@ const app = {
         }
 
         this.setView(`
-             <div class="hero-enter" style="max-width: 600px; margin: 2rem auto;">
+    < div class="hero-enter" style = "max-width: 600px; margin: 2rem auto;" >
                 <button class="btn btn-secondary" style="margin-bottom: 2rem;" onclick="app.showDashboard()">&larr; Back to Dashboard</button>
                 
                 <h2>Active Contract: ${deal.category}</h2>
@@ -1081,8 +1119,8 @@ const app = {
                         </div>
                     </div>
                 </div>
-             </div>
-        `);
+             </div >
+    `);
     },
 
     showFunderDocReview() {
@@ -1091,7 +1129,7 @@ const app = {
         const renderSmeDocs = () => {
             if (smeDocs.length === 0) return '<p class="subtext">No documents required for this SME.</p>';
             return smeDocs.map(doc => `
-                <div style="background: var(--bg-color); border: 1px solid var(--border); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+    < div style = "background: var(--bg-color); border: 1px solid var(--border); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;" >
                     <div>
                         <strong style="display: block; margin-bottom: 0.2rem;">${doc.name}</strong>
                         <span class="subtext" style="font-size: 0.85rem;">Uploaded on 12 Oct 2026</span>
@@ -1099,12 +1137,12 @@ const app = {
                     <div>
                         <button class="btn btn-outline btn-sm" onclick="alert('Downloading ${doc.name} (Simulated)...')">View File</button>
                     </div>
-                </div>
-            `).join('');
+                </div >
+    `).join('');
         };
 
         this.setView(`
-             <div class="hero-enter" style="max-width: 700px; margin: 2rem auto;">
+    < div class="hero-enter" style = "max-width: 700px; margin: 2rem auto;" >
                 <button class="btn btn-secondary" style="margin-bottom: 2rem;" onclick="app.showDashboard()">&larr; Back to Pipeline</button>
                 
                 <h2>Review Documents: My Awesome SME</h2>
@@ -1123,14 +1161,14 @@ const app = {
                         <button class="btn btn-primary" style="flex: 1;" onclick="app.showFunderOffer()">Approve & Structure Deal</button>
                     </div>
                 </div>
-             </div>
-        `);
+             </div >
+    `);
     },
 
     showAdminDashboard() {
         const renderDocTypes = () => {
             return this.docTypes.map(doc => `
-                <div style="background: var(--bg-color); border: 1px solid var(--border); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+    < div style = "background: var(--bg-color); border: 1px solid var(--border); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;" >
                     <div>
                         <h4 style="margin: 0; margin-bottom: 0.2rem;">${doc.name}</h4>
                         <p class="subtext" style="margin: 0;">${doc.description}</p>
@@ -1139,12 +1177,12 @@ const app = {
                         </div>
                     </div>
                     <button class="btn btn-secondary btn-sm" onclick="app.docTypes = app.docTypes.filter(d => d.id !== ${doc.id}); app.saveDocTypes(); app.showAdminDashboard();">Remove</button>
-                </div>
-            `).join('');
+                </div >
+    `).join('');
         };
 
         this.setView(`
-             <div class="hero-enter" style="max-width: 800px; margin: 2rem auto;">
+    < div class="hero-enter" style = "max-width: 800px; margin: 2rem auto;" >
                 <button class="btn btn-secondary" style="margin-bottom: 2rem;" onclick="app.showDashboard()">&larr; Back to Admin Panel</button>
                 
                 <h2>Compliance Document Types</h2>
@@ -1180,8 +1218,8 @@ const app = {
                         </div>
                     </div>
                 </div>
-             </div>
-        `);
+             </div >
+    `);
     },
 
     addDocType(form) {
@@ -1205,18 +1243,18 @@ const app = {
     showAdminCategories() {
         const renderCategories = () => {
             return this.fundingCategories.map(cat => `
-                <div style="background: var(--bg-color); border: 1px solid var(--border); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+    < div style = "background: var(--bg-color); border: 1px solid var(--border); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;" >
                     <div>
                         <h4 style="margin: 0; margin-bottom: 0.2rem;">${cat.name}</h4>
                         <p class="subtext" style="margin: 0;">${cat.description}</p>
                     </div>
                     <button class="btn btn-secondary btn-sm" onclick="app.fundingCategories = app.fundingCategories.filter(c => c.id !== ${cat.id}); app.saveFundingCategories(); app.showAdminCategories();">Remove</button>
-                </div>
-            `).join('');
+                </div >
+    `).join('');
         };
 
         this.setView(`
-             <div class="hero-enter" style="max-width: 800px; margin: 2rem auto;">
+    < div class="hero-enter" style = "max-width: 800px; margin: 2rem auto;" >
                 <button class="btn btn-secondary" style="margin-bottom: 2rem;" onclick="app.showDashboard()">&larr; Back to Admin Panel</button>
                 
                 <h2>Funding Categories</h2>
@@ -1245,8 +1283,8 @@ const app = {
                         </div>
                     </div>
                 </div>
-             </div>
-        `);
+             </div >
+    `);
     },
 
     addFundingCategory(form) {
@@ -1271,33 +1309,64 @@ const app = {
             btnContainer.innerHTML = '<span class="status pulse" style="background: rgba(59, 130, 246, 0.1); color: var(--primary);">Uploading to Cloud...</span>';
 
             try {
-                // Upload to Storage
-                const storageRef = ref(storage, `userData/${this.user.id}/documents/${docId}_${file.name}`);
+                // Upload to Storage with Timestamp to prevent overwriting
+                const timestamp = Date.now();
+                const filePath = `userData / ${ this.user.id } /documents/${ docId }_${ timestamp }_${ file.name } `;
+                const storageRef = ref(storage, filePath);
                 await uploadBytes(storageRef, file);
                 const downloadURL = await getDownloadURL(storageRef);
 
                 // Save reference link to DB
-                await setDoc(doc(db, "user_documents", `${this.user.id}_${docId}`), {
+                await setDoc(doc(db, "user_documents", `${ this.user.id }_${ docId } `), {
                     uid: this.user.id,
                     docTypeId: docId,
                     url: downloadURL,
+                    storagePath: filePath,
                     uploadedAt: new Date().toISOString()
                 });
 
-                btnContainer.innerHTML = `<a href="${downloadURL}" target="_blank" class="status" style="background: rgba(16, 185, 129, 0.1); color: var(--accent); text-decoration: none;">View Document</a>`;
+                btnContainer.innerHTML = `
+    < div style = "display: flex; gap: 0.5rem;" >
+                        <a href="${downloadURL}" target="_blank" class="btn btn-outline btn-sm">View</a>
+                        <button class="btn btn-secondary btn-sm" onclick="window.handleCloudDelete('${docId}', '${filePath}', this.parentElement.parentElement)">Delete</button>
+                    </div >
+    `;
             } catch (error) {
                 console.error("Upload failed", error);
                 btnContainer.innerHTML = '<span class="status pulse" style="background: rgba(220, 38, 38, 0.1); color: #dc2626;">Upload Failed</span>';
             }
         };
 
+        window.handleCloudDelete = async (docId, filePath, containerElement) => {
+            const originalHTML = containerElement.innerHTML;
+            containerElement.innerHTML = '<span class="status pulse" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;">Deleting...</span>';
+
+            try {
+                // Delete from Storage
+                const storageRef = ref(storage, filePath);
+                await deleteObject(storageRef);
+
+                // Delete from Firestore
+                await deleteDoc(doc(db, "user_documents", `${ this.user.id }_${ docId } `));
+
+                containerElement.innerHTML = `
+    < input type = "file" id = "file-${docId}" style = "display: none;" onchange = "window.handleCloudUpload(${docId}, this);" >
+        <button class="btn btn-primary btn-sm" onclick="document.getElementById('file-${docId}').click();">Upload File</button>
+`;
+            } catch (error) {
+                console.error("Delete failed", error);
+                alert("Failed to delete document.");
+                containerElement.innerHTML = originalHTML;
+            }
+        };
+
         const renderDocs = () => {
             if (requiredDocs.length === 0) {
-                return `<p class="subtext">No compliance documents are required currently.</p>`;
+                return `< p class="subtext" > No compliance documents are required currently.</p > `;
             }
 
             return requiredDocs.map(docType => `
-                <div style="background: var(--bg-color); border: 1px solid var(--border); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+    < div style = "background: var(--bg-color); border: 1px solid var(--border); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;" >
                     <div>
                         <strong style="display: block; margin-bottom: 0.2rem;">${docType.name}</strong>
                         <span class="subtext" style="font-size: 0.85rem;">${docType.description}</span>
@@ -1306,12 +1375,12 @@ const app = {
                         <input type="file" id="file-${docType.id}" style="display: none;" onchange="window.handleCloudUpload(${docType.id}, this);">
                         <button class="btn btn-primary btn-sm" onclick="document.getElementById('file-${docType.id}').click();">Upload File</button>
                     </div>
-                </div>
-            `).join('');
+                </div >
+    `).join('');
         };
 
         this.setView(`
-             <div class="hero-enter" style="max-width: 600px; margin: 2rem auto;">
+    < div class="hero-enter" style = "max-width: 600px; margin: 2rem auto;" >
                 <button class="btn btn-secondary" style="margin-bottom: 2rem;" onclick="app.showDashboard()">&larr; Back to Dashboard</button>
                 
                 <h2>Secure Document Vault</h2>
@@ -1331,8 +1400,8 @@ const app = {
                         <p class="subtext" style="font-size: 0.85rem;">Your uploaded files are encrypted at rest using AES-256 and stored securely via Google Cloud Storage.</p>
                     </div>
                 </div>
-             </div>
-        `);
+             </div >
+    `);
     },
 
     showNotifications() {
@@ -1345,7 +1414,7 @@ const app = {
             if (this.notifications.length === 0) return '<p class="subtext" style="text-align: center; padding: 2rem;">No new notifications</p>';
 
             return this.notifications.map(n => `
-                <div style="padding: 1rem; border-bottom: 1px solid var(--border); display: flex; gap: 1rem; align-items: start;">
+    < div style = "padding: 1rem; border-bottom: 1px solid var(--border); display: flex; gap: 1rem; align-items: start;" >
                     <div style="background: rgba(59, 130, 246, 0.1); color: var(--primary); border-radius: 50%; padding: 0.5rem; display: flex; align-items: center; justify-content: center;">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
                     </div>
@@ -1353,12 +1422,12 @@ const app = {
                         <p style="margin: 0; font-size: 0.95rem; color: var(--text-color);">${n.text}</p>
                         <span class="subtext" style="font-size: 0.8rem; display: block; margin-top: 0.2rem;">${n.time}</span>
                     </div>
-                </div>
-            `).join('');
+                </div >
+    `).join('');
         };
 
         this.setView(`
-             <div class="hero-enter" style="max-width: 600px; margin: 2rem auto;">
+    < div class="hero-enter" style = "max-width: 600px; margin: 2rem auto;" >
                 <button class="btn btn-secondary" style="margin-bottom: 2rem;" onclick="app.showDashboard()">&larr; Back to Dashboard</button>
                 
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
@@ -1369,13 +1438,13 @@ const app = {
                 <div class="glass-card" style="padding: 0;">
                     ${renderNotifs()}
                 </div>
-             </div>
-        `);
+             </div >
+    `);
     },
 
     showHowItWorks() {
         this.setView(`
-            <div class="hero-enter" style="max-width: 800px; margin: 2rem auto;">
+    < div class="hero-enter" style = "max-width: 800px; margin: 2rem auto;" >
                 <button class="btn btn-secondary" style="margin-bottom: 2rem;" onclick="app.renderHome()">&larr; Home</button>
                 <h2>How Fanya Pesa Works</h2>
                 <p class="subtext" style="margin-bottom: 2rem;">A seamless ecosystem empowering SMEs, connecting Funders, and managing Verified Suppliers built on escrow security.</p>
@@ -1394,13 +1463,13 @@ const app = {
                         <p class="subtext">Capital is locked into Fanya Pesa escrow. Instead of cash hitting the SME's account, Fanya Pesa directly pays the Verified Supplier upon proof of dispatch/waybill upload, neutralizing fund mismanagement.</p>
                     </div>
                 </div>
-            </div>
-        `);
+            </div >
+    `);
     },
 
     showFundingCategories() {
         this.setView(`
-            <div class="hero-enter" style="max-width: 800px; margin: 2rem auto;">
+    < div class="hero-enter" style = "max-width: 800px; margin: 2rem auto;" >
                 <button class="btn btn-secondary" style="margin-bottom: 2rem;" onclick="app.renderHome()">&larr; Home</button>
                 <h2>Funding Categories</h2>
                 <p class="subtext" style="margin-bottom: 2rem;">Explore the capital structures and mandates available on the Fanya Pesa platform.</p>
@@ -1422,13 +1491,13 @@ const app = {
                         <button class="btn btn-primary" style="margin-top: 1rem; width: 100%;" onclick="app.showAuth('SME')">Apply</button>
                     </div>
                 </div>
-            </div>
-        `);
+            </div >
+    `);
     },
 
     showVerifiedSuppliers() {
         this.setView(`
-            <div class="hero-enter" style="max-width: 800px; margin: 2rem auto;">
+    < div class="hero-enter" style = "max-width: 800px; margin: 2rem auto;" >
                 <button class="btn btn-secondary" style="margin-bottom: 2rem;" onclick="app.renderHome()">&larr; Home</button>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
                     <div>
@@ -1452,8 +1521,8 @@ const app = {
                         <span class="badge" style="background: rgba(16, 185, 129, 0.1); color: var(--accent); margin: 0;">Verified</span>
                     </div>
                 </div>
-            </div>
-        `);
+            </div >
+    `);
     }
 };
 

@@ -1,0 +1,36 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Admins have full access to everything
+    function isAdmin() {
+      return request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.type == 'ADMIN';
+    }
+
+    // Rules for fundingCategories and docTypes
+    match /fundingCategories/{category} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    match /docTypes/{docType} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Rules for Deals
+    match /deals/{dealId} {
+      // SMEs can read/write their own deals
+      allow read, write: if request.auth != null && resource.data.smeId == request.auth.uid;
+      // Funders can read all deals, but only update deals where funderId matches their uid (or they are claiming it)
+      allow read: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.type == 'FUNDER';
+      allow update: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.type == 'FUNDER' && (resource.data.funderId == request.auth.uid || !('funderId' in resource.data));
+    }
+
+    // Default catch-all (for simplicity in this MVP, allow read/write to authenticated users for other paths)
+    // Note: In a real production app, you would lock down every single path.
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}
