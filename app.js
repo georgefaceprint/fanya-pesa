@@ -353,18 +353,20 @@ const app = {
                         </div>
 
                         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
+                            ${this.deals.length > 0 ? this.deals.map(deal => `
                             <div class="glass-card" style="background: var(--bg-color);">
                                 <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                                    <strong>My Awesome SME (Pty) Ltd</strong>
-                                    <span class="status pulse" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;">Reviewing Docs</span>
+                                    <strong>${deal.smeName || 'SME'}</strong>
+                                    <span class="status pulse" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;">${deal.status}</span>
                                 </div>
-                                <h4>Request: R250,000</h4>
-                                <p class="subtext" style="margin-bottom: 1rem;">Category: Tender Execution (IT Hardware)</p>
+                                <h4>Request: R${Number(deal.amount).toLocaleString()}</h4>
+                                <p class="subtext" style="margin-bottom: 1rem;">Category: ${deal.category}</p>
                                 <div style="display: flex; gap: 0.5rem;">
-                                    <button class="btn btn-secondary" style="flex: 1; padding: 0.5rem; font-size: 0.85rem;" onclick="app.showFunderDocReview()">Review Docs</button>
-                                    <button class="btn btn-primary" style="flex: 1; padding: 0.5rem; font-size: 0.85rem;" onclick="app.showFunderOffer()">Structure Deal</button>
+                                    <button class="btn btn-secondary" style="flex: 1; padding: 0.5rem; font-size: 0.85rem;" onclick="app.showFunderDocReview('${deal.smeId}')">Review Docs</button>
+                                    <button class="btn btn-primary" style="flex: 1; padding: 0.5rem; font-size: 0.85rem;" onclick="app.showFunderOffer('${deal.id}')">Structure Deal</button>
                                 </div>
                             </div>
+                            `).join('') : '<p class="subtext">No active deals right now.</p>'}
                         </div>
                     </div>
                     ` : ''}
@@ -394,30 +396,29 @@ const app = {
                         <div class="glass-card" style="grid-column: 1 / -1;">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
                                 <div>
-                                    <h3>Supplier Dashboard</h3>
-                                    <p class="subtext">Review requests, submit quotes, and upload waybills to trigger your milestone payments.</p>
+                                    <h3>Live RFQ Feed</h3>
+                                    <p class="subtext">Available quotation requests matching your verified industry mandate.</p>
                                 </div>
-                                <span class="badge" style="background: rgba(16, 185, 129, 0.1); color: var(--accent); border-color: rgba(16, 185, 129, 0.2);">Verified Supplier</span>
+                                <span class="badge" style="background: rgba(16, 185, 129, 0.1); color: var(--accent); border-color: rgba(16, 185, 129, 0.2);">Supplier ID: SA-9281</span>
                             </div>
 
-                            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
-                                <div class="glass-card" style="background: var(--bg-color);">
-                                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                                        <strong>50x Dell/HP Laptops</strong>
-                                        <span class="status pulse" style="background: rgba(59, 130, 246, 0.1); color: var(--primary);">New RFQ</span>
-                                    </div>
-                                    <p class="subtext" style="margin-bottom: 1rem;">From: Tech Innovators SME<br>Delivery: Johannesburg</p>
-                                    <button class="btn btn-primary" style="width: 100%; padding: 0.5rem;" onclick="app.showSubmitQuote()">View & Submit Quote</button>
+                            ${this.rfqs.filter(r => r.category === 'All' || r.category === this.user.industry || !this.user.industry).map(rfq => `
+                            <div style="border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem; position: relative;">
+                                <span class="badge" style="position: absolute; top: 1.5rem; right: 1.5rem; margin: 0; background: rgba(59,130,246,0.1); color: var(--primary);">Expires: 48h</span>
+                                
+                                <div style="margin-bottom: 1rem; max-width: 80%;">
+                                    <h4 style="margin: 0 0 0.5rem 0;">${rfq.title}</h4>
+                                    <p class="subtext" style="margin: 0;">Buyer: ${rfq.smeName} • Delivery: ${rfq.location}</p>
                                 </div>
-                                <div class="glass-card" style="background: var(--bg-color); border: 1px solid var(--accent);">
-                                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                                        <strong>Active Contract: 20t Cement</strong>
-                                        <span class="status" style="background: rgba(16, 185, 129, 0.1); color: var(--accent);">30% Paid</span>
-                                    </div>
-                                    <p class="subtext" style="margin-bottom: 1rem;">Next Milestone: Waybill Upload<br>Pending Payout: R85,000</p>
-                                    <button class="btn btn-secondary" style="width: 100%; padding: 0.5rem;" onclick="app.showSupplierMilestones()">Upload Waybill</button>
+
+                                <p style="font-size: 0.95rem; margin-bottom: 1.5rem; color: var(--text-color);">${rfq.specs}</p>
+
+                                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 1rem;">
+                                    <span class="subtext" style="font-size: 0.85rem;">RFQ ID: ${rfq.id.substring(0, 8)} • ${rfq.quotes ? rfq.quotes.length : 0} Quotes Received</span>
+                                    <button class="btn btn-primary btn-sm" onclick="app.showSubmitQuote('${rfq.id}')">Submit Custom Quote</button>
                                 </div>
                             </div>
+                            `).join('') || '<p class="subtext">No RFQs matching your category currently.</p>'}
                         </div>
                         `
             ) : ''}
@@ -447,6 +448,75 @@ const app = {
                 </div>
             </div>
         `);
+    },
+
+    async submitFundingRequest(event) {
+        event.preventDefault();
+        const form = event.target;
+        const amount = form.querySelector('input[type="number"]').value;
+        const category = form.querySelector('select').value;
+        const desc = form.querySelector('textarea').value;
+
+        const btn = form.querySelector('button[type="submit"]');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<span class="status pulse" style="background: rgba(255,255,255,0.2);">Submitting...</span>';
+        btn.disabled = true;
+
+        try {
+            await addDoc(collection(db, "deals"), {
+                smeId: this.user.id,
+                smeName: this.user.name,
+                amount: amount,
+                category: category,
+                description: desc,
+                status: 'Pending Review',
+                createdAt: new Date().toISOString()
+            });
+            alert('Funding Request Submitted Successfully!');
+            this.showDashboard();
+        } catch (error) {
+            console.error("Error submitting deal:", error);
+            alert("Failed to submit request.");
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    },
+
+    async submitQuoteRequest(event) {
+        event.preventDefault();
+        const form = event.target;
+        const title = form.querySelector('input[type="text"]').value;
+        const category = form.querySelector('select').value;
+        const specs = form.querySelector('textarea').value;
+        const location = form.querySelectorAll('input[type="text"]')[1].value;
+
+        const btn = form.querySelector('button[type="submit"]');
+        btn.innerHTML = 'Broadcasting...';
+        btn.disabled = true;
+
+        try {
+            await addDoc(collection(db, "rfqs"), {
+                smeId: this.user.id,
+                smeName: this.user.name,
+                title: title,
+                category: category,
+                specs: specs,
+                location: location,
+                status: 'Open',
+                quotes: [],
+                createdAt: new Date().toISOString()
+            });
+            // Send ping to suppliers in this category
+            await this.notifySupplierCategory(category, `New RFQ: ${title}`);
+
+            alert('Quotation request securely broadcasted to Verified Suppliers!');
+            this.showDashboard();
+        } catch (error) {
+            console.error("Error submitting RFQ:", error);
+            alert("Failed to broadcast RFQ.");
+            btn.innerHTML = 'Broadcast Request';
+            btn.disabled = false;
+        }
     },
 
     showProfileEdit() {
@@ -491,7 +561,7 @@ const app = {
                 <p class="subtext" style="margin-bottom: 2rem;">Submit details to be matched with our verified funders.</p>
 
                 <div class="glass-card">
-                    <form onsubmit="event.preventDefault(); alert('Funding Request Submitted!'); app.showDashboard();">
+                    <form onsubmit="app.submitFundingRequest(event)">
                         <div class="form-group">
                             <label>Funding Amount (ZAR)</label>
                             <input type="number" class="form-control" placeholder="e.g. 250000" required>
@@ -528,7 +598,7 @@ const app = {
                 <p class="subtext" style="margin-bottom: 2rem;">Need materials or services to fulfill a tender? Your request will be sent to matched, verified suppliers on the platform.</p>
 
                 <div class="glass-card">
-                    <form onsubmit="event.preventDefault(); alert('Quotation request broadcasted to suppliers!'); app.showDashboard();">
+                    <form onsubmit="app.submitQuoteRequest(event)">
                         <div class="form-group">
                             <label>What do you need?</label>
                             <input type="text" class="form-control" placeholder="e.g. 50 Dell Laptops, or 20 Tons Cement" required>
@@ -744,17 +814,20 @@ const app = {
         `);
     },
 
-    showSubmitQuote() {
+    showSubmitQuote(rfqId) {
+        const rfq = this.rfqs.find(r => r.id === rfqId);
+        if (!rfq) return alert("RFQ not found!");
+
         this.setView(`
              <div class="hero-enter" style="max-width: 600px; margin: 2rem auto;">
                 <button class="btn btn-secondary" style="margin-bottom: 2rem;" onclick="app.showDashboard()">&larr; Back</button>
                 
                 <span class="badge" style="background: rgba(59, 130, 246, 0.1); color: var(--primary); border-color: rgba(59, 130, 246, 0.2);">Quote Request</span>
-                <h2 style="margin-top: 0.5rem;">50x Dell/HP Laptops</h2>
-                <p class="subtext" style="margin-bottom: 2rem;">Requested by Tech Innovators SME. Delivery to Johannesburg. Need minimum i5, 8GB RAM, 256GB SSD.</p>
+                <h2 style="margin-top: 0.5rem;">${rfq.title}</h2>
+                <p class="subtext" style="margin-bottom: 2rem;">Requested by ${rfq.smeName}. Delivery to ${rfq.location}. ${rfq.specs}</p>
 
                 <div class="glass-card">
-                    <form onsubmit="event.preventDefault(); alert('Quotation securely submitted to SME!'); app.showDashboard();">
+                    <form onsubmit="app.submitQuote(event, '${rfq.id}')">
                         <div class="form-group">
                             <label>Total Supply Cost (ZAR)</label>
                             <input type="number" class="form-control" placeholder="e.g. 250000" required>
@@ -774,7 +847,7 @@ const app = {
                         </div>
                         <div class="form-group">
                             <label>Upload Official Quote (PDF)</label>
-                            <input type="file" class="form-control" style="padding: 0.5rem;" accept=".pdf" required>
+                            <input type="file" class="form-control" style="padding: 0.5rem;" accept=".pdf">
                         </div>
                         <button type="submit" class="btn btn-primary btn-large" style="width: 100%; margin-top: 1rem;">
                             Submit Formal Quote
@@ -783,6 +856,51 @@ const app = {
                 </div>
              </div>
         `);
+    },
+
+    async submitQuote(event, rfqId) {
+        event.preventDefault();
+        const form = event.target;
+        const price = form.querySelectorAll('input')[0].value;
+        const timeframe = form.querySelector('select').value;
+        const terms = form.querySelector('textarea').value;
+
+        const btn = form.querySelector('button[type="submit"]');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<span class="status pulse">Submitting...</span>';
+        btn.disabled = true;
+
+        try {
+            const rfq = this.rfqs.find(r => r.id === rfqId);
+            if (!rfq) throw new Error("RFQ not found");
+
+            const quotes = rfq.quotes || [];
+            quotes.push({
+                supplierId: this.user.id,
+                supplierName: this.user.name,
+                price: price,
+                timeframe: timeframe,
+                terms: terms,
+                submittedAt: new Date().toISOString()
+            });
+
+            await setDoc(doc(db, "rfqs", rfqId), { quotes }, { merge: true });
+
+            // Ping the SME that they received a quote
+            const notifRef = doc(db, "user_notifications", rfq.smeId);
+            const notifSnap = await getDoc(notifRef);
+            let notifs = notifSnap.exists() ? notifSnap.data().data : [];
+            notifs.unshift({ id: Date.now(), text: `You received a new quote of R${Number(price).toLocaleString()} from ${this.user.name} on your RFQ: ${rfq.title}`, read: false, time: "Just now" });
+            await setDoc(notifRef, { data: notifs }, { merge: true });
+
+            alert('Your formal quote was securely submitted to the SME!');
+            this.showDashboard();
+        } catch (error) {
+            console.error("Error submitting quote:", error);
+            alert("Failed to submit quote.");
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
     },
 
     showSupplierMilestones() {
