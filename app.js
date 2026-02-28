@@ -563,22 +563,24 @@ const app = {
                 <p class="subtext" style="margin-bottom: 2rem;">Fleshing out your profile ensures faster matching with funders and suppliers.</p>
 
                 <div class="glass-card">
-                    <form onsubmit="event.preventDefault(); alert('Profile Saved!'); app.showDashboard();">
+                    <form id="profileEditForm" onsubmit="event.preventDefault(); app.saveProfile();">
                         <div class="form-group">
-                            <label>Company Name</label>
-                            <input type="text" class="form-control" value="My Awesome SME" required>
+                            <label>Company/Display Name</label>
+                            <input type="text" id="profileName" class="form-control" value="${this.user.name || ''}" required>
                         </div>
                         <div class="form-group">
                             <label>Registration Number (CIPC)</label>
-                            <input type="text" class="form-control" required>
+                            <input type="text" id="profileReg" class="form-control" value="${this.user.registrationNumber || ''}" required>
                         </div>
                         <div class="form-group">
-                            <label>Industry</label>
-                            <select class="form-control">
-                                <option>Construction</option>
-                                <option>Technology</option>
-                                <option>Agriculture</option>
-                                <option>Retail</option>
+                            <label>Industry / Sector</label>
+                            <select id="profileIndustry" class="form-control">
+                                <option value="Construction" ${this.user.industry === 'Construction' ? 'selected' : ''}>Construction</option>
+                                <option value="Technology" ${this.user.industry === 'Technology' ? 'selected' : ''}>Technology</option>
+                                <option value="Agriculture" ${this.user.industry === 'Agriculture' ? 'selected' : ''}>Agriculture</option>
+                                <option value="Retail" ${this.user.industry === 'Retail' ? 'selected' : ''}>Retail</option>
+                                <option value="Printing" ${this.user.industry === 'Printing' ? 'selected' : ''}>Printing</option>
+                                <option value="Manufacturing" ${this.user.industry === 'Manufacturing' ? 'selected' : ''}>Manufacturing</option>
                             </select>
                         </div>
                         <p class="subtext" style="margin-bottom: 1rem;">Note: Compliance documents (CSD, Tax) should be uploaded via the Document Vault.</p>
@@ -589,9 +591,46 @@ const app = {
         `);
     },
 
+    async saveProfile() {
+        const name = document.getElementById('profileName').value;
+        const reg = document.getElementById('profileReg').value;
+        const industry = document.getElementById('profileIndustry').value;
+
+        const btn = document.querySelector('#profileEditForm button');
+        const ogText = btn.innerHTML;
+        btn.innerHTML = '<span class="status pulse">Saving...</span>';
+        btn.disabled = true;
+
+        try {
+            await setDoc(doc(db, "users", this.user.id), {
+                name: name,
+                registrationNumber: reg,
+                industry: industry,
+                profileCompleted: true
+            }, { merge: true });
+
+            this.user.name = name;
+            this.user.registrationNumber = reg;
+            this.user.industry = industry;
+            this.user.profileCompleted = true;
+            localStorage.setItem(STORE_KEY, JSON.stringify(this.user));
+
+            alert('Profile saved securely!');
+            this.showDashboard();
+        } catch (error) {
+            console.error("Profile save error:", error);
+            alert("Failed to save profile.");
+            btn.innerHTML = ogText;
+            btn.disabled = false;
+        }
+                </div >
+             </div >
+    `);
+    },
+
     showFundingRequest() {
         this.setView(`
-             <div class="hero-enter" style="max-width: 600px; margin: 2rem auto;">
+    < div class="hero-enter" style = "max-width: 600px; margin: 2rem auto;" >
                 <button class="btn btn-secondary" style="margin-bottom: 2rem;" onclick="app.showDashboard()">&larr; Back</button>
                 <h2>Apply for Funding</h2>
                 <p class="subtext" style="margin-bottom: 2rem;">Submit details to be matched with our verified funders.</p>
@@ -620,13 +659,13 @@ const app = {
                         <button type="submit" class="btn btn-primary btn-large" style="width: 100%; margin-top: 1rem;">Submit Request</button>
                     </form>
                 </div>
-             </div>
-        `);
+             </div >
+    `);
     },
 
     showQuoteRequest() {
         this.setView(`
-             <div class="hero-enter" style="max-width: 600px; margin: 2rem auto;">
+    < div class="hero-enter" style = "max-width: 600px; margin: 2rem auto;" >
                 <button class="btn btn-secondary" style="margin-bottom: 2rem;" onclick="app.showDashboard()">&larr; Back</button>
                 
                 <span class="badge" style="background: rgba(16, 185, 129, 0.1); color: var(--accent); border-color: rgba(16, 185, 129, 0.2);">Supplier Network</span>
@@ -659,12 +698,12 @@ const app = {
                         </button>
                     </form>
                 </div>
-             </div>
-        `);
+             </div >
+    `);
     },
     showMilestones() {
         this.setView(`
-             <div class="hero-enter" style="max-width: 600px; margin: 2rem auto;">
+    < div class="hero-enter" style = "max-width: 600px; margin: 2rem auto;" >
                 <button class="btn btn-secondary" style="margin-bottom: 2rem;" onclick="app.showDashboard()">&larr; Back to Dashboard</button>
                 
                 <h2>Active Funding & Payments</h2>
@@ -707,13 +746,13 @@ const app = {
                         </div>
                     </div>
                 </div>
-             </div>
-        `);
+             </div >
+    `);
     },
 
     showFunderOffer() {
         this.setView(`
-             <div class="hero-enter" style="max-width: 700px; margin: 2rem auto;">
+    < div class="hero-enter" style = "max-width: 700px; margin: 2rem auto;" >
                 <button class="btn btn-secondary" style="margin-bottom: 2rem;" onclick="app.showDashboard()">&larr; Back to Pipeline</button>
                 
                 <h2>Structure Deal: My Awesome SME</h2>
