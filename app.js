@@ -1,3 +1,21 @@
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+import { getFirestore, collection, getDocs, addDoc, setDoc, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+// TODO: Replace this with your actual Firebase config from the console
+const firebaseConfig = {
+    apiKey: "AIzaSyCmoiuwbDodIELIj-TptuEYlIJbVSAKkuQ",
+    authDomain: "fanya-pesa.firebaseapp.com",
+    projectId: "fanya-pesa",
+    storageBucket: "fanya-pesa.firebasestorage.app",
+    messagingSenderId: "719005341578",
+    appId: "1:719005341578:web:da45b21b454c52a7671a73",
+    measurementId: "G-KXN6S8DXB9"
+};
+
+// Initialize Firebase & Firestore
+const firebaseApp = initializeApp(firebaseConfig);
+const db = getFirestore(firebaseApp);
+
 const STORE_KEY = 'fanya_pesa_user';
 
 const app = {
@@ -173,9 +191,10 @@ const app = {
                             <button class="btn btn-secondary" style="width: 50%;" onclick="app.showDocumentRepo()">Doc Vault</button>
                         </div>
                     </div>
+                    ` : ''}
 
                     ${this.user.type === 'SME' ? (
-                    !this.user.subscribed ? `
+                !this.user.subscribed ? `
                         <div class="glass-card" style="grid-column: 1 / -1; margin-top: 1rem;">
                             <div style="text-align: center; padding: 2rem 1rem; background: var(--secondary); border-radius: 8px;">
                                 <h2 style="margin-bottom: 1rem;">Unlock Premium Access</h2>
@@ -218,7 +237,7 @@ const app = {
                             </div>
                         </div>
                         `
-                ) : ''}
+            ) : ''}
 
                     ${this.user.type === 'FUNDER' ? `
                     <div class="glass-card" style="grid-column: 1 / -1;">
@@ -248,7 +267,7 @@ const app = {
                     ` : ''}
 
                     ${this.user.type === 'SUPPLIER' ? (
-                    !this.user.subscribed ? `
+                !this.user.subscribed ? `
                         <div class="glass-card" style="grid-column: 1 / -1; margin-top: 1rem;">
                             <div style="text-align: center; padding: 2rem 1rem; background: var(--secondary); border-radius: 8px;">
                                 <h2 style="margin-bottom: 1rem;">Start Quoting on Tenders</h2>
@@ -298,7 +317,7 @@ const app = {
                             </div>
                         </div>
                         `
-                ) : ''}
+            ) : ''}
 
                 ${this.user.type === 'ADMIN' ? `
                     <div class="glass-card" style="grid-column: 1 / -1; margin-bottom: 20px;">
