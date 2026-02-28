@@ -463,10 +463,7 @@ const app = {
                             <label>Funding Category</label>
                             <select class="form-control" required>
                                 <option value="">Select Category...</option>
-                                <option>Tender Execution (PO Financing)</option>
-                                <option>Asset Finance (Equipment/Vehicles)</option>
-                                <option>Working Capital / Cash Flow</option>
-                                <option>Merchant Cash Advance</option>
+                                ${app.fundingCategories.map(cat => `<option value="${cat.name}">${cat.name}</option>`).join('')}
                             </select>
                         </div>
                         <div class="form-group">
@@ -503,11 +500,7 @@ const app = {
                             <label>Supplier Category</label>
                             <select class="form-control" required>
                                 <option value="">Select Category...</option>
-                                <option>IT Hardware & Software</option>
-                                <option>Construction Materials</option>
-                                <option>Office Furniture</option>
-                                <option>Cleaning Supplies & PPE</option>
-                                <option>Logistics & Transport</option>
+                                ${app.fundingCategories.map(cat => `<option value="${cat.name}">${cat.name}</option>`).join('')}
                             </select>
                         </div>
                         <div class="form-group">
