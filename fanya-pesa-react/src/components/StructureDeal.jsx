@@ -72,6 +72,7 @@ export default function StructureDeal({ user, dealId, onBack, onContractGenerate
             funderId: user.uid || user.id,
             funderName: user.name,
             supplierName: terms.supplierName,
+            supplierId: suppliers.find(s => s.name === terms.supplierName)?.id || null,
             dealTerms: {
                 principal: terms.principal,
                 interest: terms.interest,

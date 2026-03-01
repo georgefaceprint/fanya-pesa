@@ -37,7 +37,8 @@ export default function App() {
 
         if (userSnap.exists()) {
           const userData = userSnap.data();
-          setUser({ ...authUser, ...userData });
+          // Normalize: ensure both .uid and .id always point to Firebase Auth UID
+          setUser({ ...authUser, ...userData, uid: authUser.uid, id: authUser.uid });
 
           if (userData.onboardingComplete) {
             setCurrentView('dashboard');
@@ -45,9 +46,8 @@ export default function App() {
             setCurrentView('onboarding');
           }
         } else {
-          // If auth exists but no firestore yet (rare if using Auth.jsx), 
-          // let Auth.jsx or Onboarding handle it
-          setUser(authUser);
+          // No Firestore doc yet — set both fields
+          setUser({ ...authUser, uid: authUser.uid, id: authUser.uid });
         }
       } else {
         setUser(null);

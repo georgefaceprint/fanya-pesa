@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, updateDoc, arrayUnion, getDoc } from 'firebase/firestore';
 
 export default function SupplierDashboard({ user, onNavigate }) {
     const [rfqs, setRfqs] = useState([]);
     const [activeDeals, setActiveDeals] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [quoting, setQuoting] = useState(null); // rfqId being quoted
+    const [quoteForm, setQuoteForm] = useState({ amount: '', note: '' });
+    const [submittingQuote, setSubmittingQuote] = useState(false);
 
     useEffect(() => {
         if (!user.id) return;
@@ -39,6 +42,49 @@ export default function SupplierDashboard({ user, onNavigate }) {
             unsubDeals();
         };
     }, [user.id, user.industry, user.name]);
+
+    const handleSubmitQuote = async (rfq) => {
+        if (!quoteForm.amount || isNaN(Number(quoteForm.amount))) {
+            alert('Please enter a valid quote amount.');
+            return;
+        }
+        setSubmittingQuote(true);
+        try {
+            const supplierId = user.uid || user.id;
+            const rfqRef = doc(db, 'rfqs', rfq.id);
+            const newQuote = {
+                supplierId,
+                supplierName: user.name,
+                amount: Number(quoteForm.amount),
+                note: quoteForm.note,
+                submittedAt: new Date().toISOString(),
+            };
+            await updateDoc(rfqRef, { quotes: arrayUnion(newQuote) });
+
+            // Notify SME of new quote
+            try {
+                const notifRef = doc(db, 'user_notifications', rfq.smeId);
+                const notifSnap = await getDoc(notifRef);
+                const existing = notifSnap.exists() ? (notifSnap.data().data || []) : [];
+                existing.unshift({
+                    id: Date.now(),
+                    text: `💬 ${user.name} submitted a quote of R${Number(quoteForm.amount).toLocaleString()} for your RFQ: "${rfq.title}"`,
+                    read: false,
+                    time: 'Just now'
+                });
+                const { setDoc } = await import('firebase/firestore');
+                await setDoc(notifRef, { data: existing }, { merge: true });
+            } catch (_) { /* notifications are non-critical */ }
+
+            setQuoting(null);
+            setQuoteForm({ amount: '', note: '' });
+        } catch (e) {
+            console.error('Quote submit error:', e);
+            alert('Failed to submit quote. Please try again.');
+        } finally {
+            setSubmittingQuote(false);
+        }
+    };
 
     return (
         <div className="space-y-8">
@@ -116,10 +162,48 @@ export default function SupplierDashboard({ user, onNavigate }) {
                                         </p>
                                         <div className="flex justify-between items-center pt-4 border-t border-gray-50 dark:border-gray-700/50">
                                             <div className="text-xs text-gray-400">
-                                                RFQ ID: {rfq.id.toUpperCase()} • {rfq.quotes?.length || 0} Quotes Received
+                                                RFQ ID: {rfq.id.substring(0, 8).toUpperCase()} • {rfq.quotes?.length || 0} Quotes Received
                                             </div>
-                                            <button className="px-5 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl text-xs font-bold hover:opacity-90 transition-opacity">Submit Custom Quote</button>
+                                            <button
+                                                onClick={() => {
+                                                    setQuoting(quoting === rfq.id ? null : rfq.id);
+                                                    setQuoteForm({ amount: '', note: '' });
+                                                }}
+                                                className="px-5 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl text-xs font-bold hover:opacity-90 transition-opacity">
+                                                {quoting === rfq.id ? 'Cancel' : 'Submit Custom Quote'}
+                                            </button>
                                         </div>
+                                        {/* Inline Quote Form */}
+                                        {quoting === rfq.id && (
+                                            <div className="mt-4 p-5 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-2xl animate-fade-in">
+                                                <p className="text-xs font-black uppercase tracking-widest text-blue-700 dark:text-blue-400 mb-4">Your Formal Quote</p>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                                    <div className="relative">
+                                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-sm">R</span>
+                                                        <input
+                                                            type="number"
+                                                            placeholder="Your quoted price"
+                                                            value={quoteForm.amount}
+                                                            onChange={e => setQuoteForm({ ...quoteForm, amount: e.target.value })}
+                                                            className="w-full bg-white dark:bg-gray-800 border border-blue-200 dark:border-blue-700 rounded-xl pl-8 pr-4 py-2.5 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 outline-none font-mono"
+                                                        />
+                                                    </div>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Brief note (delivery time, etc.)"
+                                                        value={quoteForm.note}
+                                                        onChange={e => setQuoteForm({ ...quoteForm, note: e.target.value })}
+                                                        className="w-full bg-white dark:bg-gray-800 border border-blue-200 dark:border-blue-700 rounded-xl px-4 py-2.5 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                                                    />
+                                                </div>
+                                                <button
+                                                    onClick={() => handleSubmitQuote(rfq)}
+                                                    disabled={submittingQuote || !quoteForm.amount}
+                                                    className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-black text-xs shadow-lg shadow-blue-500/20 transition-all disabled:opacity-50">
+                                                    {submittingQuote ? 'Submitting...' : `Submit Quote — R${Number(quoteForm.amount || 0).toLocaleString()}`}
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                 ))}
                                 {rfqs.length === 0 && !loading && (

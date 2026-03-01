@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
-import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, setDoc } from 'firebase/firestore';
 
 const DOC_TYPES = [
     { key: 'csd', label: 'CSD Registration', icon: '🏛️' },
@@ -33,9 +33,9 @@ export default function FunderReview({ user, dealId, onBack, onApprove }) {
                 const smeSnap = await getDoc(doc(db, 'users', dealData.smeId));
                 if (smeSnap.exists()) setSmeProfile(smeSnap.data());
 
-                // Load SME vault docs
+                // Load SME vault docs (collection written by Vault.jsx)
                 const vaultSnap = await getDocs(
-                    query(collection(db, 'vault_docs'), where('ownerId', '==', dealData.smeId))
+                    query(collection(db, 'user_documents'), where('uid', '==', dealData.smeId))
                 );
                 setSmeDocs(vaultSnap.docs.map(d => ({ id: d.id, ...d.data() })));
             } catch (e) {
@@ -90,11 +90,11 @@ export default function FunderReview({ user, dealId, onBack, onApprove }) {
                         <p className="text-xs text-gray-400 uppercase font-black tracking-widest mb-1">Due Diligence Review</p>
                         <h2 className="text-3xl font-black text-gray-900 dark:text-white">{deal.smeName}</h2>
                         <p className="text-gray-500 dark:text-gray-400 mt-1">
-                            R{Number(deal.amount).toLocaleString()} · {deal.category} · Requested {new Date(deal.createdAt).toLocaleDateString()}
+                            R{Number(deal.amount).toLocaleString()} · {deal.category} · Requested {deal.createdAt ? new Date(deal.createdAt).toLocaleDateString() : '—'}
                         </p>
                     </div>
                     <span className={`px-4 py-2 rounded-xl text-sm font-black uppercase tracking-widest ${deal.status === 'Capital Secured' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' :
-                            'bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400'
+                        'bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400'
                         }`}>{deal.status}</span>
                 </div>
 
@@ -140,8 +140,8 @@ export default function FunderReview({ user, dealId, onBack, onApprove }) {
                                 />
                             </div>
                             <span className={`text-xs font-black uppercase tracking-widest px-2 py-1 rounded-lg ${pct >= 80 ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' :
-                                    pct >= 50 ? 'bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400' :
-                                        'bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400'
+                                pct >= 50 ? 'bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400' :
+                                    'bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400'
                                 }`}>{completeness}/{DOC_TYPES.length} Docs</span>
                         </div>
                     </div>
@@ -151,8 +151,8 @@ export default function FunderReview({ user, dealId, onBack, onApprove }) {
                             const docInfo = getDocStatus(dt.key);
                             return (
                                 <div key={dt.key} className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${docInfo.status === 'uploaded'
-                                        ? 'bg-emerald-50/50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-900/30'
-                                        : 'bg-gray-50 dark:bg-gray-900/30 border-gray-100 dark:border-gray-700'
+                                    ? 'bg-emerald-50/50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-900/30'
+                                    : 'bg-gray-50 dark:bg-gray-900/30 border-gray-100 dark:border-gray-700'
                                     }`}>
                                     <div className="flex items-center gap-3">
                                         <span className="text-xl">{dt.icon}</span>
