@@ -3,9 +3,11 @@ import { db, storage } from '../firebase';
 import { collection, addDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { CATEGORIES } from '../constants/categories';
+import { useToast } from './Toast';
 
 export default function RfqForm({ user, onBack }) {
     const [loading, setLoading] = useState(false);
+    const toast = useToast();
     const [formData, setFormData] = useState({
         title: '',
         category: '',
@@ -39,11 +41,11 @@ export default function RfqForm({ user, onBack }) {
                 createdAt: new Date().toISOString()
             });
 
-            alert('Quotation request securely broadcasted to Verified Suppliers!');
+            toast.success('Quotation request securely broadcasted to verified suppliers!');
             onBack();
         } catch (error) {
             console.error("Error submitting RFQ:", error);
-            alert("Failed to broadcast RFQ.");
+            toast.error('Failed to broadcast RFQ. Please try again.');
         } finally {
             setLoading(false);
         }

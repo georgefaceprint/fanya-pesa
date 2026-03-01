@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { db } from '../firebase';
 import { doc, setDoc } from 'firebase/firestore';
+import { useToast } from './Toast';
 
 const PLANS = {
     SME: {
@@ -49,6 +50,7 @@ export default function Subscription({ user, onBack, onSuccess }) {
     const [step, setStep] = useState('review'); // 'review' | 'payment' | 'success'
     const [loading, setLoading] = useState(false);
     const [card, setCard] = useState({ name: '', number: '', expiry: '', cvv: '' });
+    const toast = useToast();
     const [cardFocused, setCardFocused] = useState(null);
 
     const formatCardNumber = (val) => {
@@ -83,7 +85,7 @@ export default function Subscription({ user, onBack, onSuccess }) {
             }, 2500);
         } catch (err) {
             console.error('Subscription activation failed:', err);
-            alert('Payment succeeded but activation failed. Contact support@fanyapesa.co.za');
+            toast.error('Payment succeeded but activation failed. Contact support@fanyapesa.co.za');
         } finally {
             setLoading(false);
         }

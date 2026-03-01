@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
 import { collection, query, where, onSnapshot, doc, updateDoc, arrayUnion, getDoc } from 'firebase/firestore';
+import { useToast } from './Toast';
 
 export default function SupplierDashboard({ user, onNavigate }) {
     const [rfqs, setRfqs] = useState([]);
@@ -9,6 +10,7 @@ export default function SupplierDashboard({ user, onNavigate }) {
     const [quoting, setQuoting] = useState(null); // rfqId being quoted
     const [quoteForm, setQuoteForm] = useState({ amount: '', note: '' });
     const [submittingQuote, setSubmittingQuote] = useState(false);
+    const toast = useToast();
 
     useEffect(() => {
         if (!user.id) return;
@@ -57,7 +59,7 @@ export default function SupplierDashboard({ user, onNavigate }) {
 
     const handleSubmitQuote = async (rfq) => {
         if (!quoteForm.amount || isNaN(Number(quoteForm.amount))) {
-            alert('Please enter a valid quote amount.');
+            toast.warning('Please enter a valid quote amount.');
             return;
         }
         setSubmittingQuote(true);
@@ -92,7 +94,7 @@ export default function SupplierDashboard({ user, onNavigate }) {
             setQuoteForm({ amount: '', note: '' });
         } catch (e) {
             console.error('Quote submit error:', e);
-            alert('Failed to submit quote. Please try again.');
+            toast.error('Failed to submit quote. Please try again.');
         } finally {
             setSubmittingQuote(false);
         }
@@ -250,10 +252,10 @@ export default function SupplierDashboard({ user, onNavigate }) {
                                                     <p className="text-[10px] text-gray-400 uppercase font-black tracking-widest mt-1">SME: {deal.smeName}</p>
                                                 </div>
                                                 <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${deal.status === 'Delivery Confirmed'
-                                                        ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400'
-                                                        : deal.status === 'Waybill Uploaded'
-                                                            ? 'bg-purple-50 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400'
-                                                            : 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
+                                                    ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400'
+                                                    : deal.status === 'Waybill Uploaded'
+                                                        ? 'bg-purple-50 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400'
+                                                        : 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
                                                     }`}>
                                                     {deal.status === 'Delivery Confirmed' ? '✓ 100% Paid'
                                                         : deal.status === 'Waybill Uploaded' ? '70% Paid'

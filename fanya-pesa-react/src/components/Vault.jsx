@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { storage, db } from '../firebase';
 import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
 import { collection, query, where, getDocs, setDoc, doc, deleteDoc, onSnapshot } from 'firebase/firestore';
+import { useToast } from './Toast';
 
 const FALLBACK_DOCS = [
     { id: '1', name: 'CSD Registration Report', description: 'Central Supplier Database summary report', requiredFor: ['SME', 'SUPPLIER'] },
@@ -15,6 +16,7 @@ export default function Vault({ user, onBack }) {
     const [documents, setDocuments] = useState({});
     const [uploading, setUploading] = useState({});
     const [progress, setProgress] = useState({});
+    const toast = useToast();
 
     useEffect(() => {
         // Fetch real-time system document configuration
@@ -65,7 +67,7 @@ export default function Vault({ user, onBack }) {
             (error) => {
                 console.error("Upload error:", error);
                 setUploading(prev => ({ ...prev, [docIdStr]: false }));
-                alert(`Upload failed: ${error.message}`);
+                toast.error(`Upload failed: ${error.message}`);
             },
             async () => {
                 const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
@@ -107,7 +109,7 @@ export default function Vault({ user, onBack }) {
             });
         } catch (error) {
             console.error("Delete error:", error);
-            alert("Failed to delete document. It may have already been removed.");
+            toast.error('Failed to delete document. It may have already been removed.');
         }
     };
 
@@ -156,8 +158,8 @@ export default function Vault({ user, onBack }) {
 
                         return (
                             <div key={docId} className={`relative overflow-hidden group p-8 rounded-3xl border transition-all duration-300 ${isUploaded
-                                    ? 'bg-emerald-50/30 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-800/30'
-                                    : 'bg-gray-50/50 dark:bg-gray-900/30 border-gray-100 dark:border-gray-700/50'
+                                ? 'bg-emerald-50/30 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-800/30'
+                                : 'bg-gray-50/50 dark:bg-gray-900/30 border-gray-100 dark:border-gray-700/50'
                                 }`}>
                                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative z-10">
                                     <div className="flex-1">

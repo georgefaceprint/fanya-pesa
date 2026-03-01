@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
 import { collection, query, where, onSnapshot, doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import { useToast } from './Toast';
 
 export default function SmeDashboard({ user, onNavigate }) {
     const [rfqs, setRfqs] = useState([]);
@@ -11,6 +12,7 @@ export default function SmeDashboard({ user, onNavigate }) {
     const [reviewingRfq, setReviewingRfq] = useState(null); // full rfq object
     const [acceptingQuote, setAcceptingQuote] = useState(null); // supplierId being accepted
     const [showAcceptModal, setShowAcceptModal] = useState(false);
+    const toast = useToast();
 
     useEffect(() => {
         if (!user.id) return;
@@ -83,7 +85,7 @@ export default function SmeDashboard({ user, onNavigate }) {
             setAcceptingQuote(null);
         } catch (e) {
             console.error('Accept quote error:', e);
-            alert('Failed to accept quote. Please try again.');
+            toast.error('Failed to accept quote. Please try again.');
             setAcceptingQuote(prev => ({ ...prev, accepting: false }));
         }
     };
@@ -172,8 +174,8 @@ export default function SmeDashboard({ user, onNavigate }) {
                         </div>
                         <div className="flex items-center gap-3">
                             <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-xl ${isClosed
-                                    ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400'
-                                    : 'bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400'
+                                ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400'
+                                : 'bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400'
                                 }`}>{reviewingRfq.status}</span>
                             <button
                                 onClick={() => setReviewingRfq(null)}
@@ -205,8 +207,8 @@ export default function SmeDashboard({ user, onNavigate }) {
 
                                 return (
                                     <div key={idx} className={`relative rounded-2xl border-2 p-5 transition-all ${isAccepted
-                                            ? 'border-emerald-400 bg-emerald-50/50 dark:bg-emerald-900/10'
-                                            : 'border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800/40 hover:border-blue-200 dark:hover:border-blue-800'
+                                        ? 'border-emerald-400 bg-emerald-50/50 dark:bg-emerald-900/10'
+                                        : 'border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800/40 hover:border-blue-200 dark:hover:border-blue-800'
                                         }`}>
                                         {/* Badges */}
                                         <div className="absolute top-4 right-4 flex gap-2">
@@ -355,16 +357,16 @@ export default function SmeDashboard({ user, onNavigate }) {
 
                                         return (
                                             <div key={i} className={`border-2 rounded-2xl p-5 transition-all hover:shadow-md ${hasNewQuotes
-                                                    ? 'border-blue-200 dark:border-blue-800 bg-blue-50/30 dark:bg-blue-900/10'
-                                                    : isClosed
-                                                        ? 'border-emerald-100 dark:border-emerald-900/30 bg-emerald-50/20 dark:bg-emerald-900/5'
-                                                        : 'border-gray-100 dark:border-gray-700'
+                                                ? 'border-blue-200 dark:border-blue-800 bg-blue-50/30 dark:bg-blue-900/10'
+                                                : isClosed
+                                                    ? 'border-emerald-100 dark:border-emerald-900/30 bg-emerald-50/20 dark:bg-emerald-900/5'
+                                                    : 'border-gray-100 dark:border-gray-700'
                                                 }`}>
                                                 <div className="flex justify-between items-start mb-2">
                                                     <h4 className="font-bold text-gray-900 dark:text-white pr-2">{rfq.title}</h4>
                                                     <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded whitespace-nowrap flex-shrink-0 ${isClosed
-                                                            ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400'
-                                                            : 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
+                                                        ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400'
+                                                        : 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
                                                         }`}>{rfq.status}</span>
                                                 </div>
                                                 <p className="text-xs text-gray-500 mb-4 truncate">{rfq.specs}</p>
@@ -389,10 +391,10 @@ export default function SmeDashboard({ user, onNavigate }) {
                                                 <button
                                                     onClick={() => setReviewingRfq(rfq)}
                                                     className={`w-full py-2.5 rounded-xl text-xs font-black transition-all ${hasNewQuotes
-                                                            ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/20'
-                                                            : isClosed
-                                                                ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/30'
-                                                                : 'bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-white border border-gray-100 dark:border-gray-600'
+                                                        ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/20'
+                                                        : isClosed
+                                                            ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/30'
+                                                            : 'bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-white border border-gray-100 dark:border-gray-600'
                                                         }`}>
                                                     {isClosed
                                                         ? '✓ View Accepted Quote'
@@ -428,10 +430,10 @@ export default function SmeDashboard({ user, onNavigate }) {
                                             </div>
                                             <div className="flex items-center gap-4">
                                                 <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${deal.status === 'Capital Secured' || deal.status === 'Delivery Confirmed'
-                                                        ? 'bg-emerald-50 text-emerald-600 border border-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-900'
-                                                        : deal.status === 'Waybill Uploaded'
-                                                            ? 'bg-blue-50 text-blue-600 border border-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-900'
-                                                            : 'bg-amber-50 text-amber-600 border border-amber-100 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-900'
+                                                    ? 'bg-emerald-50 text-emerald-600 border border-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-900'
+                                                    : deal.status === 'Waybill Uploaded'
+                                                        ? 'bg-blue-50 text-blue-600 border border-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-900'
+                                                        : 'bg-amber-50 text-amber-600 border border-amber-100 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-900'
                                                     }`}>
                                                     {deal.status}
                                                 </span>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
 import { doc, getDoc, setDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { useToast } from './Toast';
 
 const REPAYMENT_TERMS = [
     'Net 30 Days (Tender Payout)',
@@ -17,6 +18,7 @@ export default function StructureDeal({ user, dealId, onBack, onContractGenerate
     const [generating, setGenerating] = useState(false);
     const [contractDone, setContractDone] = useState(false);
     const [contractData, setContractData] = useState(null);
+    const toast = useToast();
 
     const [terms, setTerms] = useState({
         principal: '',
@@ -64,7 +66,7 @@ export default function StructureDeal({ user, dealId, onBack, onContractGenerate
 
     const handleGenerate = async (e) => {
         e.preventDefault();
-        if (!terms.supplierName) { alert('Please select a verified supplier.'); return; }
+        if (!terms.supplierName) { toast.warning('Please select a verified supplier.'); return; }
         setGenerating(true);
 
         const contractRef = {
@@ -110,7 +112,7 @@ export default function StructureDeal({ user, dealId, onBack, onContractGenerate
             onContractGenerated && onContractGenerated();
         } catch (err) {
             console.error('Contract generation failed:', err);
-            alert('Failed to generate contract. Please try again.');
+            toast.error('Failed to generate contract. Please try again.');
         } finally {
             setGenerating(false);
         }

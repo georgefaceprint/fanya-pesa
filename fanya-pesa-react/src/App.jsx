@@ -16,6 +16,7 @@ import FunderReview from './components/FunderReview';
 import StructureDeal from './components/StructureDeal';
 import SupplierMilestones from './components/SupplierMilestones';
 import FundingDetails from './components/FundingDetails';
+import { useToast } from './components/Toast';
 import './index.css';
 
 export default function App() {
@@ -24,6 +25,7 @@ export default function App() {
   const [viewParam, setViewParam] = useState(null); // for passing dealId etc.
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const toast = useToast();
 
   useEffect(() => {
     document.documentElement.classList.add('dark');
@@ -91,7 +93,7 @@ export default function App() {
       setCurrentView('dashboard');
     } catch (err) {
       console.error("Onboarding update failed:", err);
-      alert("Failed to save onboarding data.");
+      toast.error('Failed to save onboarding data.');
     }
   };
 

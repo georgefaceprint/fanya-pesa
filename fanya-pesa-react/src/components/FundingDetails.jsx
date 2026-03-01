@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { useToast } from './Toast';
 
 const STATUS_STEPS = [
     { key: 'Pending Review', label: 'Submitted', icon: '📤', desc: 'Your funding request has been received and is in the funder pipeline.' },
@@ -14,6 +15,7 @@ export default function FundingDetails({ user, dealId, onBack }) {
     const [loading, setLoading] = useState(true);
     const [confirming, setConfirming] = useState(false);
     const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const toast = useToast();
 
     useEffect(() => {
         if (!dealId) return;
@@ -60,7 +62,7 @@ export default function FundingDetails({ user, dealId, onBack }) {
             setShowConfirmModal(false);
         } catch (e) {
             console.error('Delivery confirm error:', e);
-            alert('Failed to confirm delivery. Please try again.');
+            toast.error('Failed to confirm delivery. Please try again.');
         } finally {
             setConfirming(false);
         }
@@ -155,10 +157,10 @@ export default function FundingDetails({ user, dealId, onBack }) {
                                 return (
                                     <div key={step.key} className="relative flex gap-6 items-start">
                                         <div className={`relative z-10 w-11 h-11 flex-shrink-0 rounded-full flex items-center justify-center text-lg border-2 transition-all ${isDone
-                                                ? isActive && deal.status !== 'Delivery Confirmed'
-                                                    ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-500/30'
-                                                    : 'bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/20'
-                                                : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-400 opacity-40'
+                                            ? isActive && deal.status !== 'Delivery Confirmed'
+                                                ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-500/30'
+                                                : 'bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/20'
+                                            : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-400 opacity-40'
                                             }`}>
                                             {step.icon}
                                         </div>

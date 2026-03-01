@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { db, storage } from '../firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { useToast } from './Toast';
 
 const MILESTONES = [
     {
@@ -36,6 +37,7 @@ export default function SupplierMilestones({ user, dealId, onBack }) {
     const [uploading, setUploading] = useState(false);
     const [file, setFile] = useState(null);
     const [fileError, setFileError] = useState('');
+    const toast = useToast();
 
     useEffect(() => {
         if (!dealId) return;
@@ -83,7 +85,7 @@ export default function SupplierMilestones({ user, dealId, onBack }) {
             setDeal({ id: updated.id, ...updated.data() });
         } catch (e) {
             console.error('Waybill upload error:', e);
-            alert('Upload failed. Please try again.');
+            toast.error('Upload failed. Please try again.');
         } finally {
             setUploading(false);
         }
@@ -168,10 +170,10 @@ export default function SupplierMilestones({ user, dealId, onBack }) {
                                     <div key={m.id} className="relative flex gap-6 items-start">
                                         {/* Icon dot */}
                                         <div className={`relative z-10 w-11 h-11 flex-shrink-0 rounded-full flex items-center justify-center text-sm font-black border-2 transition-all ${state === 'done'
-                                                ? 'bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/30'
-                                                : state === 'active'
-                                                    ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-500/30 animate-pulse'
-                                                    : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-400'
+                                            ? 'bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/30'
+                                            : state === 'active'
+                                                ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-500/30 animate-pulse'
+                                                : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-400'
                                             }`}>
                                             {state === 'done' ? '✓' : m.id}
                                         </div>

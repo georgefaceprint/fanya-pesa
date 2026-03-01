@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { db } from '../firebase';
 import { doc, setDoc } from 'firebase/firestore';
+import { useToast } from './Toast';
 
 const PROVINCES = [
     "Eastern Cape", "Free State", "Gauteng", "KwaZulu-Natal",
@@ -17,6 +18,7 @@ const CATEGORIES = [
 export default function ProfileEdit({ user, onBack, onSaved }) {
     const [loading, setLoading] = useState(false);
     const [saved, setSaved] = useState(false);
+    const toast = useToast();
     const [form, setForm] = useState({
         name: user.name || '',
         registrationNumber: user.registrationNumber || '',
@@ -44,7 +46,7 @@ export default function ProfileEdit({ user, onBack, onSaved }) {
         e.preventDefault();
 
         if (form.preferredCategories.length === 0) {
-            alert('Please select at least one matching category.');
+            toast.warning('Please select at least one matching category.');
             return;
         }
 
@@ -67,7 +69,7 @@ export default function ProfileEdit({ user, onBack, onSaved }) {
             }, 1200);
         } catch (err) {
             console.error('Profile save error:', err);
-            alert('Failed to save profile. Please try again.');
+            toast.error('Failed to save profile. Please try again.');
         } finally {
             setLoading(false);
         }
@@ -230,10 +232,10 @@ export default function ProfileEdit({ user, onBack, onSaved }) {
                                         type="button"
                                         onClick={() => !maxed && toggleCategory(cat)}
                                         className={`text-left px-4 py-3 rounded-xl text-xs font-bold transition-all border ${selected
-                                                ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-500/20'
-                                                : maxed
-                                                    ? 'bg-gray-50 dark:bg-gray-900 border-gray-100 dark:border-gray-800 text-gray-300 dark:text-gray-600 cursor-not-allowed'
-                                                    : 'bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-blue-400 hover:text-blue-600'
+                                            ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-500/20'
+                                            : maxed
+                                                ? 'bg-gray-50 dark:bg-gray-900 border-gray-100 dark:border-gray-800 text-gray-300 dark:text-gray-600 cursor-not-allowed'
+                                                : 'bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-blue-400 hover:text-blue-600'
                                             }`}
                                     >
                                         {selected && <span className="mr-1">✓</span>}{cat}

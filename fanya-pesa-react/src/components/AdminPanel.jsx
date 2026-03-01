@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
 import { collection, query, getDocs, doc, updateDoc, onSnapshot } from 'firebase/firestore';
+import { useToast } from './Toast';
 
 const ADMIN_MODULES = [
     { id: 'compliance', title: 'Compliance Engine', desc: 'Manage mandatory CSD, Tax, and FICA document requirements across all roles.', icon: '📄', color: 'blue' },
@@ -15,6 +16,7 @@ export default function AdminPanel({ user, onBack }) {
     const [currentModule, setCurrentModule] = useState(null);
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(false);
+    const toast = useToast();
     const [stats] = useState({
         deals: 24,
         rfqs: 156,
@@ -38,10 +40,10 @@ export default function AdminPanel({ user, onBack }) {
             await updateDoc(doc(db, "users", userId), {
                 verified: !currentStatus
             });
-            alert(`User ${currentStatus ? 'Unverified' : 'Verified'} Successfully!`);
+            toast.success(`User ${currentStatus ? 'unverified' : 'verified'} successfully!`);
         } catch (error) {
             console.error("Error toggling verification:", error);
-            alert("Failed to update user status.");
+            toast.error('Failed to update user status.');
         }
     };
 

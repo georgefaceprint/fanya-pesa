@@ -3,9 +3,11 @@ import { db, storage } from '../firebase';
 import { collection, addDoc, query, where, getDocs } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { CATEGORIES } from '../constants/categories';
+import { useToast } from './Toast';
 
 export default function FundingRequest({ user, onBack }) {
     const [loading, setLoading] = useState(false);
+    const toast = useToast();
     const [matches, setMatches] = useState(0);
     const [formData, setFormData] = useState({
         amount: '',
@@ -58,11 +60,11 @@ export default function FundingRequest({ user, onBack }) {
                 createdAt: new Date().toISOString()
             });
 
-            alert('Funding request submitted! Our verified funders have been notified.');
+            toast.success('Funding request submitted! Our verified funders have been notified.');
             onBack();
         } catch (error) {
             console.error("Error submitting funding request:", error);
-            alert("Failed to submit request.");
+            toast.error('Failed to submit request. Please try again.');
         } finally {
             setLoading(false);
         }
