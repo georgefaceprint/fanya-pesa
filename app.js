@@ -39,14 +39,52 @@ const app = {
             usersSnap.forEach(async (uSnap) => {
                 const ud = uSnap.data();
                 if (ud.type === 'SUPPLIER' && (ud.industry === category || category === 'All')) {
-                    const docRef = doc(db, "user_notifications", ud.id);
-                    const notifSnap = await getDoc(docRef);
-                    let notifs = notifSnap.exists() ? notifSnap.data().data : [];
-                    notifs.unshift({ id: Date.now(), text: message, read: false, time: "Just now" });
-                    await setDoc(docRef, { data: notifs }, { merge: true });
+                    this.sendNotification(ud.id, ud.email, message);
                 }
             });
         } catch (error) { console.error(error); }
+    },
+
+    async notifyAllFunders(message) {
+        try {
+            const usersSnap = await getDocs(collection(db, "users"));
+            usersSnap.forEach(async (uSnap) => {
+                const ud = uSnap.data();
+                if (ud.type === 'FUNDER' && ud.verified) {
+                    this.sendNotification(ud.id, ud.email, message);
+                }
+            });
+        } catch (error) { console.error("Error notifying funders:", error); }
+    },
+
+    async sendNotification(uid, email, message) {
+        try {
+            // 1. In-App Firestore Notification
+            const docRef = doc(db, "user_notifications", uid);
+            const notifSnap = await getDoc(docRef);
+            let notifs = notifSnap.exists() ? notifSnap.data().data : [];
+            notifs.unshift({ id: Date.now(), text: message, read: false, time: "Just now" });
+            await setDoc(docRef, { data: notifs }, { merge: true });
+
+            // 2. EmailJS Notification (Fallback safe)
+            if (typeof emailjs !== 'undefined') {
+                emailjs.init("YOUR_PUBLIC_KEY"); // User needs to configure this! Do not block if failing.
+
+                emailjs.send("YOUR_SERVICE_ID", "YOUR_TEMPLATE_ID", {
+                    to_email: email,
+                    message: message,
+                    subject: "Fanya Pesa: New Notification"
+                }).then(() => {
+                    console.log(`Email successfully dispatched via EmailJS to ${email}`);
+                }).catch((err) => {
+                    console.warn("EmailJS not fully configured yet, but in-app notification sent.", err);
+                });
+            } else {
+                console.warn("EmailJS script not loaded.");
+            }
+        } catch (e) {
+            console.error("Error sending notification:", e);
+        }
     },
 
     saveDocTypes() {
@@ -81,6 +119,7 @@ const app = {
         onSnapshot(doc(db, "system_config", "categories"), (docSnap) => {
             if (docSnap.exists()) {
                 this.fundingCategories = docSnap.data().data;
+            } else {
                 this.fundingCategories = [
                     { id: 1, name: 'Services: Professional & Technical', description: 'Management consultancy, architectural, engineering, legal, accounting, research, advertising' },
                     { id: 2, name: 'Services: Functional & Operations', description: 'Cleaning, security, building/landscape services, administrative and support activities' },
@@ -1002,6 +1041,9 @@ const app = {
                 status: 'Pending Review',
                 createdAt: new Date().toISOString()
             });
+
+            // Notify all verified funders of a new deal on the platform
+            await this.notifyAllFunders(`New Deal Alert: ${this.user.name} is looking for R${Number(amount).toLocaleString()} funding in ${category}.`);
             alert('Funding Request Submitted Successfully!');
             this.showDashboard();
         } catch (error) {
@@ -1418,11 +1460,11 @@ const app = {
                 }, { merge: true });
 
                 // Ping the SME
-                const smeRef = doc(db, "user_notifications", deal.smeId);
-                const smeSnap = await getDoc(smeRef);
-                let smeNotifs = smeSnap.exists() ? smeSnap.data().data : [];
-                smeNotifs.unshift({ id: Date.now(), text: `🎉 Deal APPROVED! ${this.user.name} has secured R${Number(principal).toLocaleString()} in Fanya Pesa escrow for your contract.`, read: false, time: "Just now" });
-                await setDoc(smeRef, { data: smeNotifs }, { merge: true });
+                const smeDoc = await getDoc(doc(db, "users", deal.smeId));
+                if (smeDoc.exists()) {
+                    const smeEmail = smeDoc.data().email;
+                    await this.sendNotification(deal.smeId, smeEmail, `🎉 Deal APPROVED! ${this.user.name} has secured R${Number(principal).toLocaleString()} in Fanya Pesa escrow for your contract.`);
+                }
             }
 
             this.setView(`
@@ -1587,11 +1629,11 @@ const app = {
             await setDoc(doc(db, "rfqs", rfqId), { quotes }, { merge: true });
 
             // Ping the SME that they received a quote
-            const notifRef = doc(db, "user_notifications", rfq.smeId);
-            const notifSnap = await getDoc(notifRef);
-            let notifs = notifSnap.exists() ? notifSnap.data().data : [];
-            notifs.unshift({ id: Date.now(), text: `You received a new quote of R${Number(price).toLocaleString()} from ${this.user.name} on your RFQ: ${rfq.title} `, read: false, time: "Just now" });
-            await setDoc(notifRef, { data: notifs }, { merge: true });
+            const smeDoc = await getDoc(doc(db, "users", rfq.smeId));
+            if (smeDoc.exists()) {
+                const smeEmail = smeDoc.data().email;
+                await this.sendNotification(rfq.smeId, smeEmail, `You received a new quote of R${Number(price).toLocaleString()} from ${this.user.name} on your RFQ: ${rfq.title}`);
+            }
 
             alert('Your formal quote was securely submitted to the SME!');
             this.showDashboard();
@@ -1736,16 +1778,11 @@ const app = {
             }, { merge: true });
 
             // Send notification to supplier
-            const notifRef = doc(db, "user_notifications", supplierId);
-            const notifSnap = await getDoc(notifRef);
-            let notifs = notifSnap.exists() ? notifSnap.data().data : [];
-            notifs.unshift({
-                id: Date.now(),
-                text: `🎉 QUOTE ACCEPTED: ${this.user.name} approved your quote for ${rfqData.title}! The SME will now secure funding. ${customComment ? `\n\nNotes: ${customComment}` : ''}`,
-                read: false,
-                time: "Just now"
-            });
-            await setDoc(notifRef, { data: notifs }, { merge: true });
+            const supplierDoc = await getDoc(doc(db, "users", supplierId));
+            if (supplierDoc.exists()) {
+                const supplierEmail = supplierDoc.data().email;
+                await this.sendNotification(supplierId, supplierEmail, `🎉 QUOTE ACCEPTED: ${this.user.name} approved your quote for ${rfqData.title}! The SME will now secure funding. ${customComment ? `\n\nNotes: ${customComment}` : ''}`);
+            }
 
             alert("Quote Approved!");
             this.showDashboard();
@@ -1772,6 +1809,13 @@ const app = {
             });
 
             await setDoc(rfqRef, { quotes: updatedQuotes }, { merge: true });
+
+            // Send notification to supplier
+            const supplierDoc = await getDoc(doc(db, "users", supplierId));
+            if (supplierDoc.exists()) {
+                const supplierEmail = supplierDoc.data().email;
+                await this.sendNotification(supplierId, supplierEmail, `⚠️ QUOTE REJECTED: Your quote for ${rfqData.title} was not accepted by the SME.`);
+            }
             alert("Quote Rejected.");
             this.showReviewQuotes(rfqId);
         } catch (error) {
@@ -2386,17 +2430,8 @@ const app = {
             const userRef = doc(db, "users", uid);
             await setDoc(userRef, { verified: true }, { merge: true });
 
-            // Simulate the Automated Email Pipeline
-            const notifRef = doc(db, "user_notifications", uid);
-            const notifSnap = await getDoc(notifRef);
-            let notifs = notifSnap.exists() ? notifSnap.data().data : [];
-            notifs.unshift({
-                id: Date.now(),
-                text: `✅ PROFILE VERIFIED: Your Fanya Pesa account has been fully verified by the Admin. An automated confirmation email has been dispatched to ${email}.`,
-                read: false,
-                time: "Just now"
-            });
-            await setDoc(notifRef, { data: notifs }, { merge: true });
+            // Automated Email Pipeline
+            await this.sendNotification(uid, email, `✅ PROFILE VERIFIED: Your Fanya Pesa account has been fully verified by the Admin. An automated confirmation email has been dispatched to ${email}.`);
 
             alert(`Success! Profile marked as VERIFIED.\n\n[MOCK EMAIL TRIGGERED to ${email}]`);
             this.showAdminUsers();
@@ -2410,6 +2445,10 @@ const app = {
         try {
             const userRef = doc(db, "users", uid);
             await setDoc(userRef, { verified: true }, { merge: true });
+            const funderDoc = await getDoc(userRef);
+            if (funderDoc.exists()) {
+                await this.sendNotification(uid, funderDoc.data().email, "✅ FUNDER VERIFIED: Your entity has been approved to structure deals on Fanya Pesa.");
+            }
             alert("Verification Success: Funder is now active and can structure deals!");
             this.showAdminFunderApproval();
         } catch (error) {
