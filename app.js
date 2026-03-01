@@ -83,10 +83,21 @@ const app = {
                 this.fundingCategories = docSnap.data().data;
             } else {
                 this.fundingCategories = [
-                    { id: 1, name: 'Tender Execution (PO Financing)', description: 'Government or corporate purchase orders' },
-                    { id: 2, name: 'Asset Finance (Equipment/Vehicles)', description: 'Machinery and commercial vehicles' },
-                    { id: 3, name: 'Working Capital / Cash Flow', description: 'Short-term bridging finance' },
-                    { id: 4, name: 'Merchant Cash Advance', description: 'Based on card terminal sales' }
+                    { id: 1, name: 'Construction & Engineering', description: 'Civil, building, and infrastructure projects' },
+                    { id: 2, name: 'Professional & Advisory Services', description: 'Legal, accounting, consulting, and engineering' },
+                    { id: 3, name: 'Energy & Utilities', description: 'Power generation, renewable energy, and water' },
+                    { id: 4, name: 'Telecommunications & IT', description: 'Network infrastructure, hardware, and software services' },
+                    { id: 5, name: 'Supplies: Medical & Health', description: 'Clinical supplies, equipment, and health services' },
+                    { id: 6, name: 'Supplies: Perishable Provisions', description: 'Food supplies and catering services' },
+                    { id: 7, name: 'Supplies: General Office & Stationery', description: 'Office supplies, equipment, and furniture' },
+                    { id: 8, name: 'Education & Training', description: 'Skills development and educational materials' },
+                    { id: 9, name: 'Services: Functional', description: 'Cleaning, hygiene, security, and administrative support' },
+                    { id: 10, name: 'Logistics, Transport & Storage', description: 'Freight, courier, fleet management, and warehousing' },
+                    { id: 11, name: 'Manufacturing & Processing', description: 'Production of goods, equipment, and materials' },
+                    { id: 12, name: 'Financial & Insurance Activities', description: 'Audit services, insurance, and brokering' },
+                    { id: 13, name: 'Services: Building & Maintenance', description: 'Facilities management and repairs' },
+                    { id: 14, name: 'Media, Arts & Advertising', description: 'Marketing, event management, and broadcasting' },
+                    { id: 15, name: 'Agriculture Products & Services', description: 'Farming supplies, landscaping, and forestry' }
                 ];
                 this.saveFundingCategories();
             }
@@ -1903,8 +1914,13 @@ const app = {
             <div class="hero-enter" style="max-width: 800px; margin: 2rem auto;">
                 <button class="btn btn-secondary" style="margin-bottom: 2rem;" onclick="app.showDashboard()">&larr; Back to Admin Panel</button>
                 
-                <h2>Funding Categories</h2>
-                <p class="subtext" style="margin-bottom: 2rem;">Manage the funding options that SMEs can apply for.</p>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h2>Funding Categories</h2>
+                        <p class="subtext" style="margin-bottom: 2rem;">Manage the funding options that SMEs can apply for.</p>
+                    </div>
+                    <button class="btn btn-outline" style="border-color: var(--accent); color: var(--accent);" onclick="app.loadOfficialCategories()">Load Official SA Tender Categories</button>
+                </div>
 
                 <div style="display: grid; grid-template-columns: 1fr 300px; gap: 2rem;">
                     <div>
@@ -1930,6 +1946,30 @@ const app = {
                 </div>
             </div>
         `);
+    },
+
+    loadOfficialCategories() {
+        if (!confirm("Are you sure? This will replace all current categories with the official SA Tender categories!")) return;
+        this.fundingCategories = [
+            { id: 1, name: 'Construction & Engineering', description: 'Civil, building, and infrastructure projects' },
+            { id: 2, name: 'Professional & Advisory Services', description: 'Legal, accounting, consulting, and engineering' },
+            { id: 3, name: 'Energy & Utilities', description: 'Power generation, renewable energy, and water' },
+            { id: 4, name: 'Telecommunications & IT', description: 'Network infrastructure, hardware, and software services' },
+            { id: 5, name: 'Supplies: Medical & Health', description: 'Clinical supplies, equipment, and health services' },
+            { id: 6, name: 'Supplies: Perishable Provisions', description: 'Food supplies and catering services' },
+            { id: 7, name: 'Supplies: General Office & Stationery', description: 'Office supplies, equipment, and furniture' },
+            { id: 8, name: 'Education & Training', description: 'Skills development and educational materials' },
+            { id: 9, name: 'Services: Functional', description: 'Cleaning, hygiene, security, and administrative support' },
+            { id: 10, name: 'Logistics, Transport & Storage', description: 'Freight, courier, fleet management, and warehousing' },
+            { id: 11, name: 'Manufacturing & Processing', description: 'Production of goods, equipment, and materials' },
+            { id: 12, name: 'Financial & Insurance Activities', description: 'Audit services, insurance, and brokering' },
+            { id: 13, name: 'Services: Building & Maintenance', description: 'Facilities management and repairs' },
+            { id: 14, name: 'Media, Arts & Advertising', description: 'Marketing, event management, and broadcasting' },
+            { id: 15, name: 'Agriculture Products & Services', description: 'Farming supplies, landscaping, and forestry' }
+        ];
+        this.saveFundingCategories();
+        this.showAdminCategories();
+        alert("Official categories loaded successfully!");
     },
 
     addFundingCategory(form) {
