@@ -3,6 +3,9 @@ import Home from './components/Home';
 import Auth from './components/Auth';
 import Dashboard from './components/Dashboard';
 import Onboarding from './components/Onboarding';
+import Vault from './components/Vault';
+import RfqForm from './components/RfqForm';
+import AdminPanel from './components/AdminPanel';
 import './index.css';
 
 export default function App() {
@@ -68,11 +71,14 @@ export default function App() {
       {currentView === 'home' && <Home onNavigate={navigateTo} />}
       {currentView === 'auth' && <Auth initialIntent={authIntent} onBack={() => navigateTo('home')} onLogin={(intent) => navigateTo('dashboard', intent)} />}
       {currentView === 'onboarding' && user && <Onboarding user={user} onComplete={handleOnboardingComplete} />}
+      {currentView === 'vault' && user && <Vault user={user} onBack={() => setCurrentView('dashboard')} />}
+      {currentView === 'rfq-form' && user && <RfqForm user={user} onBack={() => setCurrentView('dashboard')} />}
+      {currentView === 'admin-panel' && user && <AdminPanel user={user} onBack={() => setCurrentView('dashboard')} />}
       {currentView === 'dashboard' && user && (
         <Dashboard
           user={user}
           onLogout={logout}
-          onNavigate={(view) => console.log(`Navigating to ${view}`)}
+          onNavigate={(view) => setCurrentView(view)}
         />
       )}
     </div>

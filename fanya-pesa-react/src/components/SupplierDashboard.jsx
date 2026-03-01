@@ -23,14 +23,22 @@ export default function SupplierDashboard({ user, onNavigate }) {
                     <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white">Supplier Portal</h2>
                     <p className="text-gray-500 dark:text-gray-400 mt-1">Matched RFQs and active fulfillment contracts.</p>
                 </div>
-                {!user.subscribed && (
+                <div className="flex gap-4">
                     <button
-                        onClick={() => onNavigate('subscription')}
-                        className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-emerald-500/20 transition-all flex items-center gap-2"
+                        onClick={() => onNavigate('vault')}
+                        className="px-6 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white rounded-xl font-bold text-sm shadow-sm transition-all flex items-center gap-2"
                     >
-                        <span>🛡️</span> Become Verified
+                        <span>📁</span> Vault
                     </button>
-                )}
+                    {!user.subscribed && (
+                        <button
+                            onClick={() => onNavigate('subscription')}
+                            className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-emerald-500/20 transition-all flex items-center gap-2"
+                        >
+                            <span>🛡️</span> Become Verified
+                        </button>
+                    )}
+                </div>
             </div>
 
             {!user.subscribed ? (

@@ -29,7 +29,7 @@ export default function SmeDashboard({ user, onNavigate }) {
                 title: "Create Your First RFQ",
                 desc: "Broadcast a request to verified suppliers for your business needs.",
                 icon: "🚚",
-                action: () => onNavigate('quote-request'),
+                action: () => onNavigate('rfq-form'),
                 color: "purple"
             });
         }
@@ -67,7 +67,7 @@ export default function SmeDashboard({ user, onNavigate }) {
                 </div>
                 {user.subscribed && (
                     <div className="flex gap-3">
-                        <button onClick={() => onNavigate('quote-request')} className="px-5 py-2.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-xl font-bold text-sm hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">Request Quote</button>
+                        <button onClick={() => onNavigate('rfq-form')} className="px-5 py-2.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-xl font-bold text-sm hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">Request Quote</button>
                         <button onClick={() => onNavigate('funding-request')} className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-500/20 transition-all">Apply for Funding</button>
                     </div>
                 )}
@@ -158,7 +158,7 @@ export default function SmeDashboard({ user, onNavigate }) {
                                         <div className="text-4xl mb-4 opacity-20">📦</div>
                                         <p className="text-gray-400 text-sm italic">You have no active quotation requests.</p>
                                         <button
-                                            onClick={() => onNavigate('quote-request')}
+                                            onClick={() => onNavigate('rfq-form')}
                                             className="mt-4 text-blue-600 dark:text-blue-400 text-sm font-bold hover:underline"
                                         >
                                             Create your first RFQ
