@@ -385,13 +385,24 @@ const app = {
                     <form onsubmit="event.preventDefault(); app.saveOnboardingStep(${step}, this);">
                         ${step === 1 ? `
                             <div class="form-group">
-                                <label>Registered Company Name</label>
-                                <input type="text" name="companyName" class="form-control" placeholder="e.g. Acme Printing (Pty) Ltd" value="${currentData.companyName || ''}" required>
+                                <label>Registered ${this.user.type === 'SUPPLIER' ? 'Supplier Name' : 'Company Name'}</label>
+                                <input type="text" name="companyName" class="form-control" placeholder="e.g. Acme ${this.user.type === 'SUPPLIER' ? 'Supplies' : 'Printing'} (Pty) Ltd" value="${currentData.companyName || ''}" required>
                             </div>
+                            ${this.user.type === 'SUPPLIER' ? `
+                            <div class="form-group">
+                                <label>Email Address</label>
+                                <input type="email" class="form-control" value="${this.user.email}" readonly style="opacity: 0.7;">
+                            </div>
+                            <div class="form-group">
+                                <label>Phone Number</label>
+                                <input type="tel" name="phone" class="form-control" placeholder="+27 82 123 4567" value="${currentData.phone || ''}" required>
+                            </div>
+                            ` : `
                             <div class="form-group">
                                 <label>Registration Number (CIPC)</label>
                                 <input type="text" name="regNumber" class="form-control" placeholder="YYYY/NNNNNN/NN" value="${currentData.regNumber || ''}" required>
                             </div>
+                            `}
                         ` : ''}
 
                         ${step === 2 ? `
@@ -408,11 +419,27 @@ const app = {
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label>Funding Category Needs</label>
+                                <label>${this.user.type === 'SUPPLIER' ? 'Supply Category / Mandate' : 'Funding Category Needs'}</label>
                                 <select name="preferredCategory" class="form-control" required>
                                     ${this.fundingCategories.map(c => `<option value="${c.name}" ${currentData.preferredCategory === c.name ? 'selected' : ''}>${c.name}</option>`).join('')}
                                 </select>
                             </div>
+                            ${this.user.type === 'SUPPLIER' ? `
+                            <div class="form-group">
+                                <label>Years in Business</label>
+                                <input type="number" name="yearsInBusiness" class="form-control" placeholder="e.g. 5" value="${currentData.yearsInBusiness || ''}" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Annual Turnover (ZAR)</label>
+                                <select name="annualTurnover" class="form-control" required>
+                                    <option value="">Select Range</option>
+                                    <option value="< R1M" ${currentData.annualTurnover === '< R1M' ? 'selected' : ''}>Under R1M</option>
+                                    <option value="R1M - R5M" ${currentData.annualTurnover === 'R1M - R5M' ? 'selected' : ''}>R1M - R5M</option>
+                                    <option value="R5M - R20M" ${currentData.annualTurnover === 'R5M - R20M' ? 'selected' : ''}>R5M - R20M</option>
+                                    <option value="> R20M" ${currentData.annualTurnover === '> R20M' ? 'selected' : ''}>Over R20M</option>
+                                </select>
+                            </div>
+                            ` : ''}
                         ` : ''}
 
                         ${step === 3 ? `
@@ -465,6 +492,20 @@ const app = {
             this.user.onboardingStep = total;
             // Map onboarding data to user profile
             this.user.name = this.user.onboardingData.companyName || this.user.name;
+
+            if (this.user.type === 'SME') {
+                this.user.regNum = this.user.onboardingData.regNumber || this.user.regNum;
+                this.user.address = this.user.onboardingData.address || this.user.address;
+                this.user.province = this.user.onboardingData.province || this.user.province;
+            }
+            if (this.user.type === 'SUPPLIER') {
+                this.user.phone = this.user.onboardingData.phone || this.user.phone;
+                this.user.industry = this.user.onboardingData.preferredCategory || this.user.industry;
+                this.user.address = this.user.onboardingData.address || this.user.address;
+                this.user.province = this.user.onboardingData.province || this.user.province;
+                this.user.yearsInBusiness = this.user.onboardingData.yearsInBusiness;
+                this.user.annualTurnover = this.user.onboardingData.annualTurnover;
+            }
         } else {
             this.user.onboardingStep = step + 1;
         }
