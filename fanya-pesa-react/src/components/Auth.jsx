@@ -1,18 +1,20 @@
 import React, { useState } from 'react';
 
-export default function Auth({ initialIntent = null, onBack }) {
+export default function Auth({ initialIntent = null, onBack, onLogin }) {
     const [intent, setIntent] = useState(initialIntent);
     const [method, setMethod] = useState('select');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
 
     const handleLogin = (provider) => {
-        alert(`Simulating ${provider} login for intent: ${intent}`);
+        // alert(`Simulating ${provider} login for intent: ${intent}`);
+        onLogin(intent);
     };
 
     const processEmailAuth = (e, action) => {
         e.preventDefault();
-        alert(`Processing ${action} for ${email} as ${intent}`);
+        // alert(`Processing ${action} for ${email} as ${intent}`);
+        onLogin(intent);
     };
 
     if (!intent) {
