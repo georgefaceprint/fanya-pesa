@@ -2,10 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { db, storage } from '../firebase';
 import { collection, addDoc, query, where, getDocs } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-
-const CATEGORIES = [
-    "IT Hardware", "Construction Materials", "Logistics", "Textiles", "Office Supplies", "Fuel", "Industrial Tools", "Consultancy"
-];
+import { CATEGORIES } from '../constants/categories';
 
 export default function FundingRequest({ user, onBack }) {
     const [loading, setLoading] = useState(false);

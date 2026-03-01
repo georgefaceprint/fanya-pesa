@@ -31,10 +31,22 @@ export default function SupplierDashboard({ user, onNavigate }) {
             setLoading(false);
         });
 
-        // Listen for active fulfillment deals where this supplier is linked
-        const qDeals = query(collection(db, "deals"), where("supplierName", "==", user.name || ""));
+        // Listen for active deals — query by supplierId (UID-based, reliable)
+        // Fallback: also match by supplierName for legacy deals that predate the supplierId fix
+        const supplierId = user.uid || user.id;
+        const qDeals = query(collection(db, "deals"), where("supplierId", "==", supplierId));
+        const qDealsFallback = query(collection(db, "deals"), where("supplierName", "==", user.name || ""));
+
         const unsubDeals = onSnapshot(qDeals, (snapshot) => {
-            setActiveDeals(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+            const byId = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+            // Also listen for name-based matches (legacy)
+            onSnapshot(qDealsFallback, (snap2) => {
+                const byName = snap2.docs.map(d => ({ id: d.id, ...d.data() }));
+                // Merge, deduplicate by id
+                const all = [...byId];
+                byName.forEach(d => { if (!all.find(x => x.id === d.id)) all.push(d); });
+                setActiveDeals(all);
+            });
         });
 
         return () => {
@@ -237,7 +249,16 @@ export default function SupplierDashboard({ user, onNavigate }) {
                                                     <h4 className="font-bold text-gray-900 dark:text-white truncate">Active: {deal.category}</h4>
                                                     <p className="text-[10px] text-gray-400 uppercase font-black tracking-widest mt-1">SME: {deal.smeName}</p>
                                                 </div>
-                                                <span className="px-2 py-1 bg-emerald-50 text-emerald-600 rounded text-[10px] font-bold uppercase">{deal.status === 'Delivery Confirmed' ? '100% Paid' : '30% Paid'}</span>
+                                                <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${deal.status === 'Delivery Confirmed'
+                                                        ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400'
+                                                        : deal.status === 'Waybill Uploaded'
+                                                            ? 'bg-purple-50 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400'
+                                                            : 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
+                                                    }`}>
+                                                    {deal.status === 'Delivery Confirmed' ? '✓ 100% Paid'
+                                                        : deal.status === 'Waybill Uploaded' ? '70% Paid'
+                                                            : '30% Paid'}
+                                                </span>
                                             </div>
                                             <p className="text-xs text-gray-500 mb-6">Funder: {deal.funderName}</p>
                                             <button
