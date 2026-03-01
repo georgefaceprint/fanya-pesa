@@ -214,7 +214,12 @@ const app = {
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-color)" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
                         ${unreadCount > 0 ? `<span style="position: absolute; top: 0; right: 0; background: var(--primary); color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 0.7rem; display: flex; align-items: center; justify-content: center; font-weight: bold;">${unreadCount}</span>` : ''}
                     </div>
-                    <span style="font-weight: 500; display: none; @media (min-width: 600px) { display: block; }">Hi, ${this.user.name}</span>
+                    <button class="btn btn-outline btn-sm" style="display: flex; align-items: center; gap: 0.5rem;" onclick="app.showUserProfile()">
+                        <div style="width: 20px; height: 20px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: bold;">
+                            ${this.user.name.charAt(0).toUpperCase()}
+                        </div>
+                        <span style="font-weight: 500;">Profile</span>
+                    </button>
                     <button class="btn btn-secondary" onclick="app.logout()">Sign Out</button>
                     <button class="btn btn-primary" onclick="app.showDashboard()">Dashboard</button>
                 </div>
@@ -479,6 +484,109 @@ const app = {
         } catch (error) {
             console.error("Onboarding Save Error:", error);
             alert("System Error: Failed to save progress.");
+        }
+    },
+
+    showUserProfile() {
+        this.setView(`
+            <div class="hero-enter" style="max-width: 600px; margin: 2rem auto;">
+                <button class="btn btn-secondary" style="margin-bottom: 2rem;" onclick="app.showDashboard()">&larr; Back to Dashboard</button>
+                <h2>My Profile</h2>
+                <p class="subtext" style="margin-bottom: 2rem;">Manage your public identity, contact information, and platform role details.</p>
+
+                <div class="glass-card">
+                    <form onsubmit="app.saveUserProfile(event)">
+                        <div style="display: flex; justify-content: center; margin-bottom: 2rem;">
+                            <div style="width: 100px; height: 100px; border-radius: 50%; background: var(--bg-hover); border: 2px dashed var(--border); display: flex; align-items: center; justify-content: center; font-size: 3rem; color: var(--primary);">
+                                ${this.user.name.charAt(0).toUpperCase()}
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Full Name / Company Name</label>
+                            <input type="text" class="form-control" id="profileName" value="${this.user.name}" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Email Address</label>
+                            <input type="email" class="form-control" id="profileEmail" value="${this.user.email}" readonly style="opacity: 0.7; cursor: not-allowed;">
+                            <small class="subtext" style="font-size: 0.8rem; margin-top: 0.3rem; display: block;">Emails are tied to your authentication provider.</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Phone Number</label>
+                            <input type="tel" class="form-control" id="profilePhone" value="${this.user.phone || ''}" placeholder="+27 82 123 4567">
+                        </div>
+
+                        ${this.user.type === 'SME' ? `
+                        <div class="form-group">
+                            <label>CIPC Registration Number</label>
+                            <input type="text" class="form-control" id="profileRegNum" value="${this.user.regNum || ''}" placeholder="2024/123456/07">
+                        </div>
+                        <div class="form-group">
+                            <label>Physical Address</label>
+                            <input type="text" class="form-control" id="profileAddress" value="${this.user.address || ''}" placeholder="123 Business Street, Province">
+                        </div>
+                        ` : ''}
+
+                        ${this.user.type === 'SUPPLIER' ? `
+                        <div class="form-group">
+                            <label>Verified Industry/Mandate</label>
+                            <input type="text" class="form-control" id="profileIndustry" value="${this.user.industry || ''}" readonly style="opacity: 0.7; cursor: not-allowed;">
+                        </div>
+                        ` : ''}
+
+                        <button type="submit" class="btn btn-primary btn-large" style="width: 100%; margin-top: 1rem;">
+                            Save Profile Changes
+                        </button>
+                    </form>
+                </div>
+            </div>
+        `);
+    },
+
+    async saveUserProfile(e) {
+        e.preventDefault();
+        const btn = e.target.querySelector('button[type="submit"]');
+        const ogText = btn.innerHTML;
+        btn.innerHTML = '<span class="status pulse">Saving...</span>';
+        btn.disabled = true;
+
+        try {
+            const updates = {
+                name: document.getElementById('profileName').value,
+                phone: document.getElementById('profilePhone').value
+            };
+
+            if (this.user.type === 'SME') {
+                updates.regNum = document.getElementById('profileRegNum').value;
+                updates.address = document.getElementById('profileAddress').value;
+            }
+
+            const userRef = doc(db, "users", this.user.id);
+            await setDoc(userRef, updates, { merge: true });
+
+            // Update local state
+            this.user = { ...this.user, ...updates };
+            localStorage.setItem(STORE_KEY, JSON.stringify(this.user));
+
+            app.renderNavbar();
+
+            setTimeout(() => {
+                btn.innerHTML = 'Saved Successfully!';
+                btn.style.background = '#10b981';
+                setTimeout(() => {
+                    btn.innerHTML = ogText;
+                    btn.disabled = false;
+                    btn.style.background = 'var(--primary)';
+                }, 2000);
+            }, 500);
+
+        } catch (error) {
+            console.error("Error saving profile", error);
+            alert("Failed to save profile. Please try again.");
+            btn.innerHTML = ogText;
+            btn.disabled = false;
         }
     },
 
