@@ -22,7 +22,7 @@ export default function AdminPanel({ user, onBack }) {
     });
 
     useEffect(() => {
-        if (currentModule === 'users') {
+        if (currentModule === 'users' || currentModule === 'funder_approval') {
             setLoading(true);
             const unsub = onSnapshot(collection(db, "users"), (snapshot) => {
                 const userList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -72,7 +72,7 @@ export default function AdminPanel({ user, onBack }) {
                                     </td>
                                     <td className="px-6 py-4">
                                         <span className={`px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-wider ${u.type === 'SME' ? 'bg-blue-50 text-blue-600' :
-                                                u.type === 'SUPPLIER' ? 'bg-emerald-50 text-emerald-600' : 'bg-purple-50 text-purple-600'
+                                            u.type === 'SUPPLIER' ? 'bg-emerald-50 text-emerald-600' : 'bg-purple-50 text-purple-600'
                                             }`}>
                                             {u.type}
                                         </span>
@@ -88,8 +88,8 @@ export default function AdminPanel({ user, onBack }) {
                                         <button
                                             onClick={() => toggleVerification(u.id, u.verified)}
                                             className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${u.verified
-                                                    ? 'border border-red-200 text-red-600 hover:bg-red-50'
-                                                    : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-lg shadow-emerald-600/20'
+                                                ? 'border border-red-200 text-red-600 hover:bg-red-50'
+                                                : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-lg shadow-emerald-600/20'
                                                 }`}
                                         >
                                             {u.verified ? 'Revoke' : 'Approve'}
@@ -100,6 +100,69 @@ export default function AdminPanel({ user, onBack }) {
                         </tbody>
                     </table>
                     {loading && <div className="p-10 text-center text-gray-400 italic">Scanning decentralized database...</div>}
+                </div>
+            </div>
+        );
+    }
+
+    if (currentModule === 'funder_approval') {
+        const funders = users.filter(u => u.type === 'FUNDER');
+        return (
+            <div className="max-w-6xl mx-auto py-10 animate-fade-in">
+                <button onClick={() => setCurrentModule(null)} className="mb-8 text-sm font-bold text-gray-500 hover:text-gray-900 transition-colors">&larr; Back to Control Center</button>
+                <div className="flex justify-between items-end mb-10">
+                    <div>
+                        <h2 className="text-3xl font-black text-gray-900 dark:text-white mb-2">Funder Verification</h2>
+                        <p className="text-gray-500">Authorize capital partners to deploy liquidity on the platform.</p>
+                    </div>
+                    <div className="px-4 py-2 bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 text-[10px] font-black uppercase tracking-widest rounded-lg border border-purple-100 dark:border-purple-800">
+                        {funders.length} Registered Funders
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4">
+                    {funders.map(f => (
+                        <div key={f.id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-3xl p-6 flex flex-col md:flex-row justify-between items-center shadow-sm">
+                            <div className="flex items-center gap-6 mb-4 md:mb-0">
+                                <div className="w-16 h-16 rounded-2xl bg-purple-50 dark:bg-purple-900/30 flex items-center justify-center text-2xl">
+                                    💎
+                                </div>
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <h4 className="text-xl font-bold text-gray-900 dark:text-white">{f.name || f.email.split('@')[0]}</h4>
+                                        {f.verified && <span className="text-blue-500 text-sm">🛡️</span>}
+                                    </div>
+                                    <p className="text-sm text-gray-500">{f.email}</p>
+                                    <div className="mt-2 flex gap-2">
+                                        <span className="text-[10px] font-black uppercase tracking-widest bg-gray-50 dark:bg-gray-900 py-1 px-2 rounded text-gray-400 border border-gray-100 dark:border-gray-700">AUM: R{f.aum || '0'}M</span>
+                                        <span className="text-[10px] font-black uppercase tracking-widest bg-gray-50 dark:bg-gray-900 py-1 px-2 rounded text-gray-400 border border-gray-100 dark:border-gray-700">HNWI Verified</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-4">
+                                <span className={`text-xs font-bold ${f.verified ? 'text-emerald-500' : 'text-amber-500'}`}>
+                                    {f.verified ? 'Authorized' : 'Pending Authorization'}
+                                </span>
+                                <button
+                                    onClick={() => toggleVerification(f.id, f.verified)}
+                                    className={`px-6 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${f.verified
+                                        ? 'bg-red-50 text-red-600 hover:bg-red-100'
+                                        : 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:opacity-90 shadow-lg shadow-purple-600/20'
+                                        }`}
+                                >
+                                    {f.verified ? 'Revoke Access' : 'Approve Funder'}
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                    {funders.length === 0 && !loading && (
+                        <div className="py-20 text-center bg-gray-50 dark:bg-gray-900/30 rounded-3xl border border-dashed border-gray-200 dark:border-gray-700">
+                            <div className="text-5xl mb-4 opacity-20">🛡️</div>
+                            <p className="text-gray-400 italic">No funder applications pending review.</p>
+                        </div>
+                    )}
+                    {loading && <div className="p-10 text-center text-gray-400 italic">Synchronizing with capital markets...</div>}
                 </div>
             </div>
         );
