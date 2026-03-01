@@ -3,6 +3,7 @@ import SmeDashboard from './SmeDashboard';
 import FunderDashboard from './FunderDashboard';
 import SupplierDashboard from './SupplierDashboard';
 import AdminDashboard from './AdminDashboard';
+import NotificationBell from './NotificationBell';
 
 export default function Dashboard({ user, onLogout, onNavigate }) {
     if (!user) return null;
@@ -28,11 +29,12 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
                 <div className="text-xl font-bold cursor-pointer flex items-center gap-2" onClick={() => onNavigate('home')}>
                     <span>💸</span> Fanya Pesa
                 </div>
-                <div className="flex items-center gap-4">
-                    <div className="hidden md:flex flex-col items-end mr-2">
+                <div className="flex items-center gap-3">
+                    <div className="hidden md:flex flex-col items-end mr-1">
                         <span className="text-sm font-bold text-gray-900 dark:text-white">{user.name}</span>
-                        <span className="text-xs text-gray-500 dark:text-gray-400 capitalize">{user.type.toLowerCase()}</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400 capitalize">{user.type?.toLowerCase()}</span>
                     </div>
+                    <NotificationBell user={user} />
                     <button
                         onClick={onLogout}
                         className="text-xs font-bold px-4 py-2 border border-red-200 dark:border-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"

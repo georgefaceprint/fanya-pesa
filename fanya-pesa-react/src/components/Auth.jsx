@@ -4,7 +4,8 @@ import {
     signInWithPopup,
     GoogleAuthProvider,
     signInWithEmailAndPassword,
-    createUserWithEmailAndPassword
+    createUserWithEmailAndPassword,
+    sendPasswordResetEmail
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 
@@ -15,6 +16,7 @@ export default function Auth({ initialIntent = null, onBack, onLogin }) {
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [resetSent, setResetSent] = useState(false);
 
     const syncUserToFirestore = async (user, userType) => {
         const userRef = doc(db, "users", user.uid);
@@ -77,6 +79,21 @@ export default function Auth({ initialIntent = null, onBack, onLogin }) {
         }
     };
 
+    const handlePasswordReset = async (e) => {
+        if (e) e.preventDefault();
+        if (!email) { setError('Enter your email address above first.'); return; }
+        setLoading(true);
+        setError(null);
+        try {
+            await sendPasswordResetEmail(auth, email);
+            setResetSent(true);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     if (!intent) {
         return (
             <div className="min-h-screen bg-gray-50 dark:bg-[#1a1a2e] flex flex-col items-center pt-24 px-6 transition-colors duration-300">
@@ -127,6 +144,27 @@ export default function Auth({ initialIntent = null, onBack, onLogin }) {
     }
 
     if (method === 'email') {
+        // ── Password Reset Success Screen ─────────────────────────────────────
+        if (resetSent) {
+            return (
+                <div className="min-h-screen bg-gray-50 dark:bg-[#1a1a2e] flex flex-col items-center pt-24 px-6">
+                    <div className="w-full max-w-md animate-fade-in-up text-center">
+                        <div className="w-20 h-20 rounded-3xl bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center text-4xl mx-auto mb-8">📨</div>
+                        <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-3">Check Your Email</h2>
+                        <p className="text-gray-500 dark:text-gray-400 mb-8 leading-relaxed">
+                            A password reset link has been sent to <strong className="text-gray-900 dark:text-white">{email}</strong>. Follow the link to set a new password.
+                        </p>
+                        <button
+                            onClick={() => { setResetSent(false); setMethod('email'); setError(null); }}
+                            className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black shadow-xl shadow-blue-500/20 transition-all"
+                        >
+                            Back to Login
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
         return (
             <div className="min-h-screen bg-gray-50 dark:bg-[#1a1a2e] flex flex-col items-center pt-24 px-6 transition-colors duration-300">
                 <div className="w-full max-w-md animate-fade-in-up">
@@ -156,7 +194,17 @@ export default function Auth({ initialIntent = null, onBack, onLogin }) {
                                 />
                             </div>
                             <div className="mb-8">
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Password</label>
+                                <div className="flex justify-between items-center mb-2">
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
+                                    <button
+                                        type="button"
+                                        onClick={handlePasswordReset}
+                                        disabled={loading || !email}
+                                        className="text-xs text-blue-600 dark:text-blue-400 font-bold hover:underline disabled:opacity-40 transition-opacity"
+                                    >
+                                        Forgot password?
+                                    </button>
+                                </div>
                                 <input
                                     type="password"
                                     value={password}
