@@ -1,7 +1,7 @@
 /* Fanya Pesa Engine - Version 12.67 */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
 import { getFirestore, collection, getDocs, addDoc, setDoc, doc, onSnapshot, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-import { getAuth, signInWithPopup, GoogleAuthProvider, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
 // TODO: Replace this with your actual Firebase config from the console
@@ -161,33 +161,63 @@ const app = {
 
         try {
             const result = await signInWithPopup(auth, provider);
-            const userRef = doc(db, "users", result.user.uid);
-            const docSnap = await getDoc(userRef);
-
-            let userData;
-            if (docSnap.exists()) {
-                userData = docSnap.data();
-            } else {
-                // First time login - set up the profile mapped to their intent 
-                userData = {
-                    id: result.user.uid,
-                    name: result.user.displayName,
-                    email: result.user.email,
-                    type: intentType, // SME, FUNDER, SUPPLIER, or ADMIN
-                    subscribed: false,
-                    onboardingStep: 1,
-                    onboardingComplete: false
-                };
-                await setDoc(userRef, userData);
-            }
-
-            this.user = userData;
-            localStorage.setItem(STORE_KEY, JSON.stringify(userData));
-            this.init();
+            await this.handleAuthSuccess(result.user, intentType);
         } catch (error) {
             console.error("Auth Error:", error);
             alert("Login Failed: " + error.message);
         }
+    },
+
+    async processEmailAuth(e, intentType) {
+        e.preventDefault();
+        const action = e.submitter.value; // 'login' or 'register'
+        const email = e.target.email.value;
+        const password = e.target.password.value;
+
+        const originalText = e.submitter.innerHTML;
+        e.submitter.innerHTML = 'Processing...';
+        e.submitter.disabled = true;
+
+        try {
+            let result;
+            if (action === 'register') {
+                result = await createUserWithEmailAndPassword(auth, email, password);
+            } else {
+                result = await signInWithEmailAndPassword(auth, email, password);
+            }
+            await this.handleAuthSuccess(result.user, intentType);
+        } catch (error) {
+            console.error("Email Auth Error:", error);
+            alert("Auth Failed: " + error.message);
+            e.submitter.innerHTML = originalText;
+            e.submitter.disabled = false;
+        }
+    },
+
+    async handleAuthSuccess(user, intentType) {
+        const userRef = doc(db, "users", user.uid);
+        const docSnap = await getDoc(userRef);
+
+        let userData;
+        if (docSnap.exists()) {
+            userData = docSnap.data();
+        } else {
+            // First time login - set up the profile mapped to their intent 
+            userData = {
+                id: user.uid,
+                name: user.displayName || user.email.split('@')[0],
+                email: user.email,
+                type: intentType, // SME, FUNDER, SUPPLIER, or ADMIN
+                subscribed: false,
+                onboardingStep: 1,
+                onboardingComplete: false
+            };
+            await setDoc(userRef, userData);
+        }
+
+        this.user = userData;
+        localStorage.setItem(STORE_KEY, JSON.stringify(userData));
+        this.init();
     },
 
     async logout() {
@@ -275,7 +305,7 @@ const app = {
         `);
     },
 
-    showAuth(intentType = null) {
+    showAuth(intentType = null, method = 'select') {
         if (!intentType) {
             this.setView(`
             <div class="auth-wrapper hero-enter" style="max-width: 600px; margin: 4rem auto; text-align: center;">
@@ -306,6 +336,34 @@ const app = {
             return;
         }
 
+        if (method === 'email') {
+            this.setView(`
+                <div class="auth-wrapper hero-enter" style="max-width: 450px; margin: 4rem auto;">
+                    <button class="btn btn-secondary btn-sm" style="margin-bottom: 2rem;" onclick="app.showAuth('${intentType}', 'select')">&larr; Back to Options</button>
+                    <h2 style="margin-bottom: 0.5rem; font-size: 2rem; font-family: var(--font-heading);">Email Access</h2>
+                    <div class="badge" style="margin-bottom: 1.5rem; background: rgba(59,130,246,0.1); color: var(--primary);">Accessing as: ${intentType}</div>
+                    
+                    <div class="glass-card" style="text-align: left; padding: 2.5rem 2rem;">
+                        <form onsubmit="app.processEmailAuth(event, '${intentType}')">
+                            <div class="form-group">
+                                <label>Email Address</label>
+                                <input type="email" name="email" class="form-control" required placeholder="you@company.com">
+                            </div>
+                            <div class="form-group">
+                                <label>Password</label>
+                                <input type="password" name="password" class="form-control" required minlength="6" placeholder="••••••••">
+                            </div>
+                            <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                                <button type="submit" name="action" value="login" class="btn btn-outline" style="flex: 1;">Log In</button>
+                                <button type="submit" name="action" value="register" class="btn btn-primary" style="flex: 1;">Register</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `);
+            return;
+        }
+
         this.setView(`
             <div class="auth-wrapper hero-enter" style="max-width: 450px; margin: 4rem auto;">
                 <button class="btn btn-secondary btn-sm" style="margin-bottom: 2rem;" onclick="app.showAuth()">&larr; Change Role</button>
@@ -330,7 +388,7 @@ const app = {
                         Continue with Apple
                     </button>
                     
-                    <button class="btn btn-outline btn-large" style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 1rem; margin-bottom: 1rem;" onclick="app.login('${intentType}', 'email')">
+                    <button class="btn btn-outline btn-large" style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 1rem; margin-bottom: 1rem;" onclick="app.showAuth('${intentType}', 'email')">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2" ry="2"/><polyline points="3 7 12 13 21 7"/></svg>
                         Continue with Email
                     </button>
@@ -2020,8 +2078,9 @@ const app = {
                                             ${u.verified !== false ? 'Active & Verified' : 'Application Pending'}
                                         </span>
                                     </td>
-                                    <td style="padding: 1.2rem; text-align: right;">
-                                        <button class="btn btn-secondary btn-sm" onclick="alert('Viewing comprehensive profile for ${u.name}')">View Profile</button>
+                                    <td style="padding: 1.2rem; text-align: right; display: flex; justify-content: flex-end; gap: 0.5rem;">
+                                        <button class="btn btn-secondary btn-sm" onclick="app.showAdminUserVault('${u.id}')">Open Vault</button>
+                                        ${u.verified !== true ? `<button class="btn btn-primary btn-sm" onclick="app.verifyVaultUser('${u.id}', '${u.name}', '${u.email}')">Verify Profile</button>` : ''}
                                     </td>
                                 </tr>
                             `).join('') : '<tr><td colspan="4" style="padding: 3rem; text-align: center; color: var(--text-muted);">No platform users found in database.</td></tr>'}
@@ -2067,7 +2126,87 @@ const app = {
                     </div>
                 `}
             </div>
+            </div>
         `);
+    },
+
+    async showAdminUserVault(uid) {
+        try {
+            const userSnap = await getDoc(doc(db, "users", uid));
+            if (!userSnap.exists()) return alert("User not found.");
+            const u = userSnap.data();
+
+            this.setView(`
+                <div class="hero-enter" style="max-width: 800px; margin: 2rem auto;">
+                    <button class="btn btn-secondary" style="margin-bottom: 2rem;" onclick="app.showAdminUsers()">&larr; Back to Users List</button>
+                    <h2>Platform Vault: ${u.name}</h2>
+                    <p class="subtext" style="margin-bottom: 2rem;">Review identity and compliance records before issuing manual platform verification.</p>
+
+                    <div class="glass-card" style="margin-bottom: 2rem;">
+                        <h3 style="margin-top: 0; color: var(--primary);">Profile Data</h3>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                            <div><strong>Role:</strong> <span class="badge" style="background: rgba(59,130,246,0.1); color: var(--primary);">${u.type}</span></div>
+                            <div><strong>Email:</strong> ${u.email}</div>
+                            <div><strong>Phone:</strong> ${u.phone || 'N/A'}</div>
+                            <div><strong>Province:</strong> ${u.province || 'N/A'}</div>
+                            ${u.type === 'SME' ? `<div><strong>CIPC Reg:</strong> ${u.regNum || 'N/A'}</div>` : ''}
+                            ${u.type === 'SUPPLIER' ? `
+                                <div><strong>Industry:</strong> ${u.industry || 'N/A'}</div>
+                                <div><strong>Turnover:</strong> ${u.annualTurnover || 'N/A'}</div>
+                                <div><strong>Years Active:</strong> ${u.yearsInBusiness || 'N/A'}</div>
+                            ` : ''}
+                        </div>
+                    </div>
+
+                    <div class="glass-card" style="margin-bottom: 2rem; border-left: 4px solid var(--accent);">
+                        <h3 style="margin-top: 0; color: var(--accent);">Uploaded Compliance Documents</h3>
+                        <div style="background: rgba(16, 185, 129, 0.05); padding: 1.5rem; text-align: center; border: 1px dashed var(--accent); margin-top: 1rem; border-radius: 8px;">
+                            <p style="margin: 0; color: var(--text-color);">No physical documents uploaded yet.</p>
+                            <p class="subtext" style="font-size: 0.85rem; margin-top: 0.5rem;">The user has self-certified their details during onboarding.</p>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 1rem;">
+                        ${u.verified !== true ? `
+                            <button class="btn btn-primary" style="flex: 1;" onclick="app.verifyVaultUser('${u.id}', '${u.name}', '${u.email}')">Manually Verify & Send Email</button>
+                        ` : `
+                            <button class="btn btn-primary" style="flex: 1;" disabled>User is Already Verified</button>
+                        `}
+                        <button class="btn btn-outline" style="flex: 1; color: #ef4444; border-color: rgba(239,68,68,0.3);" onclick="alert('Account Suspended.'); app.showAdminUsers();">Suspend Account</button>
+                    </div>
+                </div>
+            `);
+        } catch (error) {
+            console.error(error);
+            alert("Error loading vault.");
+        }
+    },
+
+    async verifyVaultUser(uid, name, email) {
+        if (!confirm(`Are you sure you want to verify ${name}?\n\nThis will trigger an automated approval email to ${email}.`)) return;
+
+        try {
+            const userRef = doc(db, "users", uid);
+            await setDoc(userRef, { verified: true }, { merge: true });
+
+            // Simulate the Automated Email Pipeline
+            const notifRef = doc(db, "user_notifications", uid);
+            const notifSnap = await getDoc(notifRef);
+            let notifs = notifSnap.exists() ? notifSnap.data().data : [];
+            notifs.unshift({
+                id: Date.now(),
+                text: `✅ PROFILE VERIFIED: Your Fanya Pesa account has been fully verified by the Admin. An automated confirmation email has been dispatched to ${email}.`,
+                read: false,
+                time: "Just now"
+            });
+            await setDoc(notifRef, { data: notifs }, { merge: true });
+
+            alert(`Success! Profile marked as VERIFIED.\n\n[MOCK EMAIL TRIGGERED to ${email}]`);
+            this.showAdminUsers();
+        } catch (error) {
+            console.error("Verification Error:", error);
+            alert("System Error: Could not verify user.");
+        }
     },
 
     async verifyFunder(uid) {
