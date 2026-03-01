@@ -1,7 +1,33 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { db } from '../firebase';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
 
 export default function SmeDashboard({ user, onNavigate }) {
-    const [rfqs, setRfqs] = useState([]); // Placeholder for RFQs
+    const [rfqs, setRfqs] = useState([]);
+    const [deals, setDeals] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        if (!user.id) return;
+
+        // Listen for SME's own RFQs
+        const qRfqs = query(collection(db, "rfqs"), where("smeId", "==", user.id));
+        const unsubRfqs = onSnapshot(qRfqs, (snapshot) => {
+            setRfqs(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        });
+
+        // Listen for SME's own Funding Deals
+        const qDeals = query(collection(db, "deals"), where("smeId", "==", user.id));
+        const unsubDeals = onSnapshot(qDeals, (snapshot) => {
+            setDeals(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+            setLoading(false);
+        });
+
+        return () => {
+            unsubRfqs();
+            unsubDeals();
+        };
+    }, [user.id]);
 
     const renderSuggestiveActions = () => {
         const actions = [];
@@ -134,39 +160,76 @@ export default function SmeDashboard({ user, onNavigate }) {
                             </div>
                         </div>
                     ) : (
-                        <div className="bg-white dark:bg-gray-800/60 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-3xl p-8">
-                            <div className="flex justify-between items-center mb-8">
-                                <div>
-                                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">Active Quotation Requests (RFQs)</h3>
-                                    <p className="text-sm text-gray-500 dark:text-gray-400">Track quotes from verified suppliers in real-time.</p>
+                        <>
+                            <div className="bg-white dark:bg-gray-800/60 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-3xl p-8">
+                                <div className="flex justify-between items-center mb-8">
+                                    <div>
+                                        <h3 className="text-xl font-bold text-gray-900 dark:text-white">Active Quotation Requests (RFQs)</h3>
+                                        <p className="text-sm text-gray-500 dark:text-gray-400">Track quotes from verified suppliers in real-time.</p>
+                                    </div>
+                                    <span className="px-3 py-1 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold uppercase tracking-widest rounded-full border border-emerald-100 dark:border-emerald-800">SME Pro Active</span>
                                 </div>
-                                <span className="px-3 py-1 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold uppercase tracking-widest rounded-full border border-emerald-100 dark:border-emerald-800">SME Pro Active</span>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {rfqs.length > 0 ? rfqs.map((rfq, i) => (
+                                        <div key={i} className="border border-gray-100 dark:border-gray-700 rounded-2xl p-5 hover:border-blue-500/30 transition-colors">
+                                            <div className="flex justify-between items-start mb-2">
+                                                <h4 className="font-bold text-gray-900 dark:text-white">{rfq.title}</h4>
+                                                <span className="text-[10px] bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2 py-1 rounded font-bold">{rfq.status}</span>
+                                            </div>
+                                            <p className="text-xs text-gray-500 mb-4 truncate">{rfq.specs}</p>
+                                            <button className="w-full py-2 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-white rounded-lg text-xs font-bold hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">View Quotes ({rfq.quotes?.length || 0})</button>
+                                        </div>
+                                    )) : (
+                                        <div className="col-span-2 py-12 text-center">
+                                            <div className="text-4xl mb-4 opacity-20">📦</div>
+                                            <p className="text-gray-400 text-sm italic">You have no active quotation requests.</p>
+                                            <button
+                                                onClick={() => onNavigate('rfq-form')}
+                                                className="mt-4 text-blue-600 dark:text-blue-400 text-sm font-bold hover:underline"
+                                            >
+                                                Create your first RFQ
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {rfqs.length > 0 ? rfqs.map((rfq, i) => (
-                                    <div key={i} className="border border-gray-100 dark:border-gray-700 rounded-2xl p-5 hover:border-blue-500/30 transition-colors">
-                                        <div className="flex justify-between items-start mb-2">
-                                            <h4 className="font-bold text-gray-900 dark:text-white">{rfq.title}</h4>
-                                            <span className="text-[10px] bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2 py-1 rounded font-bold">{rfq.status}</span>
+                            {/* Funding Deals Section */}
+                            <div className="bg-white dark:bg-gray-800/60 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-3xl p-8 mt-8">
+                                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Tender Funding Status</h3>
+                                <p className="text-sm text-gray-500 dark:text-gray-400 mb-8">Track your funding applications and capital deployment.</p>
+
+                                <div className="space-y-4">
+                                    {deals.length > 0 ? deals.map(deal => (
+                                        <div key={deal.id} className="bg-gray-50 dark:bg-gray-900/40 p-5 rounded-2xl border border-gray-100 dark:border-gray-700 flex justify-between items-center transition-all hover:border-blue-500/30">
+                                            <div>
+                                                <h4 className="font-bold text-gray-900 dark:text-white">R{Number(deal.amount || 0).toLocaleString()} Funding Request</h4>
+                                                <p className="text-xs text-gray-400 uppercase font-black tracking-widest mt-1">{deal.category}</p>
+                                            </div>
+                                            <div className="flex items-center gap-4">
+                                                <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${deal.status === 'Capital Secured' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' :
+                                                    deal.status === 'Pending Review' ? 'bg-amber-50 text-amber-600 border border-amber-100' :
+                                                        'bg-blue-50 text-blue-600 border border-blue-100'
+                                                    }`}>
+                                                    {deal.status}
+                                                </span>
+                                                <button
+                                                    onClick={() => onNavigate('funding-details', { dealId: deal.id })}
+                                                    className="text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                                                >
+                                                    &rarr;
+                                                </button>
+                                            </div>
                                         </div>
-                                        <p className="text-xs text-gray-500 mb-4 truncate">{rfq.specs}</p>
-                                        <button className="w-full py-2 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-white rounded-lg text-xs font-bold hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">View Quotes ({rfq.quotes?.length || 0})</button>
-                                    </div>
-                                )) : (
-                                    <div className="col-span-2 py-12 text-center">
-                                        <div className="text-4xl mb-4 opacity-20">📦</div>
-                                        <p className="text-gray-400 text-sm italic">You have no active quotation requests.</p>
-                                        <button
-                                            onClick={() => onNavigate('rfq-form')}
-                                            className="mt-4 text-blue-600 dark:text-blue-400 text-sm font-bold hover:underline"
-                                        >
-                                            Create your first RFQ
-                                        </button>
-                                    </div>
-                                )}
+                                    )) : (
+                                        <div className="py-10 text-center border-2 border-dashed border-gray-100 dark:border-gray-700 rounded-3xl">
+                                            <p className="text-gray-400 text-sm">No active funding deals found.</p>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                        </div>
+                        </>
                     )}
                 </div>
             </div>

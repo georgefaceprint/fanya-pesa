@@ -8,6 +8,9 @@ import Dashboard from './components/Dashboard';
 import Onboarding from './components/Onboarding';
 import Vault from './components/Vault';
 import RfqForm from './components/RfqForm';
+import FundingRequest from './components/FundingRequest';
+import Subscription from './components/Subscription';
+import ProfileEdit from './components/ProfileEdit';
 import AdminPanel from './components/AdminPanel';
 import './index.css';
 
@@ -103,6 +106,27 @@ export default function App() {
       {currentView === 'onboarding' && user && <Onboarding user={user} onComplete={handleOnboardingComplete} />}
       {currentView === 'vault' && user && <Vault user={user} onBack={() => setCurrentView('dashboard')} />}
       {currentView === 'rfq-form' && user && <RfqForm user={user} onBack={() => setCurrentView('dashboard')} />}
+      {currentView === 'funding-request' && user && <FundingRequest user={user} onBack={() => setCurrentView('dashboard')} />}
+      {currentView === 'subscription' && user && (
+        <Subscription
+          user={user}
+          onBack={() => setCurrentView('dashboard')}
+          onSuccess={() => {
+            setUser(prev => ({ ...prev, subscribed: true }));
+            setCurrentView('dashboard');
+          }}
+        />
+      )}
+      {currentView === 'profile-edit' && user && (
+        <ProfileEdit
+          user={user}
+          onBack={() => setCurrentView('dashboard')}
+          onSaved={(updatedUser) => {
+            setUser(prev => ({ ...prev, ...updatedUser }));
+            setCurrentView('dashboard');
+          }}
+        />
+      )}
       {currentView === 'admin-panel' && user && <AdminPanel user={user} onBack={() => setCurrentView('dashboard')} />}
       {currentView === 'dashboard' && user && (
         <Dashboard

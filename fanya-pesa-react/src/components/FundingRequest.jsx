@@ -1,0 +1,152 @@
+import React, { useState, useEffect } from 'react';
+import { db, storage } from '../firebase';
+import { collection, addDoc, query, where, getDocs } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+
+const CATEGORIES = [
+    "IT Hardware", "Construction Materials", "Logistics", "Textiles", "Office Supplies", "Fuel", "Industrial Tools", "Consultancy"
+];
+
+export default function FundingRequest({ user, onBack }) {
+    const [loading, setLoading] = useState(false);
+    const [matches, setMatches] = useState(0);
+    const [formData, setFormData] = useState({
+        amount: '',
+        category: '',
+        description: '',
+        file: null
+    });
+
+    useEffect(() => {
+        if (!formData.category) {
+            setMatches(0);
+            return;
+        }
+
+        // Matching Logic: Find how many verified funders match this category
+        const findMatches = async () => {
+            const q = query(collection(db, "users"), where("type", "==", "FUNDER"));
+            const snap = await getDocs(q);
+            const count = snap.docs.filter(doc => {
+                const d = doc.data();
+                const cats = Array.isArray(d.preferredCategories) ? d.preferredCategories :
+                    (Array.isArray(d.industry) ? d.industry : [d.industry]);
+                return cats.includes(formData.category) || cats.length === 0;
+            }).length;
+            setMatches(count);
+        };
+        findMatches();
+    }, [formData.category]);
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+
+        try {
+            let fileUrl = null;
+            if (formData.file) {
+                const storageRef = ref(storage, `deal_docs/${user.id}_${Date.now()}_${formData.file.name}`);
+                const snapshot = await uploadBytes(storageRef, formData.file);
+                fileUrl = await getDownloadURL(snapshot.ref);
+            }
+
+            await addDoc(collection(db, "deals"), {
+                smeId: user.id,
+                smeName: user.name,
+                amount: Number(formData.amount),
+                category: formData.category,
+                description: formData.description,
+                docUrl: fileUrl,
+                status: 'Pending Review',
+                createdAt: new Date().toISOString()
+            });
+
+            alert('Funding request submitted! Our verified funders have been notified.');
+            onBack();
+        } catch (error) {
+            console.error("Error submitting funding request:", error);
+            alert("Failed to submit request.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="max-w-xl mx-auto py-10 animate-fade-in px-4">
+            <button onClick={onBack} className="mb-8 text-sm font-bold text-gray-500 hover:text-gray-900 transition-colors flex items-center gap-2">
+                <span>&larr;</span> Back to Dashboard
+            </button>
+            <h2 className="text-3xl font-black text-gray-900 dark:text-white mb-2">Apply for Tender Funding</h2>
+            <p className="text-gray-500 dark:text-gray-400 mb-8 leading-relaxed">Submit your request to be matched with verified funders and secure the capital needed for your project.</p>
+
+            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-3xl p-8 shadow-xl">
+                <form onSubmit={handleSubmit} className="space-y-6">
+                    <div>
+                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Funding Amount (ZAR)</label>
+                        <div className="relative">
+                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">R</span>
+                            <input
+                                type="number"
+                                required
+                                className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl pl-10 pr-4 py-3 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none font-mono"
+                                placeholder="e.g. 250000"
+                                onChange={e => setFormData({ ...formData, amount: e.target.value })}
+                            />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Funding Category</label>
+                        <select
+                            required
+                            className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                            onChange={e => setFormData({ ...formData, category: e.target.value })}
+                        >
+                            <option value="">Select Category...</option>
+                            {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                        </select>
+                        {formData.category && (
+                            <div className="mt-3 flex items-center gap-2 text-xs font-bold text-emerald-600 dark:text-emerald-400 animate-fade-in">
+                                <span className="w-2 h-2 bg-emerald-500 rounded-full animate-ping"></span>
+                                {matches > 0 ? `${matches} Verified Funders match this category` : 'Finding best funders in our network...'}
+                            </div>
+                        )}
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Purpose of Funding</label>
+                        <textarea
+                            required
+                            rows="4"
+                            className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none resize-none"
+                            placeholder="Briefly describe the tender or business needs this funding will fulfill."
+                            onChange={e => setFormData({ ...formData, description: e.target.value })}
+                        ></textarea>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Supporting Documents</label>
+                        <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest mb-3">Upload POs, Invoices, or Bank Statements</p>
+                        <input
+                            type="file"
+                            className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                            onChange={e => setFormData({ ...formData, file: e.target.files[0] })}
+                        />
+                    </div>
+
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full py-4 bg-gray-900 dark:bg-blue-600 text-white rounded-2xl font-black shadow-xl transition-all active:scale-95 disabled:opacity-50"
+                    >
+                        {loading ? 'Submitting to Network...' : 'Submit Funding Request'}
+                    </button>
+
+                    <p className="text-center text-[10px] text-gray-400 uppercase font-bold tracking-tighter">
+                        Protected by Fanya Pesa Escrow & Verification Systems
+                    </p>
+                </form>
+            </div>
+        </div>
+    );
+}

@@ -1,20 +1,44 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { db } from '../firebase';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
 
 export default function SupplierDashboard({ user, onNavigate }) {
-    const [rfqs, setRfqs] = useState([
-        {
-            id: "rfq_9281",
-            title: "Supply of 50 HP Laptops",
-            smeName: "Cape Logistics Ltd",
-            location: "Johannesburg, GP",
-            specs: "Intel Core i7, 16GB RAM, 512GB SSD. Required within 14 days.",
-            status: "Requested",
-            quotes: 4,
-            category: "IT Hardware"
-        }
-    ]);
-
+    const [rfqs, setRfqs] = useState([]);
     const [activeDeals, setActiveDeals] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        if (!user.id) return;
+
+        // Matching Logic: Fetch all Requested RFQs and filter by Supplier category
+        const qRfqs = query(collection(db, "rfqs"), where("status", "==", "Requested"));
+        const unsubRfqs = onSnapshot(qRfqs, (snapshot) => {
+            const allRfqs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+            // Client-side filtering for category match
+            const matchedRfqs = allRfqs.filter(rfq => {
+                const userCats = Array.isArray(user.preferredCategories) ? user.preferredCategories :
+                    (Array.isArray(user.industry) ? user.industry :
+                        (user.industry ? [user.industry] : []));
+
+                return rfq.category === 'All' || userCats.includes(rfq.category) || userCats.length === 0;
+            });
+
+            setRfqs(matchedRfqs);
+            setLoading(false);
+        });
+
+        // Listen for active fulfillment deals where this supplier is linked
+        const qDeals = query(collection(db, "deals"), where("supplierName", "==", user.name || ""));
+        const unsubDeals = onSnapshot(qDeals, (snapshot) => {
+            setActiveDeals(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        });
+
+        return () => {
+            unsubRfqs();
+            unsubDeals();
+        };
+    }, [user.id, user.industry, user.name]);
 
     return (
         <div className="space-y-8">
@@ -92,12 +116,22 @@ export default function SupplierDashboard({ user, onNavigate }) {
                                         </p>
                                         <div className="flex justify-between items-center pt-4 border-t border-gray-50 dark:border-gray-700/50">
                                             <div className="text-xs text-gray-400">
-                                                RFQ ID: {rfq.id.toUpperCase()} • {rfq.quotes} Quotes Received
+                                                RFQ ID: {rfq.id.toUpperCase()} • {rfq.quotes?.length || 0} Quotes Received
                                             </div>
                                             <button className="px-5 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl text-xs font-bold hover:opacity-90 transition-opacity">Submit Custom Quote</button>
                                         </div>
                                     </div>
                                 ))}
+                                {rfqs.length === 0 && !loading && (
+                                    <div className="py-12 text-center text-gray-400 italic">
+                                        No quotation requests currently match your industry mandate.
+                                    </div>
+                                )}
+                                {loading && (
+                                    <div className="py-12 text-center text-gray-400">
+                                        Scanning national database...
+                                    </div>
+                                )}
                             </div>
                         </div>
 
@@ -112,7 +146,24 @@ export default function SupplierDashboard({ user, onNavigate }) {
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {/* Deal items would go here */}
+                                    {activeDeals.map(deal => (
+                                        <div key={deal.id} className="bg-gray-50 dark:bg-gray-900/40 p-5 rounded-2xl border border-blue-100 dark:border-blue-900/30 transition-all hover:border-blue-500/30">
+                                            <div className="flex justify-between items-start mb-4">
+                                                <div className="max-w-[70%]">
+                                                    <h4 className="font-bold text-gray-900 dark:text-white truncate">Active: {deal.category}</h4>
+                                                    <p className="text-[10px] text-gray-400 uppercase font-black tracking-widest mt-1">SME: {deal.smeName}</p>
+                                                </div>
+                                                <span className="px-2 py-1 bg-emerald-50 text-emerald-600 rounded text-[10px] font-bold uppercase">{deal.status === 'Delivery Confirmed' ? '100% Paid' : '30% Paid'}</span>
+                                            </div>
+                                            <p className="text-xs text-gray-500 mb-6">Funder: {deal.funderName}</p>
+                                            <button
+                                                onClick={() => onNavigate('supplier-milestones', { dealId: deal.id })}
+                                                className="w-full py-2.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-white rounded-xl text-xs font-bold border border-gray-200 dark:border-gray-700 hover:bg-gray-50 transition-colors"
+                                            >
+                                                {deal.status === 'Delivery Confirmed' ? 'View Details' : 'Upload Waybill'}
+                                            </button>
+                                        </div>
+                                    ))}
                                 </div>
                             )}
                         </div>
@@ -124,23 +175,24 @@ export default function SupplierDashboard({ user, onNavigate }) {
                                 <span>📋</span> Supplier Profile
                             </h4>
                             <div className="space-y-4">
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-gray-500">Official Name</span>
-                                    <span className="font-bold text-right">{user.name}</span>
+                                <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400">
+                                    <span>Official Name</span>
+                                    <span className="font-bold text-gray-900 dark:text-white text-right">{user.name}</span>
                                 </div>
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-gray-500">Supplier ID</span>
-                                    <span className="font-mono text-blue-600 dark:text-blue-400">SA-9281</span>
+                                <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400">
+                                    <span>Supplier ID</span>
+                                    <span className="font-mono text-blue-600 dark:text-blue-400">FP-SUP-{user.id?.substring(0, 4).toUpperCase()}</span>
                                 </div>
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-gray-500">Categories</span>
-                                    <span className="text-right max-w-[50%]">{Array.isArray(user.industry) ? user.industry.join(', ') : (user.industry || 'All')}</span>
+                                <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400">
+                                    <span>Categories</span>
+                                    <span className="text-gray-900 dark:text-white text-right max-w-[50%]">{Array.isArray(user.industry) ? user.industry.join(', ') : (user.industry || 'All')}</span>
                                 </div>
                             </div>
-                            <button className="w-full mt-8 py-3 bg-gray-50 dark:bg-gray-700/50 text-gray-700 dark:text-white rounded-xl text-sm font-bold border border-gray-100 dark:border-gray-700">Update Match Criteria</button>
+                            <button onClick={() => onNavigate('profile-edit')} className="w-full mt-8 py-3 bg-gray-50 dark:bg-gray-700/50 text-gray-700 dark:text-white rounded-xl text-sm font-bold border border-gray-100 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">Update Match Criteria</button>
                         </div>
 
-                        <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-3xl p-8 text-white">
+                        <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-3xl p-8 text-white relative overflow-hidden shadow-xl shadow-indigo-500/20">
+                            <div className="absolute top-0 right-0 p-4 opacity-10 text-6xl">🔒</div>
                             <h4 className="text-lg font-bold mb-2">Guaranteed Payment</h4>
                             <p className="text-white/70 text-sm mb-6 leading-relaxed">
                                 All RFQs on Fanya Pesa are pre-funded or backed by verified funding facilities. Your payment is held in escrow from the moment you accept a contract.
