@@ -45,7 +45,8 @@ const app = {
             const usersSnap = await getDocs(collection(db, "users"));
             usersSnap.forEach(async (uSnap) => {
                 const ud = uSnap.data();
-                if (ud.type === 'SUPPLIER' && (ud.industry === category || category === 'All')) {
+                const matchedCategory = (Array.isArray(ud.industry) && ud.industry.includes(category)) || ud.industry === category || category === 'All';
+                if (ud.type === 'SUPPLIER' && matchedCategory) {
                     this.sendNotification(ud.id, ud.email, message);
                 }
             });
@@ -126,23 +127,17 @@ const app = {
         onSnapshot(doc(db, "system_config", "categories"), (docSnap) => {
             if (docSnap.exists()) {
                 this.fundingCategories = docSnap.data().data;
-            } else {
                 this.fundingCategories = [
-                    { id: 1, name: 'Services: Professional & Technical', description: 'Management consultancy, architectural, engineering, legal, accounting, research, advertising' },
-                    { id: 2, name: 'Services: Functional & Operations', description: 'Cleaning, security, building/landscape services, administrative and support activities' },
-                    { id: 3, name: 'Construction & Engineering', description: 'Building construction, civil engineering, specialised construction, building/electrical services' },
-                    { id: 4, name: 'Information & Communication', description: 'Publishing, programming, broadcasting, telecommunications, and information services' },
-                    { id: 5, name: 'Healthcare & Social Services', description: 'Human health activities, residential care, and medical supplies' },
-                    { id: 6, name: 'Education & Culture', description: 'Education, libraries, museums, arts, entertainment and recreation activities' },
-                    { id: 7, name: 'Manufacturing & Production', description: 'Manufacture of textiles, paper, chemicals, metals, machinery, electronics, and furniture' },
-                    { id: 8, name: 'Transportation & Logistics', description: 'Land, water, air transport, warehousing, and postal/courier activities' },
-                    { id: 9, name: 'Utilities & Infrastructure', description: 'Electricity, gas, water supply, sewerage, waste management and remediation' },
-                    { id: 10, name: 'Supplies & Equipment', description: 'General supplies, computer, electrical, textiles, stationery and perishable provisions' },
-                    { id: 11, name: 'Mining & Extraction', description: 'Mining and quarrying, coal, lignite, and mining support services' },
-                    { id: 12, name: 'Financial & Insurance', description: 'Financial services, insurance, reinsurance, pension funding, and auxiliary activities' },
-                    { id: 13, name: 'Accommodation & Food Services', description: 'Accommodation, food and beverage service activities' },
-                    { id: 14, name: 'Real Estate & Property', description: 'Real estate activities and property management' },
-                    { id: 15, name: 'Other Services & Disposals', description: 'General services, retail trade, motor vehicle repair, and disposals' }
+                    { id: 1, name: 'Construction & Civil Works', description: 'General construction, civil engineering, electrical' },
+                    { id: 2, name: 'Media Production & PR', description: 'Video, audio production, marketing, and public relations' },
+                    { id: 3, name: 'Software & IT Development', description: 'App development, networking, bespoke software' },
+                    { id: 4, name: 'Logistics & Supply Chain', description: 'Transport, warehousing, distribution' },
+                    { id: 5, name: 'Cleaning & Facilities Management', description: 'Janitorial, security, pest control' },
+                    { id: 6, name: 'Consulting & Professional Services', description: 'Accounting, legal, management consulting' },
+                    { id: 7, name: 'Medical & Healthcare Products', description: 'Equipment, generic pharmaceuticals, social services' },
+                    { id: 8, name: 'Catering & Event Management', description: 'Food services, corporate events, equipment hire' },
+                    { id: 9, name: 'Agriculture & Agri-processing', description: 'Farming, milling, food packaging' },
+                    { id: 10, name: 'General Supply & Retail', description: 'Stationery, office supplies, protective clothing' }
                 ];
                 this.saveFundingCategories();
             }
@@ -544,8 +539,11 @@ const app = {
                             </div>
                             <div class="form-group">
                                 <label>${this.user.type === 'SUPPLIER' ? 'Supply Category / Mandate' : 'Funding Category Needs'}</label>
-                                <select name="preferredCategory" class="form-control" required>
-                                    ${this.fundingCategories.map(c => `<option value="${c.name}" ${currentData.preferredCategory === c.name ? 'selected' : ''}>${c.name}</option>`).join('')}
+                                <p class="subtext" style="font-size: 0.8rem; margin-top: 5px;">Hold Cmd/Ctrl to select multiple (Max 5)</p>
+                                <select name="preferredCategory" class="form-control" multiple required size="5">
+                                    ${this.fundingCategories.map(c => `
+                                        <option value="${c.name}" ${Array.isArray(currentData.preferredCategory) && currentData.preferredCategory.includes(c.name) ? 'selected' : (currentData.preferredCategory === c.name ? 'selected' : '')}>${c.name}</option>
+                                    `).join('')}
                                 </select>
                             </div>
                             ${this.user.type === 'SUPPLIER' ? `
@@ -604,8 +602,25 @@ const app = {
     },
 
     async saveOnboardingStep(step, form) {
+        event.preventDefault();
         const formData = new FormData(form);
         const data = Object.fromEntries(formData.entries());
+
+        // Handle multi-select for categories manually
+        const categorySelect = form.querySelector('select[name="preferredCategory"]');
+        if (categorySelect && categorySelect.multiple) {
+            const selectedOptions = Array.from(categorySelect.selectedOptions).map(opt => opt.value);
+            if (selectedOptions.length > 5) {
+                alert("Error: Maximum 5 industry categories allowed.");
+                return;
+            }
+            if (selectedOptions.length === 0) {
+                alert("Please select at least one category.");
+                return;
+            }
+            data.preferredCategory = selectedOptions;
+        }
+
         const total = this.onboardingSteps.length;
 
         // Update local user state
@@ -1141,14 +1156,11 @@ const app = {
                             <input type="text" id="profileReg" class="form-control" value="${this.user.registrationNumber || ''}" required>
                         </div>
                         <div class="form-group">
-                            <label>Industry / Sector</label>
-                            <select id="profileIndustry" class="form-control">
-                                <option value="Construction" ${this.user.industry === 'Construction' ? 'selected' : ''}>Construction</option>
-                                <option value="Technology" ${this.user.industry === 'Technology' ? 'selected' : ''}>Technology</option>
-                                <option value="Agriculture" ${this.user.industry === 'Agriculture' ? 'selected' : ''}>Agriculture</option>
-                                <option value="Retail" ${this.user.industry === 'Retail' ? 'selected' : ''}>Retail</option>
-                                <option value="Printing" ${this.user.industry === 'Printing' ? 'selected' : ''}>Printing</option>
-                                <option value="Manufacturing" ${this.user.industry === 'Manufacturing' ? 'selected' : ''}>Manufacturing</option>
+                            <label>Industry / Sector (Select up to 5 by holding Cmd/Ctrl)</label>
+                            <select id="profileIndustry" class="form-control" multiple size="5" required>
+                                ${this.fundingCategories.map(c => `
+                                    <option value="${c.name}" ${Array.isArray(this.user.industry) && this.user.industry.includes(c.name) ? 'selected' : (this.user.industry === c.name ? 'selected' : '')}>${c.name}</option>
+                                `).join('')}
                             </select>
                         </div>
                         <p class="subtext" style="margin-bottom: 1rem;">Note: Compliance documents (CSD, Tax) should be uploaded via the Document Vault.</p>
@@ -1162,7 +1174,17 @@ const app = {
     async saveProfile() {
         const name = document.getElementById('profileName').value;
         const reg = document.getElementById('profileReg').value;
-        const industry = document.getElementById('profileIndustry').value;
+        const industrySelect = document.getElementById('profileIndustry');
+        const industry = Array.from(industrySelect.selectedOptions).map(o => o.value);
+
+        if (industry.length > 5) {
+            alert("Error: You can strictly select a maximum of 5 matching categories.");
+            return;
+        }
+        if (industry.length === 0) {
+            alert("Please select at least one category to receive matched RFQs.");
+            return;
+        }
 
         const btn = document.querySelector('#profileEditForm button');
         const ogText = btn.innerHTML;
@@ -2019,27 +2041,22 @@ const app = {
     },
 
     loadOfficialCategories() {
-        if (!confirm("Are you sure? This will replace all current categories with the official SA Tender categories!")) return;
+        if (!confirm("Are you sure? This will replace all current categories with the official scraped Tender categories!")) return;
         this.fundingCategories = [
-            { id: 1, name: 'Services: Professional & Technical', description: 'Management consultancy, architectural, engineering, legal, accounting, research, advertising' },
-            { id: 2, name: 'Services: Functional & Operations', description: 'Cleaning, security, building/landscape services, administrative and support activities' },
-            { id: 3, name: 'Construction & Engineering', description: 'Building construction, civil engineering, specialised construction, building/electrical services' },
-            { id: 4, name: 'Information & Communication', description: 'Publishing, programming, broadcasting, telecommunications, and information services' },
-            { id: 5, name: 'Healthcare & Social Services', description: 'Human health activities, residential care, and medical supplies' },
-            { id: 6, name: 'Education & Culture', description: 'Education, libraries, museums, arts, entertainment and recreation activities' },
-            { id: 7, name: 'Manufacturing & Production', description: 'Manufacture of textiles, paper, chemicals, metals, machinery, electronics, and furniture' },
-            { id: 8, name: 'Transportation & Logistics', description: 'Land, water, air transport, warehousing, and postal/courier activities' },
-            { id: 9, name: 'Utilities & Infrastructure', description: 'Electricity, gas, water supply, sewerage, waste management and remediation' },
-            { id: 10, name: 'Supplies & Equipment', description: 'General supplies, computer, electrical, textiles, stationery and perishable provisions' },
-            { id: 11, name: 'Mining & Extraction', description: 'Mining and quarrying, coal, lignite, and mining support services' },
-            { id: 12, name: 'Financial & Insurance', description: 'Financial services, insurance, reinsurance, pension funding, and auxiliary activities' },
-            { id: 13, name: 'Accommodation & Food Services', description: 'Accommodation, food and beverage service activities' },
-            { id: 14, name: 'Real Estate & Property', description: 'Real estate activities and property management' },
-            { id: 15, name: 'Other Services & Disposals', description: 'General services, retail trade, motor vehicle repair, and disposals' }
+            { id: 1, name: 'Construction & Civil Works', description: 'General construction, civil engineering, electrical' },
+            { id: 2, name: 'Media Production & PR', description: 'Video, audio production, marketing, and public relations' },
+            { id: 3, name: 'Software & IT Development', description: 'App development, networking, bespoke software' },
+            { id: 4, name: 'Logistics & Supply Chain', description: 'Transport, warehousing, distribution' },
+            { id: 5, name: 'Cleaning & Facilities Management', description: 'Janitorial, security, pest control' },
+            { id: 6, name: 'Consulting & Professional Services', description: 'Accounting, legal, management consulting' },
+            { id: 7, name: 'Medical & Healthcare Products', description: 'Equipment, generic pharmaceuticals, social services' },
+            { id: 8, name: 'Catering & Event Management', description: 'Food services, corporate events, equipment hire' },
+            { id: 9, name: 'Agriculture & Agri-processing', description: 'Farming, milling, food packaging' },
+            { id: 10, name: 'General Supply & Retail', description: 'Stationery, office supplies, protective clothing' }
         ];
         this.saveFundingCategories();
         this.showAdminCategories();
-        alert("Official categories loaded successfully!");
+        alert("Official platform matching categories loaded successfully!");
     },
 
     addFundingCategory(form) {
