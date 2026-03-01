@@ -537,10 +537,11 @@ const app = {
 
                 <div class="glass-card">
                     <form onsubmit="app.saveUserProfile(event)">
-                        <div style="display: flex; justify-content: center; margin-bottom: 2rem;">
-                            <div style="width: 100px; height: 100px; border-radius: 50%; background: var(--bg-hover); border: 2px dashed var(--border); display: flex; align-items: center; justify-content: center; font-size: 3rem; color: var(--primary);">
+                        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 2rem;">
+                            <div style="width: 100px; height: 100px; border-radius: 50%; background: var(--bg-hover); border: 2px dashed var(--border); display: flex; align-items: center; justify-content: center; font-size: 3rem; color: var(--primary); margin-bottom: 1rem;">
                                 ${this.user.name.charAt(0).toUpperCase()}
                             </div>
+                            <span class="badge" style="background: rgba(59, 130, 246, 0.1); color: var(--primary); text-transform: uppercase;">Profile Role: ${this.user.type || 'Standard'}</span>
                         </div>
 
                         <div class="form-group">
