@@ -9,8 +9,8 @@ admin.initializeApp();
 const mailTransport = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-        user: functions.config().email.user || 'YOUR_EMAIL@gmail.com',
-        pass: functions.config().email.pass || 'YOUR_APP_PASSWORD',
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
     },
 });
 

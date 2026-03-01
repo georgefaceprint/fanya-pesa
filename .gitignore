@@ -1,0 +1,8 @@
+node_modules
+.DS_Store
+.env
+functions/.env
+fanya-pesa-react/dist
+fanya-pesa-react/node_modules
+firebase-debug.log
+firebase-debug.*.log
