@@ -12,9 +12,19 @@ service cloud.firestore {
     match /users/{userId} {
       // Anyone can read a user profile (needed for matching/reviewing)
       allow read: if request.auth != null;
-      // Users can only create or update their own profile
-      allow create, update: if request.auth != null && request.auth.uid == userId;
-      // Admins can verify profiles
+      // Users can create their own profile, but cannot set themselves as ADMIN or VERIFIED
+      allow create: if request.auth != null 
+                    && request.auth.uid == userId
+                    && request.resource.data.type != 'ADMIN'
+                    && request.resource.data.verified != true;
+                    
+      // Users can update their own profile, but cannot change their type to ADMIN or verify themselves
+      allow update: if request.auth != null 
+                    && request.auth.uid == userId
+                    && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['type', 'verified']) 
+                        || (request.resource.data.type == resource.data.type && request.resource.data.verified == resource.data.verified));
+                        
+      // Admins can update/verify profiles
       allow update: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.type == 'ADMIN';
     }
 
@@ -42,9 +52,12 @@ service cloud.firestore {
     
     // Notifications
     match /user_notifications/{userId} {
-      allow read: if request.auth != null && request.auth.uid == userId;
-      // System/Users can write notifications to others (broadcasting)
-      allow write: if request.auth != null;
+      // Users can read/write their own notifications.
+      // Admins and Funders can read/write notifications for ANY user.
+      allow read, write: if request.auth != null && (
+        request.auth.uid == userId ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.type in ['ADMIN', 'FUNDER']
+      );
     }
 
     // Compliance Documents

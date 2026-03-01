@@ -636,6 +636,7 @@ const app = {
                 this.user.regNum = this.user.onboardingData.regNumber || this.user.regNum;
                 this.user.address = this.user.onboardingData.address || this.user.address;
                 this.user.province = this.user.onboardingData.province || this.user.province;
+                this.user.industry = this.user.onboardingData.preferredCategory || this.user.industry;
             }
             if (this.user.type === 'SUPPLIER') {
                 this.user.phone = this.user.onboardingData.phone || this.user.phone;
@@ -708,12 +709,16 @@ const app = {
                             <label>Physical Address</label>
                             <input type="text" class="form-control" id="profileAddress" value="${this.user.address || ''}" placeholder="123 Business Street, Province">
                         </div>
+                        <div class="form-group">
+                            <label>Verified Categories</label>
+                            <input type="text" class="form-control" id="profileIndustry" value="${Array.isArray(this.user.industry) ? this.user.industry.join(', ') : (this.user.industry || '')}" readonly style="opacity: 0.7; cursor: not-allowed;">
+                        </div>
                         ` : ''}
 
                         ${this.user.type === 'SUPPLIER' ? `
                         <div class="form-group">
                             <label>Verified Industry/Mandate</label>
-                            <input type="text" class="form-control" id="profileIndustry" value="${this.user.industry || ''}" readonly style="opacity: 0.7; cursor: not-allowed;">
+                            <input type="text" class="form-control" id="profileIndustry" value="${Array.isArray(this.user.industry) ? this.user.industry.join(', ') : (this.user.industry || '')}" readonly style="opacity: 0.7; cursor: not-allowed;">
                         </div>
                         ` : ''}
 
@@ -793,6 +798,8 @@ const app = {
 
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
                     
+                    ${this.user.type !== 'ADMIN' ? this.renderSuggestiveActions() : ''}
+                    
                     ${this.user.type === 'SME' ? `
                     <div class="glass-card">
                         <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
@@ -807,6 +814,9 @@ const app = {
                                 <span class="subtext">Account Status</span> <span style="color: var(--accent); font-weight: 600;">Verified Platform SME</span>
                             </div>
                             <div style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+                                <span class="subtext">Categories</span> <span style="text-align: right; max-width: 60%;">${Array.isArray(this.user.industry) ? this.user.industry.join(', ') : (this.user.industry || 'None')}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 0.9rem;">
                                 <span class="subtext">Official Email</span> <span>${this.user.email}</span>
                             </div>
                             <div style="display: flex; justify-content: space-between; font-size: 0.9rem;">
@@ -814,7 +824,7 @@ const app = {
                             </div>
                         </div>
                         <div style="display: flex; gap: 1rem; margin-top: 2rem;">
-                            <button class="btn btn-outline" style="flex: 1; padding: 0.5rem;" onclick="app.showProfileEdit()">Edit Details</button>
+                            <button class="btn btn-outline" style="flex: 1; padding: 0.5rem;" onclick="app.showUserProfile()">Edit Details</button>
                             <button class="btn btn-secondary" style="flex: 1; padding: 0.5rem;" onclick="app.showDocumentRepo()">My Vault</button>
                         </div>
                     </div>
@@ -935,7 +945,10 @@ const app = {
                                 <span class="badge" style="background: rgba(16, 185, 129, 0.1); color: var(--accent); border-color: rgba(16, 185, 129, 0.2);">Supplier ID: SA-9281</span>
                             </div>
 
-                            ${this.rfqs.filter(r => r.category === 'All' || r.category === this.user.industry || !this.user.industry).map(rfq => `
+                            ${this.rfqs.filter(r => {
+                    const ind = this.user.industry;
+                    return r.category === 'All' || (Array.isArray(ind) ? ind.includes(r.category) : ind === r.category) || !ind;
+                }).map(rfq => `
                             <div style="border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem; position: relative; opacity: ${rfq.status === 'Closed (Quote Accepted)' ? '0.5' : '1'};">
                                 <span class="badge" style="position: absolute; top: 1.5rem; right: 1.5rem; margin: 0; background: rgba(59,130,246,0.1); color: var(--primary);">${rfq.status}</span>
                                 
@@ -2565,9 +2578,9 @@ const app = {
 
     showAdminAPIKeys() {
         this.setView(`
-            <div class="hero-enter" style="max-width: 800px; margin: 2rem auto;">
-                <button class="btn btn-secondary" style="margin-bottom: 2rem;" onclick="app.showDashboard()">&larr; Back to Admin Panel</button>
-                <h2>API Keys & Service Secrets</h2>
+            <div class="hero-enter" style="max-width: 600px; margin: 4rem auto;">
+                <button class="btn btn-secondary btn-sm" style="margin-bottom: 2rem;" onclick="app.showDashboard()">&larr; Back to Admin Panel</button>
+                <h2>System Secrets & API Gateway</h2>
                 <p class="subtext" style="margin-bottom: 2rem;">Manage integration tokens for Firebase, PayStack, and SMS Gateways.</p>
 
                 <div class="glass-card">
