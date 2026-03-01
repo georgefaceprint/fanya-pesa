@@ -12,11 +12,14 @@ import FundingRequest from './components/FundingRequest';
 import Subscription from './components/Subscription';
 import ProfileEdit from './components/ProfileEdit';
 import AdminPanel from './components/AdminPanel';
+import FunderReview from './components/FunderReview';
+import StructureDeal from './components/StructureDeal';
 import './index.css';
 
 export default function App() {
   const [currentView, setCurrentView] = useState('home');
   const [authIntent, setAuthIntent] = useState(null);
+  const [viewParam, setViewParam] = useState(null); // for passing dealId etc.
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -55,7 +58,13 @@ export default function App() {
   }, []);
 
   const navigateTo = (view, intent = null) => {
-    setAuthIntent(intent);
+    if (intent && typeof intent === 'object' && intent.dealId) {
+      setViewParam(intent.dealId);
+      setAuthIntent(null);
+    } else {
+      setAuthIntent(intent);
+      setViewParam(null);
+    }
     setCurrentView(view);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -128,11 +137,32 @@ export default function App() {
         />
       )}
       {currentView === 'admin-panel' && user && <AdminPanel user={user} onBack={() => setCurrentView('dashboard')} />}
+      {currentView === 'funder-review' && user && (
+        <FunderReview
+          user={user}
+          dealId={viewParam}
+          onBack={() => setCurrentView('dashboard')}
+          onApprove={(deal) => {
+            setViewParam(deal.id);
+            setCurrentView('structure-deal');
+          }}
+        />
+      )}
+      {currentView === 'structure-deal' && user && (
+        <StructureDeal
+          user={user}
+          dealId={viewParam}
+          onBack={() => {
+            setCurrentView('funder-review');
+          }}
+          onContractGenerated={() => { }}
+        />
+      )}
       {currentView === 'dashboard' && user && (
         <Dashboard
           user={user}
           onLogout={logout}
-          onNavigate={(view) => setCurrentView(view)}
+          onNavigate={(view, params) => navigateTo(view, params)}
         />
       )}
     </div>
