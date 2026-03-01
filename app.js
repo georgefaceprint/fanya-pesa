@@ -761,25 +761,34 @@ const app = {
                             </div>
                         </div>
                         ` : `
-                        <div class="glass-card">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                                <h3>Active Requests</h3>
+                        <div class="glass-card" style="grid-column: 1 / -1; margin-top: 1rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                                <div>
+                                    <h3>My Quotation Requests (RFQs)</h3>
+                                    <p class="subtext">Track quotes received from verified suppliers and approve the best offer.</p>
+                                </div>
                                 <span class="status pulse">SME Pro Active</span>
                             </div>
-                            <div style="margin-top: 1rem; border: 1px solid var(--border); padding: 1rem; border-radius: 8px;">
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                                    <strong>Tender Funding (R500k)</strong>
-                                    <span class="status pulse">Pending</span>
-                                </div>
-                                <p class="subtext">Category: Tech Infrastructure</p>
-                            </div>
-                            <div style="margin-top: 1rem; border: 1px solid var(--border); padding: 1rem; border-radius: 8px;">
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                                    <strong>Supplier Quote Request</strong>
-                                    <span class="status" style="background: rgba(59,130,246,0.1); color: var(--primary);">2 Quotes Received</span>
-                                </div>
-                                <p class="subtext">Required: 50x Laptops (HP/Dell)</p>
-                                <button class="btn btn-secondary" style="width: 100%; margin-top: 0.8rem; padding: 0.4rem;" onclick="app.showMilestones()">Track Milestones</button>
+
+                            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
+                                ${this.rfqs.filter(r => r.smeId === this.user.id).length > 0 ?
+                    this.rfqs.filter(r => r.smeId === this.user.id).map(rfq => `
+                                    <div class="glass-card" style="background: var(--bg-color); border: 1px solid var(--border);">
+                                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                            <strong>${rfq.title}</strong>
+                                            <span class="status" style="background: rgba(16, 185, 129, 0.1); color: var(--accent);">${rfq.status}</span>
+                                        </div>
+                                        <p class="subtext" style="font-size: 0.85rem; margin-bottom: 0.5rem;">Category: ${rfq.category} &bull; Delivery: ${rfq.location}</p>
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                                            <span class="badge" style="background: rgba(59,130,246,0.1); color: var(--primary); margin: 0;">${rfq.quotes ? rfq.quotes.length : 0} Quotes Received</span>
+                                        </div>
+                                        ${rfq.quotes && rfq.quotes.length > 0 ? `
+                                            <div style="border-top: 1px solid var(--border); padding-top: 1rem; text-align: right;">
+                                                <button class="btn btn-primary btn-sm" style="width: 100%;" onclick="app.showReviewQuotes('${rfq.id}')">Review ${rfq.quotes.length} Quotes</button>
+                                            </div>
+                                        ` : '<p class="subtext" style="font-size: 0.85rem; padding-top: 1rem; border-top: 1px solid var(--border);">Awaiting supplier quotes...</p>'}
+                                    </div>
+                                `).join('') : '<p class="subtext" style="grid-column: 1 / -1; text-align: center; padding: 2rem;">You have no active quotation requests.</p>'}
                             </div>
                         </div>
                         `
@@ -846,8 +855,8 @@ const app = {
                             </div>
 
                             ${this.rfqs.filter(r => r.category === 'All' || r.category === this.user.industry || !this.user.industry).map(rfq => `
-                            <div style="border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem; position: relative;">
-                                <span class="badge" style="position: absolute; top: 1.5rem; right: 1.5rem; margin: 0; background: rgba(59,130,246,0.1); color: var(--primary);">Expires: 48h</span>
+                            <div style="border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem; position: relative; opacity: ${rfq.status === 'Closed (Quote Accepted)' ? '0.5' : '1'};">
+                                <span class="badge" style="position: absolute; top: 1.5rem; right: 1.5rem; margin: 0; background: rgba(59,130,246,0.1); color: var(--primary);">${rfq.status}</span>
                                 
                                 <div style="margin-bottom: 1rem; max-width: 80%;">
                                     <h4 style="margin: 0 0 0.5rem 0;">${rfq.title}</h4>
@@ -857,8 +866,11 @@ const app = {
                                 <p style="font-size: 0.95rem; margin-bottom: 1.5rem; color: var(--text-color);">${rfq.specs}</p>
 
                                 <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 1rem;">
-                                    <span class="subtext" style="font-size: 0.85rem;">RFQ ID: ${rfq.id.substring(0, 8)} • ${rfq.quotes ? rfq.quotes.length : 0} Quotes Received</span>
-                                    <button class="btn btn-primary btn-sm" onclick="app.showSubmitQuote('${rfq.id}')">Submit Custom Quote</button>
+                                    <div>
+                                        <span class="subtext" style="font-size: 0.85rem; display: block;">RFQ ID: ${rfq.id.substring(0, 8)} • ${rfq.quotes ? rfq.quotes.length : 0} Quotes Received</span>
+                                        ${rfq.docUrl ? `<a href="${rfq.docUrl}" target="_blank" style="font-size: 0.85rem; color: var(--primary); text-decoration: underline; margin-top: 0.5rem; display: inline-block;">View Ref Document</a>` : ''}
+                                    </div>
+                                    ${rfq.status !== 'Closed (Quote Accepted)' ? `<button class="btn btn-primary btn-sm" onclick="app.showSubmitQuote('${rfq.id}')">Submit Custom Quote</button>` : `<span class="badge" style="background: rgba(16, 185, 129, 0.1); color: var(--accent);">Closed</span>`}
                                 </div>
                             </div>
                             `).join('') || '<p class="subtext">No RFQs matching your category currently.</p>'}
@@ -997,12 +1009,21 @@ const app = {
         const category = form.querySelector('select').value;
         const specs = form.querySelector('textarea').value;
         const location = form.querySelectorAll('input[type="text"]')[1].value;
+        const fileInput = form.querySelector('input[type="file"]');
+        let fileUrl = null;
 
         const btn = form.querySelector('button[type="submit"]');
         btn.innerHTML = 'Broadcasting...';
         btn.disabled = true;
 
         try {
+            if (fileInput && fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                const storageRef = ref(storage, `rfq_docs/${this.user.id}_${Date.now()}_${file.name}`);
+                const snapshot = await uploadBytes(storageRef, file);
+                fileUrl = await getDownloadURL(snapshot.ref);
+            }
+
             await addDoc(collection(db, "rfqs"), {
                 smeId: this.user.id,
                 smeName: this.user.name,
@@ -1010,7 +1031,8 @@ const app = {
                 category: category,
                 specs: specs,
                 location: location,
-                status: 'Open',
+                docUrl: fileUrl,
+                status: 'Requested',
                 quotes: [],
                 createdAt: new Date().toISOString()
             });
@@ -1231,6 +1253,11 @@ const app = {
                         <div class="form-group">
                             <label>Delivery Location</label>
                             <input type="text" class="form-control" placeholder="City/Province" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Reference Document (Optional)</label>
+                            <input type="file" id="rfqDoc" class="form-control" style="padding: 0.5rem;" accept=".pdf,.doc,.docx,.jpg,.png">
+                            <small class="subtext" style="font-size: 0.8rem; display: block; margin-top: 0.3rem;">Upload specifications, BOQs, or plans (PDF/Docs).</small>
                         </div>
                         <button type="submit" class="btn btn-primary btn-large" style="width: 100%; margin-top: 1rem;">
                             Broadcast Request
@@ -1683,6 +1710,108 @@ const app = {
     `);
     },
 
+    async approveQuote(rfqId, supplierId, customComment = "") {
+        if (!confirm("Are you sure you want to approve this quote? This will close the RFQ.")) return;
+        try {
+            const rfqRef = doc(db, "rfqs", rfqId);
+            const rfqDoc = await getDoc(rfqRef);
+            if (!rfqDoc.exists()) return;
+            const rfqData = rfqDoc.data();
+
+            const selectedQuote = rfqData.quotes.find(q => q.supplierId === supplierId);
+
+            await setDoc(rfqRef, {
+                status: 'Closed (Quote Accepted)',
+                acceptedQuote: selectedQuote
+            }, { merge: true });
+
+            // Send notification to supplier
+            const notifRef = doc(db, "user_notifications", supplierId);
+            const notifSnap = await getDoc(notifRef);
+            let notifs = notifSnap.exists() ? notifSnap.data().data : [];
+            notifs.unshift({
+                id: Date.now(),
+                text: `🎉 QUOTE ACCEPTED: ${this.user.name} approved your quote for ${rfqData.title}! The SME will now secure funding. ${customComment ? `\n\nNotes: ${customComment}` : ''}`,
+                read: false,
+                time: "Just now"
+            });
+            await setDoc(notifRef, { data: notifs }, { merge: true });
+
+            alert("Quote Approved!");
+            this.showDashboard();
+        } catch (error) {
+            console.error("Error approving quote:", error);
+            alert("Failed to approve quote.");
+        }
+    },
+
+    async rejectQuote(rfqId, supplierId) {
+        if (!confirm("Are you sure you want to reject this quote?")) return;
+        try {
+            const rfqRef = doc(db, "rfqs", rfqId);
+            const rfqDoc = await getDoc(rfqRef);
+            if (!rfqDoc.exists()) return;
+            let rfqData = rfqDoc.data();
+
+            // Mark the specific quote as 'rejected'
+            const updatedQuotes = rfqData.quotes.map(q => {
+                if (q.supplierId === supplierId) {
+                    q.rejected = true;
+                }
+                return q;
+            });
+
+            await setDoc(rfqRef, { quotes: updatedQuotes }, { merge: true });
+            alert("Quote Rejected.");
+            this.showReviewQuotes(rfqId);
+        } catch (error) {
+            console.error(error);
+            alert("Error rejecting quote.");
+        }
+    },
+
+    showReviewQuotes(rfqId) {
+        const rfq = this.rfqs.find(r => r.id === rfqId);
+        if (!rfq) return this.showDashboard();
+
+        this.setView(`
+            <div class="hero-enter" style="max-width: 800px; margin: 2rem auto;">
+                <button class="btn btn-secondary" style="margin-bottom: 2rem;" onclick="app.showDashboard()">&larr; Back to Dashboard</button>
+                <h2>Review Quotes submitted for: ${rfq.title}</h2>
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem;">
+                    <p class="subtext" style="max-width: 60%">Specs: ${rfq.specs}</p>
+                    <span class="badge" style="background: rgba(16,185,129,0.1); color: var(--accent);">${rfq.status}</span>
+                </div>
+
+                <div style="display: grid; gap: 1.5rem;">
+                    ${rfq.quotes && rfq.quotes.length > 0 ? rfq.quotes.map((q, idx) => `
+                        <div class="glass-card" style="opacity: ${q.rejected ? '0.5' : '1'}; border-left: 4px solid ${q.rejected ? '#ef4444' : (rfq.acceptedQuote && rfq.acceptedQuote.supplierId === q.supplierId ? 'var(--accent)' : 'var(--primary)')};">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                                <div>
+                                    <h3 style="margin: 0; color: var(--text-color);">R${Number(q.amount).toLocaleString()}</h3>
+                                    <span class="subtext" style="font-size: 0.85rem; font-weight: 600;">Supplier: ${q.supplierName}</span>
+                                </div>
+                                ${q.rejected ? '<span class="status" style="background: rgba(239, 68, 68, 0.1); color: #ef4444;">Rejected</span>' : (rfq.acceptedQuote && rfq.acceptedQuote.supplierId === q.supplierId ? '<span class="status pulse">Accepted Offer</span>' : '')}
+                            </div>
+
+                            <p style="font-size: 0.95rem; margin-bottom: 1.5rem; background: var(--secondary); padding: 1rem; border-radius: 4px;">"${q.message}"</p>
+                            
+                            ${rfq.status !== 'Closed (Quote Accepted)' && !q.rejected ? `
+                                <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                                    <textarea id="comment_${q.supplierId}" class="form-control" style="flex: 2; min-height: 40px;" placeholder="Optional comments to send on approval..."></textarea>
+                                    <div style="flex: 1; display: flex; flex-direction: column; gap: 0.5rem;">
+                                        <button class="btn btn-primary" onclick="app.approveQuote('${rfq.id}', '${q.supplierId}', document.getElementById('comment_${q.supplierId}').value)">Accept Quote</button>
+                                        <button class="btn btn-outline" style="color: #ef4444; border-color: rgba(239,68,68,0.3);" onclick="app.rejectQuote('${rfq.id}', '${q.supplierId}')">Reject</button>
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `).join('') : '<p class="subtext">No quotes submitted yet.</p>'}
+                </div>
+            </div>
+        `);
+    },
+
     showAdminDashboard() {
         const renderDocTypes = () => {
             return this.docTypes.map(doc => `
@@ -1813,27 +1942,44 @@ const app = {
         this.showAdminCategories();
     },
 
-    showDocumentRepo() {
+    async showDocumentRepo() {
         const userType = this.user.type; // 'SME' or 'SUPPLIER'
         const requiredDocs = this.docTypes.filter(doc => doc.requiredFor.includes(userType));
+
+        let existingDocs = {};
+        try {
+            const docsSnap = await getDocs(collection(db, "user_documents"));
+            docsSnap.forEach(d => {
+                const data = d.data();
+                if (data.uid === this.user.id) {
+                    existingDocs[data.docTypeId] = data;
+                }
+            });
+        } catch (e) {
+            console.error("Error fetching docs", e);
+        }
+
+        const uploadedCount = requiredDocs.filter(d => existingDocs[d.id]).length;
+        const totalCount = requiredDocs.length;
+        const progressPercent = totalCount > 0 ? Math.round((uploadedCount / totalCount) * 100) : 100;
 
         window.handleCloudUpload = async (docId, fileInput) => {
             const file = fileInput.files[0];
             if (!file) return;
 
             const btnContainer = fileInput.parentElement;
-            btnContainer.innerHTML = '<span class="status pulse" style="background: rgba(59, 130, 246, 0.1); color: var(--primary);">Uploading to Cloud...</span>';
+            btnContainer.innerHTML = '<span class="status pulse" style="background: rgba(59, 130, 246, 0.1); color: var(--primary);">Uploading...</span>';
 
             try {
                 // Upload to Storage with Timestamp to prevent overwriting
                 const timestamp = Date.now();
-                const filePath = `userData / ${this.user.id} /documents/${docId}_${timestamp}_${file.name} `;
+                const filePath = `userData/${this.user.id}/documents/${docId}_${timestamp}_${file.name}`;
                 const storageRef = ref(storage, filePath);
                 await uploadBytes(storageRef, file);
                 const downloadURL = await getDownloadURL(storageRef);
 
                 // Save reference link to DB
-                await setDoc(doc(db, "user_documents", `${this.user.id}_${docId} `), {
+                await setDoc(doc(db, "user_documents", `${this.user.id}_${docId}`), {
                     uid: this.user.id,
                     docTypeId: docId,
                     url: downloadURL,
@@ -1841,21 +1987,16 @@ const app = {
                     uploadedAt: new Date().toISOString()
                 });
 
-                btnContainer.innerHTML = `
-    <div style="display: flex; gap: 0.5rem;">
-                        <a href="${downloadURL}" target="_blank" class="btn btn-outline btn-sm">View</a>
-                        <button class="btn btn-secondary btn-sm" onclick="window.handleCloudDelete('${docId}', '${filePath}', this.parentElement.parentElement)">Delete</button>
-                    </div>
-    `;
+                app.showDocumentRepo();
             } catch (error) {
                 console.error("Upload failed", error);
                 btnContainer.innerHTML = '<span class="status pulse" style="background: rgba(220, 38, 38, 0.1); color: #dc2626;">Upload Failed</span>';
             }
         };
 
-        window.handleCloudDelete = async (docId, filePath, containerElement) => {
-            const originalHTML = containerElement.innerHTML;
-            containerElement.innerHTML = '<span class="status pulse" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;">Deleting...</span>';
+        window.handleCloudDelete = async (docId, filePath, btnElement) => {
+            const originalHTML = btnElement.parentElement.innerHTML;
+            btnElement.parentElement.innerHTML = '<span class="status pulse" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;">Deleting...</span>';
 
             try {
                 // Delete from Storage
@@ -1863,36 +2004,43 @@ const app = {
                 await deleteObject(storageRef);
 
                 // Delete from Firestore
-                await deleteDoc(doc(db, "user_documents", `${this.user.id}_${docId} `));
+                await deleteDoc(doc(db, "user_documents", `${this.user.id}_${docId}`));
 
-                containerElement.innerHTML = `
-    <input type = "file" id = "file-${docId}" style = "display: none;" onchange = "window.handleCloudUpload(${docId}, this);" >
-        <button class="btn btn-primary btn-sm" onclick="document.getElementById('file-${docId}').click();">Upload File</button>
-`;
+                app.showDocumentRepo();
             } catch (error) {
                 console.error("Delete failed", error);
                 alert("Failed to delete document.");
-                containerElement.innerHTML = originalHTML;
+                btnElement.parentElement.innerHTML = originalHTML;
             }
         };
 
         const renderDocs = () => {
             if (requiredDocs.length === 0) {
-                return `<p class="subtext" > No compliance documents are required currently.</p> `;
+                return `<p class="subtext">No compliance documents are required currently.</p>`;
             }
 
-            return requiredDocs.map(docType => `
-    <div style="background: var(--bg-color); border: 1px solid var(--border); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+            return requiredDocs.map(docType => {
+                const upDoc = existingDocs[docType.id];
+                const actionHtml = upDoc
+                    ? `<div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                          <a href="${upDoc.url}" target="_blank" class="btn btn-outline btn-sm">View</a>
+                          <button class="btn btn-secondary btn-sm" onclick="window.handleCloudDelete('${docType.id}', '${upDoc.storagePath}', this)">Delete</button>
+                       </div>`
+                    : `<div>
+                          <input type="file" id="file-${docType.id}" style="display: none;" onchange="window.handleCloudUpload(${docType.id}, this);">
+                          <button class="btn btn-primary btn-sm" onclick="document.getElementById('file-${docType.id}').click();">Upload File</button>
+                       </div>`;
+
+                return `<div style="background: var(--bg-color); border: 1px solid var(--border); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
                     <div>
-                        <strong style="display: block; margin-bottom: 0.2rem;">${docType.name}</strong>
+                        <strong style="display: block; margin-bottom: 0.2rem; color: ${upDoc ? 'var(--text-color)' : 'var(--text-muted)'};">${docType.name}</strong>
                         <span class="subtext" style="font-size: 0.85rem;">${docType.description}</span>
                     </div>
                     <div style="text-align: right;">
-                        <input type="file" id="file-${docType.id}" style="display: none;" onchange="window.handleCloudUpload(${docType.id}, this);">
-                        <button class="btn btn-primary btn-sm" onclick="document.getElementById('file-${docType.id}').click();">Upload File</button>
+                        ${actionHtml}
                     </div>
-                </div>
-    `).join('');
+                </div>`;
+            }).join('');
         };
 
         this.setView(`
@@ -1903,9 +2051,19 @@ const app = {
                 <p class="subtext" style="margin-bottom: 2rem;">Upload your required compliance documents here. These are stored securely via Fanya Pesa and are shared with Funders structured in your active deals.</p>
 
                 <div class="glass-card">
+                    <div style="margin-bottom: 2rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 0.5rem;">
+                            <h3 style="margin: 0; font-size: 1rem;">Setup Progress</h3>
+                            <span style="font-weight: bold; color: var(--primary);">${progressPercent}%</span>
+                        </div>
+                        <div style="width: 100%; background: var(--border); height: 8px; border-radius: 4px; overflow: hidden;">
+                            <div style="width: ${progressPercent}%; background: var(--primary); height: 100%; transition: width 0.3s ease;"></div>
+                        </div>
+                    </div>
+
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 1rem;">
                         <h3 style="margin: 0;">Required Documents</h3>
-                        <span class="badge" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;">Verification Pending</span>
+                        <span class="badge" style="background: ${progressPercent === 100 ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)'}; color: ${progressPercent === 100 ? 'var(--accent)' : '#f59e0b'};">${progressPercent === 100 ? 'Complete' : 'Verification Pending'}</span>
                     </div>
 
                     ${renderDocs()}
