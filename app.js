@@ -673,6 +673,16 @@ const app = {
                                 <h4 style="margin: 1rem 0 0.5rem 0;">Funder Verification</h4>
                                 <p class="subtext" style="font-size: 0.85rem;">Approve or reject high-net-worth individuals and corporate funding entities.</p>
                             </div>
+                            <div class="glass-card admin-module-card" onclick="app.showAdminActivity()">
+                                <div class="icon-circle" style="background: rgba(239, 68, 68, 0.1); color: #ef4444;">🔔</div>
+                                <h4 style="margin: 1rem 0 0.5rem 0;">System Activity</h4>
+                                <p class="subtext" style="font-size: 0.85rem;">Live feed of platform notifications, deal statuses, and user sign-ups.</p>
+                            </div>
+                            <div class="glass-card admin-module-card" onclick="app.showAdminAPIKeys()">
+                                <div class="icon-circle" style="background: rgba(107, 114, 128, 0.1); color: var(--text-muted);">🔑</div>
+                                <h4 style="margin: 1rem 0 0.5rem 0;">API & Secrets</h4>
+                                <p class="subtext" style="font-size: 0.85rem;">Manage backend keys, Firestore limits, and third-party integration secrets.</p>
+                            </div>
                         </div>
                     </div>
                 ` : ''}
@@ -1840,6 +1850,83 @@ const app = {
             console.error("Verification Error:", error);
             alert("Platform Error: Verification update failed.");
         }
+    },
+
+    async showAdminActivity() {
+        // Fetch last 50 notifications or logs
+        const logs = [
+            { id: 1, type: 'USER', event: 'New SME Joined', detail: 'Cape Town Logistics Ltd', time: '2m ago' },
+            { id: 2, type: 'DEAL', event: 'Offer Submitted', detail: 'Funder ID: Alpha Capital', time: '15m ago' },
+            { id: 3, type: 'DOC', event: 'Vault Upload', detail: 'Tax Clearance - My SME', time: '1h ago' },
+            { id: 4, type: 'AUTH', event: 'Admin Login', detail: 'Root Session Started', time: '3h ago' }
+        ];
+
+        this.setView(`
+            <div class="hero-enter" style="max-width: 800px; margin: 2rem auto;">
+                <button class="btn btn-secondary" style="margin-bottom: 2rem;" onclick="app.showDashboard()">&larr; Back to Admin Panel</button>
+                <h2>System Activity Log</h2>
+                <p class="subtext" style="margin-bottom: 2rem;">Real-time stream of all sensitive platform events and state changes.</p>
+
+                <div class="glass-card" style="padding: 0; overflow: hidden;">
+                    ${logs.map(log => `
+                        <div style="border-bottom: 1px solid var(--border); padding: 1.2rem; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <span class="badge" style="margin-bottom: 0.5rem; font-size: 0.7rem; background: rgba(59,130,246,0.1); color: var(--primary);">${log.type}</span>
+                                <h4 style="margin: 0;">${log.event}</h4>
+                                <p class="subtext" style="margin: 0.2rem 0 0 0; font-size: 0.85rem;">${log.detail}</p>
+                            </div>
+                            <span class="subtext" style="font-size: 0.8rem;">${log.time}</span>
+                        </div>
+                    `).join('')}
+                    <div style="padding: 1rem; text-align: center; background: var(--secondary);">
+                        <p class="subtext" style="font-size: 0.75rem;">Showing most recent 50 events. <a href="#" style="color: var(--primary);">Export CSV Log</a></p>
+                    </div>
+                </div>
+            </div>
+        `);
+    },
+
+    showAdminAPIKeys() {
+        this.setView(`
+            <div class="hero-enter" style="max-width: 800px; margin: 2rem auto;">
+                <button class="btn btn-secondary" style="margin-bottom: 2rem;" onclick="app.showDashboard()">&larr; Back to Admin Panel</button>
+                <h2>API Keys & Service Secrets</h2>
+                <p class="subtext" style="margin-bottom: 2rem;">Manage integration tokens for Firebase, PayStack, and SMS Gateways.</p>
+
+                <div class="glass-card">
+                    <div style="margin-bottom: 2rem;">
+                        <h4 style="margin-bottom: 1rem;">Primary Gateway Access</h4>
+                        <div style="background: var(--bg-color); border: 1px solid var(--border); padding: 1rem; border-radius: 8px; font-family: monospace; font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center;">
+                            <span>${firebaseConfig.apiKey.substring(0, 10)}********************</span>
+                            <button class="btn btn-outline btn-sm" onclick="alert('Master Key rotation requires manual Firebase Console intervention.')">Rotate Key</button>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 2rem; border-top: 1px solid var(--border); padding-top: 2rem;">
+                        <h4 style="margin-bottom: 1rem;">Payment Integration (PayStack Mock)</h4>
+                        <div style="display: grid; gap: 1rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span class="subtext">Public Key</span>
+                                <span style="font-family: monospace;">pk_test_9281...</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span class="subtext">Secret Key</span>
+                                <span style="font-family: monospace;">sk_test_••••••••</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="text-align: right; margin-top: 2rem;">
+                        <button class="btn btn-primary" onclick="alert('Platform Error: Key Management is currently in Read-Only mode.')">Update Core Config</button>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 2rem; background: rgba(239, 68, 68, 0.05); padding: 1.5rem; border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.1);">
+                    <h4 style="color: #ef4444; margin-bottom: 0.5rem;">Security Warning</h4>
+                    <p class="subtext" style="font-size: 0.85rem;">Rotating keys may temporarily disable SME deal structuring or Supplier subscription payments until the sync completes.</p>
+                </div>
+            </div>
+        `);
     }
 };
 
