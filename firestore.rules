@@ -1,36 +1,64 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Admins have full access to everything
-    function isAdmin() {
-      return request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.type == 'ADMIN';
-    }
-
-    // Rules for fundingCategories and docTypes
-    match /fundingCategories/{category} {
-      allow read: if true;
-      allow write: if isAdmin();
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
     }
     
-    match /docTypes/{docType} {
-      allow read: if true;
-      allow write: if isAdmin();
+    // User Profiles
+    match /users/{userId} {
+      // Anyone can read a user profile (needed for matching/reviewing)
+      allow read: if request.auth != null;
+      // Users can only create or update their own profile
+      allow create, update: if request.auth != null && request.auth.uid == userId;
+      // Admins can verify profiles
+      allow update: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.type == 'ADMIN';
     }
 
-    // Rules for Deals
+    // Deals (Structures & Requests)
     match /deals/{dealId} {
-      // SMEs can read/write their own deals
-      allow read, write: if request.auth != null && resource.data.smeId == request.auth.uid;
-      // Funders can read all deals, but only update deals where funderId matches their uid (or they are claiming it)
-      allow read: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.type == 'FUNDER';
-      allow update: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.type == 'FUNDER' && (resource.data.funderId == request.auth.uid || !('funderId' in resource.data));
+      allow read: if request.auth != null; // SMEs, Funders need to see these
+      // SMEs can create deals involving themselves
+      allow create: if request.auth != null 
+                    && request.resource.data.smeId == request.auth.uid 
+                    && request.resource.data.amount > 0;
+      // Funders can update deals to secure them
+      allow update: if request.auth != null 
+                    && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.type == 'FUNDER';
     }
 
-    // Default catch-all (for simplicity in this MVP, allow read/write to authenticated users for other paths)
-    // Note: In a real production app, you would lock down every single path.
-    match /{document=**} {
-      allow read, write: if request.auth != null;
+    // RFQs (Quote Requests)
+    match /rfqs/{rfqId} {
+      allow read: if request.auth != null;
+      // SMEs create RFQs
+      allow create: if request.auth != null && request.resource.data.smeId == request.auth.uid;
+      // SMEs and Suppliers can update (Suppliers append quotes, SMEs change status)
+      allow update: if request.auth != null;
+      allow delete: if request.auth != null && resource.data.smeId == request.auth.uid;
+    }
+    
+    // Notifications
+    match /user_notifications/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      // System/Users can write notifications to others (broadcasting)
+      allow write: if request.auth != null;
+    }
+
+    // Compliance Documents
+    match /user_documents/{docId} {
+      allow read: if request.auth != null; // Needed for Admin & Funders to review
+      // Users can only upload their own docs
+      allow create, update, delete: if request.auth != null && request.auth.uid == docId.split('_')[0];
+    }
+
+    // System Config
+    match /system_config/{configId} {
+      allow read: if true; // Public configs (categories, etc.)
+      // Only admins can update the platform configuration
+      allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.type == 'ADMIN';
     }
   }
 }

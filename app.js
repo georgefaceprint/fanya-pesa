@@ -33,6 +33,13 @@ const app = {
     rfqs: [],
     currentView: 'home',
 
+    escapeHTML(unsafe) {
+        return (unsafe || '').toString()
+            .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;").replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    },
+
     async notifySupplierCategory(category, message) {
         try {
             const usersSnap = await getDocs(collection(db, "users"));
@@ -251,12 +258,22 @@ const app = {
         if (docSnap.exists()) {
             userData = docSnap.data();
         } else {
+            // Frontend verification to ensure users don't escalate to ADMIN status
+            let safeIntent = intentType;
+            if (safeIntent === 'ADMIN') {
+                const adminWhitelist = ['faceprint@icloud.com'];
+                if (!adminWhitelist.includes(user.email.toLowerCase())) {
+                    console.warn("Security Alert: Unauthorized attempt to create an Admin. Assigning to SME.");
+                    safeIntent = 'SME';
+                }
+            }
+
             // First time login - set up the profile mapped to their intent 
             userData = {
                 id: user.uid,
-                name: user.displayName || user.email.split('@')[0],
+                name: this.escapeHTML(user.displayName) || this.escapeHTML(user.email.split('@')[0]),
                 email: user.email,
-                type: intentType, // SME, FUNDER, SUPPLIER, or ADMIN
+                type: safeIntent, // SME, FUNDER, SUPPLIER, or ADMIN
                 subscribed: false,
                 onboardingStep: 1,
                 onboardingComplete: false
@@ -1022,9 +1039,14 @@ const app = {
     async submitFundingRequest(event) {
         event.preventDefault();
         const form = event.target;
-        const amount = form.querySelector('input[type="number"]').value;
+        const amount = Number(form.querySelector('input[type="number"]').value);
         const category = form.querySelector('select').value;
-        const desc = form.querySelector('textarea').value;
+        const desc = this.escapeHTML(form.querySelector('textarea').value);
+
+        if (isNaN(amount) || amount <= 0) {
+            alert("Error: Please enter a valid funding amount.");
+            return;
+        }
 
         const btn = form.querySelector('button[type="submit"]');
         const originalText = btn.innerHTML;
@@ -1603,9 +1625,14 @@ const app = {
     async submitQuote(event, rfqId) {
         event.preventDefault();
         const form = event.target;
-        const price = form.querySelectorAll('input')[0].value;
+        const price = Number(form.querySelectorAll('input')[0].value);
         const timeframe = form.querySelector('select').value;
-        const terms = form.querySelector('textarea').value;
+        const terms = this.escapeHTML(form.querySelector('textarea').value);
+
+        if (isNaN(price) || price <= 0) {
+            alert("Error: Please enter a correct, positive price for the quote.");
+            return;
+        }
 
         const btn = form.querySelector('button[type="submit"]');
         const originalText = btn.innerHTML;
