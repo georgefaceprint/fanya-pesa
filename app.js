@@ -270,12 +270,43 @@ const app = {
         `);
     },
 
-    showAuth(intentType = 'SME') {
+    showAuth(intentType = null) {
+        if (!intentType) {
+            this.setView(`
+            <div class="auth-wrapper hero-enter" style="max-width: 600px; margin: 4rem auto; text-align: center;">
+                <h2 style="margin-bottom: 0.5rem; font-size: 2rem; font-family: var(--font-heading);">Welcome to Fanya Pesa</h2>
+                <p style="color: var(--text-muted); margin-bottom: 2rem; font-size: 1rem;">Please select how you want to use the platform to continue.</p>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+                    <div class="glass-card" style="cursor: pointer; padding: 2rem 1rem; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 10px 25px rgba(59,130,246,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="app.showAuth('SME')">
+                        <div class="icon-circle" style="background: rgba(59, 130, 246, 0.1); color: var(--primary); margin: 0 auto 1rem auto;">🏢</div>
+                        <h4>Business (SME)</h4>
+                        <p class="subtext" style="font-size: 0.85rem; margin-top: 0.5rem;">Apply for funding & tenders</p>
+                    </div>
+                    
+                    <div class="glass-card" style="cursor: pointer; padding: 2rem 1rem; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 10px 25px rgba(139,92,246,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="app.showAuth('FUNDER')">
+                        <div class="icon-circle" style="background: rgba(139, 92, 246, 0.1); color: #8b5cf6; margin: 0 auto 1rem auto;">💎</div>
+                        <h4>Funder</h4>
+                        <p class="subtext" style="font-size: 0.85rem; margin-top: 0.5rem;">Deploy capital securely</p>
+                    </div>
+                    
+                    <div class="glass-card" style="cursor: pointer; padding: 2rem 1rem; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 10px 25px rgba(16,185,129,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="app.showAuth('SUPPLIER')">
+                        <div class="icon-circle" style="background: rgba(16, 185, 129, 0.1); color: var(--accent); margin: 0 auto 1rem auto;">🚚</div>
+                        <h4>Supplier</h4>
+                        <p class="subtext" style="font-size: 0.85rem; margin-top: 0.5rem;">Quote on SME RFQs</p>
+                    </div>
+                </div>
+            </div>
+            `);
+            return;
+        }
+
         this.setView(`
             <div class="auth-wrapper hero-enter" style="max-width: 450px; margin: 4rem auto;">
+                <button class="btn btn-secondary btn-sm" style="margin-bottom: 2rem;" onclick="app.showAuth()">&larr; Change Role</button>
                 <h2 style="margin-bottom: 0.5rem; font-size: 2rem; font-family: var(--font-heading);">Sign In / Join</h2>
                 <div class="badge" style="margin-bottom: 1.5rem; background: rgba(59,130,246,0.1); color: var(--primary);">Accessing as: ${intentType}</div>
-                <p style="color: var(--text-muted); margin-bottom: 2rem; font-size: 0.9rem;">Please use your Google account to log in. Your profile will be automatically mapped to your chosen role.</p>
+                <p style="color: var(--text-muted); margin-bottom: 2rem; font-size: 0.9rem;">Please choose an authentication method to log into your Fanya Pesa account.</p>
                 
                 <div class="glass-card" style="text-align: center; padding: 3rem 2rem;">
                     
