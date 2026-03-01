@@ -1,0 +1,5 @@
+{
+    "buildCommand": "cd fanya-pesa-react && npm install && npm run build",
+    "outputDirectory": "fanya-pesa-react/dist",
+    "framework": "vite"
+}

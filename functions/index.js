@@ -36,7 +36,7 @@ exports.onUserVerified = functions.firestore.document('users/{userId}')
             <p>Good news! Your profile has been successfully verified by a Fanya Pesa admin.</p>
             <p>You can now fully utilize the platform to match with funders and request quotes from our national database.</p>
             <br/>
-            <a href="https://your-fanya-pesa-url.com" style="background:#3b82f6;color:white;padding:10px 20px;text-decoration:none;border-radius:5px;">Go to Dashboard</a>
+            <a href="https://fanya-pesa.vercel.app" style="background:#3b82f6;color:white;padding:10px 20px;text-decoration:none;border-radius:5px;">Go to Dashboard</a>
             <br/><br/>
             <p>Best Regards,</p>
             <p><strong>The Fanya Pesa Team</strong></p>
