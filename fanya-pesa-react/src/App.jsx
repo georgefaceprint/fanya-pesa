@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { auth, db } from './firebase';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import Home from './components/Home';
 import Auth from './components/Auth';
 import Dashboard from './components/Dashboard';
@@ -12,59 +15,86 @@ export default function App() {
   const [currentView, setCurrentView] = useState('home');
   const [authIntent, setAuthIntent] = useState(null);
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Auto-detect dark mode and check for existing session
   useEffect(() => {
     document.documentElement.classList.add('dark');
-    const storedUser = localStorage.getItem('fanya_pesa_user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-      setCurrentView('dashboard');
-    }
+
+    const unsubscribe = onAuthStateChanged(auth, async (authUser) => {
+      setLoading(true);
+      if (authUser) {
+        // Fetch profile from Firestore
+        const userRef = doc(db, "users", authUser.uid);
+        const userSnap = await getDoc(userRef);
+
+        if (userSnap.exists()) {
+          const userData = userSnap.data();
+          setUser({ ...authUser, ...userData });
+
+          if (userData.onboardingComplete) {
+            setCurrentView('dashboard');
+          } else {
+            setCurrentView('onboarding');
+          }
+        } else {
+          // If auth exists but no firestore yet (rare if using Auth.jsx), 
+          // let Auth.jsx or Onboarding handle it
+          setUser(authUser);
+        }
+      } else {
+        setUser(null);
+        setCurrentView('home');
+      }
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const navigateTo = (view, intent = null) => {
     setAuthIntent(intent);
-
-    // Simple state simulation for testing
-    if (view === 'dashboard' && !user) {
-      // Quick mock for testing purposes
-      const mockUser = {
-        id: "user_" + Math.random().toString(36).substr(2, 9),
-        name: "Lindiwe Dlamini",
-        email: "lindiwe@cape-logistics.co.za",
-        type: intent || "SME",
-        industry: [],
-        subscribed: false,
-        onboardingComplete: false // Start with onboarding incomplete
-      };
-      setUser(mockUser);
-      localStorage.setItem('fanya_pesa_user', JSON.stringify(mockUser));
-      setCurrentView('onboarding');
-      return;
-    }
-
     setCurrentView(view);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleOnboardingComplete = (data) => {
+  const handleOnboardingComplete = async (data) => {
+    if (!user) return;
+
     const updatedUser = {
       ...user,
       ...data,
       onboardingComplete: true,
-      name: data.companyName // Sync company name with user name for UI
+      name: data.companyName
     };
-    setUser(updatedUser);
-    localStorage.setItem('fanya_pesa_user', JSON.stringify(updatedUser));
-    setCurrentView('dashboard');
+
+    try {
+      await updateDoc(doc(db, "users", user.uid), {
+        ...data,
+        name: data.companyName,
+        onboardingComplete: true
+      });
+      setUser(updatedUser);
+      setCurrentView('dashboard');
+    } catch (err) {
+      console.error("Onboarding update failed:", err);
+      alert("Failed to save onboarding data.");
+    }
   };
 
   const logout = () => {
-    setUser(null);
-    localStorage.removeItem('fanya_pesa_user');
-    setCurrentView('home');
+    signOut(auth);
   };
+
+  if (loading) {
+    return (
+      <div className="w-full min-h-screen bg-[#1a1a2e] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-gray-400 font-bold uppercase tracking-widest text-[10px]">Synchronizing Fanya Pesa...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full min-h-screen font-sans">

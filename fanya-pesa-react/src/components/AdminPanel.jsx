@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { db } from '../firebase';
+import { collection, query, getDocs, doc, updateDoc, onSnapshot } from 'firebase/firestore';
 
 const ADMIN_MODULES = [
     { id: 'compliance', title: 'Compliance Engine', desc: 'Manage mandatory CSD, Tax, and FICA document requirements across all roles.', icon: '📄', color: 'blue' },
@@ -10,11 +12,98 @@ const ADMIN_MODULES = [
 ];
 
 export default function AdminPanel({ user, onBack }) {
+    const [currentModule, setCurrentModule] = useState(null);
+    const [users, setUsers] = useState([]);
+    const [loading, setLoading] = useState(false);
     const [stats] = useState({
         deals: 24,
         rfqs: 156,
         categories: 12
     });
+
+    useEffect(() => {
+        if (currentModule === 'users') {
+            setLoading(true);
+            const unsub = onSnapshot(collection(db, "users"), (snapshot) => {
+                const userList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                setUsers(userList);
+                setLoading(false);
+            });
+            return () => unsub();
+        }
+    }, [currentModule]);
+
+    const toggleVerification = async (userId, currentStatus) => {
+        try {
+            await updateDoc(doc(db, "users", userId), {
+                verified: !currentStatus
+            });
+            alert(`User ${currentStatus ? 'Unverified' : 'Verified'} Successfully!`);
+        } catch (error) {
+            console.error("Error toggling verification:", error);
+            alert("Failed to update user status.");
+        }
+    };
+
+    if (currentModule === 'users') {
+        return (
+            <div className="max-w-6xl mx-auto py-10 animate-fade-in">
+                <button onClick={() => setCurrentModule(null)} className="mb-8 text-sm font-bold text-gray-500 hover:text-gray-900 transition-colors">&larr; Back to Control Center</button>
+                <h2 className="text-3xl font-black text-gray-900 dark:text-white mb-2">User Management</h2>
+                <p className="text-gray-500 mb-10">Audit and verify platform participants.</p>
+
+                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-3xl overflow-hidden shadow-xl">
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-100 dark:border-gray-700">
+                                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">User / Entity</th>
+                                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Type</th>
+                                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Email</th>
+                                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Status</th>
+                                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                            {users.map(u => (
+                                <tr key={u.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-700/30 transition-colors">
+                                    <td className="px-6 py-4">
+                                        <div className="font-bold text-gray-900 dark:text-white">{u.name || 'Unknown'}</div>
+                                        <div className="text-[10px] text-gray-400 font-mono mt-0.5">{u.id}</div>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <span className={`px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-wider ${u.type === 'SME' ? 'bg-blue-50 text-blue-600' :
+                                                u.type === 'SUPPLIER' ? 'bg-emerald-50 text-emerald-600' : 'bg-purple-50 text-purple-600'
+                                            }`}>
+                                            {u.type}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4 text-sm text-gray-500">{u.email}</td>
+                                    <td className="px-6 py-4">
+                                        <span className={`flex items-center gap-1.5 text-xs font-bold ${u.verified ? 'text-emerald-500' : 'text-amber-500'}`}>
+                                            <span className={`w-1.5 h-1.5 rounded-full ${u.verified ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`}></span>
+                                            {u.verified ? 'Verified' : 'Pending'}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4 text-right">
+                                        <button
+                                            onClick={() => toggleVerification(u.id, u.verified)}
+                                            className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${u.verified
+                                                    ? 'border border-red-200 text-red-600 hover:bg-red-50'
+                                                    : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-lg shadow-emerald-600/20'
+                                                }`}
+                                        >
+                                            {u.verified ? 'Revoke' : 'Approve'}
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                    {loading && <div className="p-10 text-center text-gray-400 italic">Scanning decentralized database...</div>}
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="max-w-6xl mx-auto py-10 animate-fade-in">
@@ -45,7 +134,11 @@ export default function AdminPanel({ user, onBack }) {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {ADMIN_MODULES.map(module => (
-                    <div key={module.id} className="group bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700/50 rounded-3xl p-8 shadow-sm hover:shadow-xl hover:translate-y-[-4px] transition-all cursor-pointer">
+                    <div
+                        key={module.id}
+                        onClick={() => setCurrentModule(module.id)}
+                        className="group bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700/50 rounded-3xl p-8 shadow-sm hover:shadow-xl hover:translate-y-[-4px] transition-all cursor-pointer"
+                    >
                         <div className={`w-14 h-14 rounded-2xl bg-${module.color}-50 dark:bg-${module.color}-900/20 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform mb-6`}>
                             {module.icon}
                         </div>

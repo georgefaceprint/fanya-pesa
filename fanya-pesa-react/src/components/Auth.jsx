@@ -1,20 +1,80 @@
 import React, { useState } from 'react';
+import { auth, db } from '../firebase';
+import {
+    signInWithPopup,
+    GoogleAuthProvider,
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword
+} from 'firebase/auth';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 export default function Auth({ initialIntent = null, onBack, onLogin }) {
     const [intent, setIntent] = useState(initialIntent);
     const [method, setMethod] = useState('select');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
 
-    const handleLogin = (provider) => {
-        // alert(`Simulating ${provider} login for intent: ${intent}`);
-        onLogin(intent);
+    const syncUserToFirestore = async (user, userType) => {
+        const userRef = doc(db, "users", user.uid);
+        const userSnap = await getDoc(userRef);
+
+        if (!userSnap.exists()) {
+            await setDoc(userRef, {
+                uid: user.uid,
+                email: user.email,
+                name: user.displayName || '',
+                type: userType,
+                verified: false,
+                onboardingComplete: false,
+                createdAt: serverTimestamp()
+            });
+            return { uid: user.uid, email: user.email, name: user.displayName || '', type: userType, onboardingComplete: false, verified: false };
+        } else {
+            return { uid: user.uid, email: user.email, ...userSnap.data() };
+        }
     };
 
-    const processEmailAuth = (e, action) => {
+    const handleGoogleLogin = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const provider = new GoogleAuthProvider();
+            const result = await signInWithPopup(auth, provider);
+            const userProfile = await syncUserToFirestore(result.user, intent);
+            onLogin(userProfile);
+        } catch (err) {
+            console.error(err);
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const processEmailAuth = async (e, action) => {
         e.preventDefault();
-        // alert(`Processing ${action} for ${email} as ${intent}`);
-        onLogin(intent);
+        setLoading(true);
+        setError(null);
+        try {
+            let userCredential;
+            if (action === 'register') {
+                userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const userProfile = await syncUserToFirestore(userCredential.user, intent);
+                onLogin(userProfile);
+            } else {
+                userCredential = await signInWithEmailAndPassword(auth, email, password);
+                const userRef = doc(db, "users", userCredential.user.uid);
+                const userSnap = await getDoc(userRef);
+                const userData = userSnap.exists() ? userSnap.data() : { type: intent };
+                onLogin({ uid: userCredential.user.uid, email: userCredential.user.email, ...userData });
+            }
+        } catch (err) {
+            console.error(err);
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
     };
 
     if (!intent) {
@@ -83,6 +143,7 @@ export default function Auth({ initialIntent = null, onBack, onLogin }) {
 
                     <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-8 shadow-xl shadow-gray-200/50 dark:shadow-none">
                         <form onSubmit={(e) => e.preventDefault()}>
+                            {error && <div className="mb-4 text-xs font-bold text-red-500 bg-red-50 dark:bg-red-900/20 p-3 rounded-lg border border-red-100 dark:border-red-900/50">{error}</div>}
                             <div className="mb-5">
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email Address</label>
                                 <input
@@ -107,11 +168,11 @@ export default function Auth({ initialIntent = null, onBack, onLogin }) {
                                 />
                             </div>
                             <div className="flex gap-4">
-                                <button type="button" onClick={(e) => processEmailAuth(e, 'login')} className="flex-1 bg-transparent border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50 py-3 rounded-lg font-medium transition-colors">
-                                    Log In
+                                <button type="button" disabled={loading} onClick={(e) => processEmailAuth(e, 'login')} className="flex-1 bg-transparent border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50 py-3 rounded-lg font-medium transition-colors disabled:opacity-50">
+                                    {loading ? '...' : 'Log In'}
                                 </button>
-                                <button type="button" onClick={(e) => processEmailAuth(e, 'register')} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/20 py-3 rounded-lg font-medium transition-all">
-                                    Register
+                                <button type="button" disabled={loading} onClick={(e) => processEmailAuth(e, 'register')} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/20 py-3 rounded-lg font-medium transition-all disabled:opacity-50">
+                                    {loading ? '...' : 'Register'}
                                 </button>
                             </div>
                         </form>
@@ -137,9 +198,11 @@ export default function Auth({ initialIntent = null, onBack, onLogin }) {
                 <p className="text-gray-500 dark:text-gray-400 mb-8 text-sm">Please choose an authentication method to log into your Fanya Pesa account.</p>
 
                 <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-8 shadow-xl shadow-gray-200/50 dark:shadow-none">
+                    {error && <div className="mb-4 text-xs font-bold text-red-500 bg-red-50 dark:bg-red-900/20 p-3 rounded-lg border border-red-100 dark:border-red-900/50">{error}</div>}
                     <button
-                        onClick={() => handleLogin('google')}
-                        className="w-full flex items-center justify-center gap-3 bg-blue-600 hover:bg-blue-700 text-white py-3.5 px-4 rounded-xl font-medium transition-all shadow-md shadow-blue-500/20 mb-3"
+                        onClick={handleGoogleLogin}
+                        disabled={loading}
+                        className="w-full flex items-center justify-center gap-3 bg-blue-600 hover:bg-blue-700 text-white py-3.5 px-4 rounded-xl font-medium transition-all shadow-md shadow-blue-500/20 mb-3 disabled:opacity-50"
                     >
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="bg-white rounded-full p-1">
                             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
@@ -147,31 +210,16 @@ export default function Auth({ initialIntent = null, onBack, onLogin }) {
                             <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
                             <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
                         </svg>
-                        Continue with Google
-                    </button>
-
-                    <button
-                        onClick={() => handleLogin('apple')}
-                        className="w-full flex items-center justify-center gap-3 bg-transparent border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 text-gray-800 dark:text-gray-200 py-3.5 px-4 rounded-xl font-medium transition-colors mb-3"
-                    >
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M16.365 20.675C15.115 21.6 13.905 22.025 12 22C10.155 22.025 8.875 21.6 7.635 20.675C5.165 18.845 2.625 14.185 4.305 9.775C5.145 7.575 7.035 6.125 9.175 6.125C10.745 6.125 11.975 6.845 12.875 6.845C13.805 6.845 15.255 5.995 17.155 5.995C18.675 5.995 20.465 6.675 21.575 8.045C21.495 8.105 18.825 9.685 18.825 12.845C18.825 16.595 22.155 17.895 22.195 17.915C22.145 18.065 21.655 19.825 20.575 21.415C19.555 22.925 18.435 24.365 16.825 24.365C15.225 24.365 14.735 23.365 12.865 23.365C10.985 23.365 10.425 24.325 8.905 24.325C7.385 24.325 6.135 22.755 5.075 21.235C2.885 18.085.875 12.385 3.125 9.145C4.245 7.525 5.985 6.545 7.825 6.545C9.375 6.545 10.745 7.575 11.725 7.575C12.705 7.575 14.395 6.325 16.295 6.325C17.655 6.325 19.505 6.945 20.655 8.415L20.665 8.425C18.155 9.945 18.415 13.575 21.105 14.715C20.505 16.395 19.335 18.445 18.065 20.275C17.585 20.945 17.125 21.565 16.715 22.055L16.365 20.675ZM15.265 4.185C16.095 3.165 16.655 1.835 16.505.495C15.355.545 13.935 1.285 13.085 2.305C12.335 3.205 11.665 4.585 11.835 5.885C13.115 5.985 14.435 5.205 15.265 4.185Z" /></svg>
-                        Continue with Apple
+                        {loading ? 'Authorizing...' : 'Continue with Google'}
                     </button>
 
                     <button
                         onClick={() => setMethod('email')}
-                        className="w-full flex items-center justify-center gap-3 bg-transparent border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 text-gray-800 dark:text-gray-200 py-3.5 px-4 rounded-xl font-medium transition-colors mb-3"
+                        disabled={loading}
+                        className="w-full flex items-center justify-center gap-3 bg-transparent border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 text-gray-800 dark:text-gray-200 py-3.5 px-4 rounded-xl font-medium transition-colors disabled:opacity-50"
                     >
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="5" width="18" height="14" rx="2" ry="2" /><polyline points="3 7 12 13 21 7" /></svg>
                         Continue with Email
-                    </button>
-
-                    <button
-                        onClick={() => handleLogin('phone')}
-                        className="w-full flex items-center justify-center gap-3 bg-transparent border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 text-gray-800 dark:text-gray-200 py-3.5 px-4 rounded-xl font-medium transition-colors"
-                    >
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
-                        Continue with Phone
                     </button>
 
                     <p className="mt-8 text-xs text-gray-400 dark:text-gray-500 leading-relaxed max-w-xs mx-auto">
