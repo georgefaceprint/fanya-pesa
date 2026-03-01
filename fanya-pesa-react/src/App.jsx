@@ -14,6 +14,8 @@ import ProfileEdit from './components/ProfileEdit';
 import AdminPanel from './components/AdminPanel';
 import FunderReview from './components/FunderReview';
 import StructureDeal from './components/StructureDeal';
+import SupplierMilestones from './components/SupplierMilestones';
+import FundingDetails from './components/FundingDetails';
 import './index.css';
 
 export default function App() {
@@ -152,10 +154,22 @@ export default function App() {
         <StructureDeal
           user={user}
           dealId={viewParam}
-          onBack={() => {
-            setCurrentView('funder-review');
-          }}
+          onBack={() => setCurrentView('funder-review')}
           onContractGenerated={() => { }}
+        />
+      )}
+      {currentView === 'supplier-milestones' && user && (
+        <SupplierMilestones
+          user={user}
+          dealId={viewParam}
+          onBack={() => setCurrentView('dashboard')}
+        />
+      )}
+      {currentView === 'funding-details' && user && (
+        <FundingDetails
+          user={user}
+          dealId={viewParam}
+          onBack={() => setCurrentView('dashboard')}
         />
       )}
       {currentView === 'dashboard' && user && (
