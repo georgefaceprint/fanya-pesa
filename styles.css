@@ -474,3 +474,35 @@ select.form-control {
     justify-content: center;
     margin-top: 2rem;
 }
+
+@media print {
+
+    body,
+    html {
+        background: white !important;
+        color: black !important;
+    }
+
+    .navbar,
+    footer,
+    .btn:not(.print-btn),
+    .glass-card:not(#fanya-contract-doc) {
+        display: none !important;
+    }
+
+    #main-view {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    #fanya-contract-doc {
+        box-shadow: none !important;
+        border: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    @page {
+        margin: 1.5cm;
+    }
+}

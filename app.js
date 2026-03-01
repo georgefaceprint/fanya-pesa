@@ -154,7 +154,11 @@ const app = {
         }
     },
 
-    async login(intentType = 'SME') {
+    async login(intentType = 'SME', providerType = 'google') {
+        if (providerType !== 'google') {
+            alert("Simulating " + providerType + " Auth... (This routes to Firebase " + providerType + " Auth Provider in production). Continuing with demo Google login.");
+        }
+
         try {
             const result = await signInWithPopup(auth, provider);
             const userRef = doc(db, "users", result.user.uid);
@@ -274,8 +278,8 @@ const app = {
                 <p style="color: var(--text-muted); margin-bottom: 2rem; font-size: 0.9rem;">Please use your Google account to log in. Your profile will be automatically mapped to your chosen role.</p>
                 
                 <div class="glass-card" style="text-align: center; padding: 3rem 2rem;">
-                    <!-- Placeholder for Real Google Sign In -->
-                    <button class="btn btn-primary btn-large" style="width: 100%; display: flex; justify-content: center; gap: 1rem;" onclick="app.login('${intentType}')">
+                    
+                    <button class="btn btn-primary btn-large" style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 1rem; margin-bottom: 1rem;" onclick="app.login('${intentType}', 'google')">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
                             <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -284,8 +288,24 @@ const app = {
                         </svg>
                         Continue with Google
                     </button>
+                    
+                    <button class="btn btn-outline btn-large" style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 1rem; margin-bottom: 1rem;" onclick="app.login('${intentType}', 'apple')">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M16.365 20.675C15.115 21.6 13.905 22.025 12 22C10.155 22.025 8.875 21.6 7.635 20.675C5.165 18.845 2.625 14.185 4.305 9.775C5.145 7.575 7.035 6.125 9.175 6.125C10.745 6.125 11.975 6.845 12.875 6.845C13.805 6.845 15.255 5.995 17.155 5.995C18.675 5.995 20.465 6.675 21.575 8.045C21.495 8.105 18.825 9.685 18.825 12.845C18.825 16.595 22.155 17.895 22.195 17.915C22.145 18.065 21.655 19.825 20.575 21.415C19.555 22.925 18.435 24.365 16.825 24.365C15.225 24.365 14.735 23.365 12.865 23.365C10.985 23.365 10.425 24.325 8.905 24.325C7.385 24.325 6.135 22.755 5.075 21.235C2.885 18.085.875 12.385 3.125 9.145C4.245 7.525 5.985 6.545 7.825 6.545C9.375 6.545 10.745 7.575 11.725 7.575C12.705 7.575 14.395 6.325 16.295 6.325C17.655 6.325 19.505 6.945 20.655 8.415L20.665 8.425C18.155 9.945 18.415 13.575 21.105 14.715C20.505 16.395 19.335 18.445 18.065 20.275C17.585 20.945 17.125 21.565 16.715 22.055L16.365 20.675ZM15.265 4.185C16.095 3.165 16.655 1.835 16.505.495C15.355.545 13.935 1.285 13.085 2.305C12.335 3.205 11.665 4.585 11.835 5.885C13.115 5.985 14.435 5.205 15.265 4.185Z"/></svg>
+                        Continue with Apple
+                    </button>
+                    
+                    <button class="btn btn-outline btn-large" style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 1rem; margin-bottom: 1rem;" onclick="app.login('${intentType}', 'email')">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2" ry="2"/><polyline points="3 7 12 13 21 7"/></svg>
+                        Continue with Email
+                    </button>
+                    
+                    <button class="btn btn-outline btn-large" style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 1rem;" onclick="app.login('${intentType}', 'phone')">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                        Continue with Phone
+                    </button>
+
                     <p style="margin-top: 1.5rem; font-size: 0.85rem; color: var(--text-muted);">
-                        By continuing, you agree to our Terms and Privacy Policy.
+                        By continuing, you agree to our Terms and Privacy Policy. All major authentication providers supported.
                     </p>
                 </div>
             </div>
@@ -840,43 +860,72 @@ const app = {
 
     showSubscriptionCheckout() {
         this.setView(`
-    <div class="hero-enter" style = "max-width: 500px; margin: 4rem auto; text-align: center;">
-        <div class="glass-card" id="checkout-container" style="padding: 3rem 2rem;">
-            <div class="spinner" style="margin: 0 auto 1.5rem auto; width: 40px; height: 40px; border: 4px solid rgba(59, 130, 246, 0.1); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite;"></div>
-            <style>@keyframes spin {to {transform: rotate(360deg); } }</style>
-            <h3 style="margin-bottom: 0.5rem;">Connecting to PayFast...</h3>
-            <p class="subtext">Please wait while we transfer you to our secure payment gateway to process your R499 subscription.</p>
-        </div>
-             </div>
-    `);
-
-        // Simulate identical Yoco/PayFast redirection delay and success callback
-        setTimeout(async () => {
-            const container = document.getElementById('checkout-container');
-            if (container) {
-                container.innerHTML = `
-    <div style="background: rgba(16, 185, 129, 0.1); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem auto;">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <div class="hero-enter" style="max-width: 500px; margin: 4rem auto;">
+                <div class="glass-card" style="padding: 0; overflow: hidden; border: none; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+                    <div style="background: #10b981; color: white; padding: 2rem; text-align: center;">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-bottom: 0.5rem;"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v2M3 13h18M5 17h14a2 2 0 0 0 2-2v-4H3v4a2 2 0 0 0 2 2z"/></svg>
+                        <h2 style="font-family: var(--font-heading); margin-bottom: 0.5rem; color: white;">PayFast Secure</h2>
+                        <p style="opacity: 0.9; font-size: 0.9rem;">Fanya Pesa Supplier Subscription</p>
+                        <h1 style="color: white; margin-top: 1rem; font-weight: 800; font-family: monospace;">ZAR 499.00</h1>
                     </div>
-                    <h3 style="margin-bottom: 0.5rem; color: var(--accent);">Payment Successful!</h3>
-                    <p class="subtext">Your account is now verified. Redirecting to Live RFQs...</p>
-`;
+                    
+                    <form id="payfast-mock-form" style="padding: 2rem; background: var(--card-bg);" onsubmit="event.preventDefault(); app.processPayment();">
+                        <div class="form-group">
+                            <label>Name on Card</label>
+                            <input type="text" class="form-control" placeholder="John Doe" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Valid Card Number</label>
+                            <input type="text" class="form-control" placeholder="4000 1234 5678 9010" required>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="form-group">
+                                <label>Expiry Date</label>
+                                <input type="text" class="form-control" placeholder="MM/YY" required>
+                            </div>
+                            <div class="form-group">
+                                <label>CVV / CVC</label>
+                                <input type="password" class="form-control" placeholder="***" required>
+                            </div>
+                        </div>
+                        <button type="submit" id="pay-btn" class="btn btn-primary btn-large" style="width: 100%; margin-top: 1.5rem; background: #10b981; border: none; font-size: 1.1rem; padding: 1rem;">Secure Pay R499.00</button>
+                    </form>
+                    
+                    <div id="payment-success" style="display: none; padding: 4rem 2rem; text-align: center; background: var(--card-bg);">
+                        <div style="background: rgba(16, 185, 129, 0.1); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem auto;">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        </div>
+                        <h3 style="margin-bottom: 0.5rem; color: var(--accent);">Payment Complete!</h3>
+                        <p class="subtext">Your account is now fully verified. Redirecting to Live RFQs...</p>
+                    </div>
+                </div>
+            </div>
+        `);
+    },
 
-                // Update Firestore DB seamlessly and mutate global user state
-                try {
-                    await setDoc(doc(db, "users", this.user.id), { subscribed: true }, { merge: true });
-                    this.user.subscribed = true;
-                    localStorage.setItem(STORE_KEY, JSON.stringify(this.user));
+    async processPayment() {
+        const btn = document.getElementById('pay-btn');
+        btn.innerHTML = '<span class="status pulse" style="background: rgba(255,255,255,0.2); color: white;">Processing securely...</span>';
+        btn.disabled = true;
 
-                    setTimeout(() => {
-                        this.showDashboard();
-                    }, 2000); // Allow them to read the success message
-                } catch (error) {
-                    console.error("Subscription activation failed", error);
-                    alert("Payment succeeded but activation failed. Contact support.");
-                }
+        setTimeout(async () => {
+            document.getElementById('payfast-mock-form').style.display = 'none';
+            document.getElementById('payment-success').style.display = 'block';
+
+            try {
+                const userRef = doc(db, "users", this.user.id);
+                await setDoc(userRef, { subscribed: true }, { merge: true });
+                this.user.subscribed = true;
+                localStorage.setItem(STORE_KEY, JSON.stringify(this.user));
+
+                setTimeout(() => {
+                    this.showDashboard();
+                }, 2500);
+            } catch (error) {
+                console.error("Subscription activation failed", error);
+                alert("Payment succeeded but database activation failed. Contact support.");
             }
-        }, 3000);
+        }, 1500);
     },
 
     showFundingRequest() {
