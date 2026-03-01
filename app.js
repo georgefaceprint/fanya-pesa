@@ -81,23 +81,22 @@ const app = {
         onSnapshot(doc(db, "system_config", "categories"), (docSnap) => {
             if (docSnap.exists()) {
                 this.fundingCategories = docSnap.data().data;
-            } else {
                 this.fundingCategories = [
-                    { id: 1, name: 'Construction & Engineering', description: 'Civil, building, and infrastructure projects' },
-                    { id: 2, name: 'Professional & Advisory Services', description: 'Legal, accounting, consulting, and engineering' },
-                    { id: 3, name: 'Energy & Utilities', description: 'Power generation, renewable energy, and water' },
-                    { id: 4, name: 'Telecommunications & IT', description: 'Network infrastructure, hardware, and software services' },
-                    { id: 5, name: 'Supplies: Medical & Health', description: 'Clinical supplies, equipment, and health services' },
-                    { id: 6, name: 'Supplies: Perishable Provisions', description: 'Food supplies and catering services' },
-                    { id: 7, name: 'Supplies: General Office & Stationery', description: 'Office supplies, equipment, and furniture' },
-                    { id: 8, name: 'Education & Training', description: 'Skills development and educational materials' },
-                    { id: 9, name: 'Services: Functional', description: 'Cleaning, hygiene, security, and administrative support' },
-                    { id: 10, name: 'Logistics, Transport & Storage', description: 'Freight, courier, fleet management, and warehousing' },
-                    { id: 11, name: 'Manufacturing & Processing', description: 'Production of goods, equipment, and materials' },
-                    { id: 12, name: 'Financial & Insurance Activities', description: 'Audit services, insurance, and brokering' },
-                    { id: 13, name: 'Services: Building & Maintenance', description: 'Facilities management and repairs' },
-                    { id: 14, name: 'Media, Arts & Advertising', description: 'Marketing, event management, and broadcasting' },
-                    { id: 15, name: 'Agriculture Products & Services', description: 'Farming supplies, landscaping, and forestry' }
+                    { id: 1, name: 'Services: Professional & Technical', description: 'Management consultancy, architectural, engineering, legal, accounting, research, advertising' },
+                    { id: 2, name: 'Services: Functional & Operations', description: 'Cleaning, security, building/landscape services, administrative and support activities' },
+                    { id: 3, name: 'Construction & Engineering', description: 'Building construction, civil engineering, specialised construction, building/electrical services' },
+                    { id: 4, name: 'Information & Communication', description: 'Publishing, programming, broadcasting, telecommunications, and information services' },
+                    { id: 5, name: 'Healthcare & Social Services', description: 'Human health activities, residential care, and medical supplies' },
+                    { id: 6, name: 'Education & Culture', description: 'Education, libraries, museums, arts, entertainment and recreation activities' },
+                    { id: 7, name: 'Manufacturing & Production', description: 'Manufacture of textiles, paper, chemicals, metals, machinery, electronics, and furniture' },
+                    { id: 8, name: 'Transportation & Logistics', description: 'Land, water, air transport, warehousing, and postal/courier activities' },
+                    { id: 9, name: 'Utilities & Infrastructure', description: 'Electricity, gas, water supply, sewerage, waste management and remediation' },
+                    { id: 10, name: 'Supplies & Equipment', description: 'General supplies, computer, electrical, textiles, stationery and perishable provisions' },
+                    { id: 11, name: 'Mining & Extraction', description: 'Mining and quarrying, coal, lignite, and mining support services' },
+                    { id: 12, name: 'Financial & Insurance', description: 'Financial services, insurance, reinsurance, pension funding, and auxiliary activities' },
+                    { id: 13, name: 'Accommodation & Food Services', description: 'Accommodation, food and beverage service activities' },
+                    { id: 14, name: 'Real Estate & Property', description: 'Real estate activities and property management' },
+                    { id: 15, name: 'Other Services & Disposals', description: 'General services, retail trade, motor vehicle repair, and disposals' }
                 ];
                 this.saveFundingCategories();
             }
@@ -1951,21 +1950,21 @@ const app = {
     loadOfficialCategories() {
         if (!confirm("Are you sure? This will replace all current categories with the official SA Tender categories!")) return;
         this.fundingCategories = [
-            { id: 1, name: 'Construction & Engineering', description: 'Civil, building, and infrastructure projects' },
-            { id: 2, name: 'Professional & Advisory Services', description: 'Legal, accounting, consulting, and engineering' },
-            { id: 3, name: 'Energy & Utilities', description: 'Power generation, renewable energy, and water' },
-            { id: 4, name: 'Telecommunications & IT', description: 'Network infrastructure, hardware, and software services' },
-            { id: 5, name: 'Supplies: Medical & Health', description: 'Clinical supplies, equipment, and health services' },
-            { id: 6, name: 'Supplies: Perishable Provisions', description: 'Food supplies and catering services' },
-            { id: 7, name: 'Supplies: General Office & Stationery', description: 'Office supplies, equipment, and furniture' },
-            { id: 8, name: 'Education & Training', description: 'Skills development and educational materials' },
-            { id: 9, name: 'Services: Functional', description: 'Cleaning, hygiene, security, and administrative support' },
-            { id: 10, name: 'Logistics, Transport & Storage', description: 'Freight, courier, fleet management, and warehousing' },
-            { id: 11, name: 'Manufacturing & Processing', description: 'Production of goods, equipment, and materials' },
-            { id: 12, name: 'Financial & Insurance Activities', description: 'Audit services, insurance, and brokering' },
-            { id: 13, name: 'Services: Building & Maintenance', description: 'Facilities management and repairs' },
-            { id: 14, name: 'Media, Arts & Advertising', description: 'Marketing, event management, and broadcasting' },
-            { id: 15, name: 'Agriculture Products & Services', description: 'Farming supplies, landscaping, and forestry' }
+            { id: 1, name: 'Services: Professional & Technical', description: 'Management consultancy, architectural, engineering, legal, accounting, research, advertising' },
+            { id: 2, name: 'Services: Functional & Operations', description: 'Cleaning, security, building/landscape services, administrative and support activities' },
+            { id: 3, name: 'Construction & Engineering', description: 'Building construction, civil engineering, specialised construction, building/electrical services' },
+            { id: 4, name: 'Information & Communication', description: 'Publishing, programming, broadcasting, telecommunications, and information services' },
+            { id: 5, name: 'Healthcare & Social Services', description: 'Human health activities, residential care, and medical supplies' },
+            { id: 6, name: 'Education & Culture', description: 'Education, libraries, museums, arts, entertainment and recreation activities' },
+            { id: 7, name: 'Manufacturing & Production', description: 'Manufacture of textiles, paper, chemicals, metals, machinery, electronics, and furniture' },
+            { id: 8, name: 'Transportation & Logistics', description: 'Land, water, air transport, warehousing, and postal/courier activities' },
+            { id: 9, name: 'Utilities & Infrastructure', description: 'Electricity, gas, water supply, sewerage, waste management and remediation' },
+            { id: 10, name: 'Supplies & Equipment', description: 'General supplies, computer, electrical, textiles, stationery and perishable provisions' },
+            { id: 11, name: 'Mining & Extraction', description: 'Mining and quarrying, coal, lignite, and mining support services' },
+            { id: 12, name: 'Financial & Insurance', description: 'Financial services, insurance, reinsurance, pension funding, and auxiliary activities' },
+            { id: 13, name: 'Accommodation & Food Services', description: 'Accommodation, food and beverage service activities' },
+            { id: 14, name: 'Real Estate & Property', description: 'Real estate activities and property management' },
+            { id: 15, name: 'Other Services & Disposals', description: 'General services, retail trade, motor vehicle repair, and disposals' }
         ];
         this.saveFundingCategories();
         this.showAdminCategories();
