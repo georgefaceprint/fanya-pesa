@@ -2330,13 +2330,41 @@ const app = {
         // Fetch all users from Firestore
         const userSnapshot = await getDocs(collection(db, "users"));
         const allUsers = [];
-        userSnapshot.forEach(docSnap => allUsers.push(docSnap.data()));
+        let stats = { total: 0, sme: 0, supplier: 0, funder: 0 };
+
+        userSnapshot.forEach(docSnap => {
+            const data = docSnap.data();
+            allUsers.push(data);
+            stats.total++;
+            if (data.type === 'SME') stats.sme++;
+            else if (data.type === 'SUPPLIER') stats.supplier++;
+            else if (data.type === 'FUNDER') stats.funder++;
+        });
 
         this.setView(`
             <div class="hero-enter" style="max-width: 900px; margin: 2rem auto;">
                 <button class="btn btn-secondary" style="margin-bottom: 2rem;" onclick="app.showDashboard()">&larr; Back to Admin Panel</button>
                 <h2>User Management Dashboard</h2>
                 <p class="subtext" style="margin-bottom: 2rem;">Audit and manage all platform participants including SMEs, Funders, and Suppliers.</p>
+
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2rem;">
+                    <div class="glass-card" style="padding: 1.5rem; text-align: center; border-left: 4px solid var(--primary);">
+                        <h2 style="font-size: 2.5rem; color: var(--text-color); margin: 0;">${stats.total}</h2>
+                        <span class="subtext" style="font-size: 0.85rem; font-weight: 600; text-transform: uppercase;">Total Users</span>
+                    </div>
+                    <div class="glass-card" style="padding: 1.5rem; text-align: center; border-left: 4px solid #3b82f6;">
+                        <h2 style="font-size: 2.5rem; color: #3b82f6; margin: 0;">${stats.sme}</h2>
+                        <span class="subtext" style="font-size: 0.85rem; font-weight: 600; text-transform: uppercase;">SMEs</span>
+                    </div>
+                    <div class="glass-card" style="padding: 1.5rem; text-align: center; border-left: 4px solid var(--accent);">
+                        <h2 style="font-size: 2.5rem; color: var(--accent); margin: 0;">${stats.supplier}</h2>
+                        <span class="subtext" style="font-size: 0.85rem; font-weight: 600; text-transform: uppercase;">Suppliers</span>
+                    </div>
+                    <div class="glass-card" style="padding: 1.5rem; text-align: center; border-left: 4px solid #8b5cf6;">
+                        <h2 style="font-size: 2.5rem; color: #8b5cf6; margin: 0;">${stats.funder}</h2>
+                        <span class="subtext" style="font-size: 0.85rem; font-weight: 600; text-transform: uppercase;">Funders</span>
+                    </div>
+                </div>
 
                 <div class="glass-card" style="padding: 0; overflow: hidden;">
                     <table style="width: 100%; border-collapse: collapse; text-align: left;">
@@ -2357,15 +2385,15 @@ const app = {
                                     </td>
                                     <td style="padding: 1.2rem;"><span class="badge" style="background: rgba(59, 130, 246, 0.1); color: var(--primary);">${u.type || 'SME'}</span></td>
                                     <td style="padding: 1.2rem;">
-                                        <span class="status ${u.verified !== false ? 'pulse' : ''}" 
-                                              style="background: ${u.verified !== false ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)'}; 
-                                                     color: ${u.verified !== false ? 'var(--accent)' : '#ef4444'};">
-                                            ${u.verified !== false ? 'Active & Verified' : 'Application Pending'}
+                                        <span class="status ${u.verified === true ? 'pulse' : ''}" 
+                                              style="background: ${u.verified === true ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)'}; 
+                                                     color: ${u.verified === true ? 'var(--accent)' : '#ef4444'};">
+                                            ${u.verified === true ? 'Active & Verified' : 'Application Pending'}
                                         </span>
                                     </td>
                                     <td style="padding: 1.2rem; text-align: right; display: flex; justify-content: flex-end; gap: 0.5rem;">
                                         <button class="btn btn-secondary btn-sm" onclick="app.showAdminUserVault('${u.id}')">Open Vault</button>
-                                        ${u.verified !== true ? `<button class="btn btn-primary btn-sm" onclick="app.verifyVaultUser('${u.id}', '${u.name}', '${u.email}')">Verify Profile</button>` : ''}
+                                        ${u.verified !== true ? `<button class="btn btn-primary btn-sm" onclick="app.verifyVaultUser('${u.id}', '${this.escapeHTML(u.name)}', '${u.email}')">Verify Profile</button>` : ''}
                                     </td>
                                 </tr>
                             `).join('') : '<tr><td colspan="4" style="padding: 3rem; text-align: center; color: var(--text-muted);">No platform users found in database.</td></tr>'}
@@ -2434,11 +2462,11 @@ const app = {
                             <div><strong>Email:</strong> ${u.email}</div>
                             <div><strong>Phone:</strong> ${u.phone || 'N/A'}</div>
                             <div><strong>Province:</strong> ${u.province || 'N/A'}</div>
-                            ${u.type === 'SME' ? `<div><strong>CIPC Reg:</strong> ${u.regNum || 'N/A'}</div>` : ''}
-                            ${u.type === 'SUPPLIER' ? `
-                                <div><strong>Industry:</strong> ${u.industry || 'N/A'}</div>
-                                <div><strong>Turnover:</strong> ${u.annualTurnover || 'N/A'}</div>
-                                <div><strong>Years Active:</strong> ${u.yearsInBusiness || 'N/A'}</div>
+                            ${u.type === 'SME' ? `<div><strong>CIPC Reg:</strong> ${u.registrationNumber || u.regNum || 'N/A'}</div>` : ''}
+                            ${(u.type === 'SUPPLIER' || u.type === 'SME') ? `
+                                <div><strong>Industry:</strong> ${Array.isArray(u.industry) ? u.industry.join(', ') : (u.industry || 'N/A')}</div>
+                                <div><strong>Turnover:</strong> ${(u.onboardingData && u.onboardingData.annualTurnover) || 'N/A'}</div>
+                                <div><strong>Years Active:</strong> ${(u.onboardingData && u.onboardingData.yearsInBusiness) || 'N/A'}</div>
                             ` : ''}
                         </div>
                     </div>
