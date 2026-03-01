@@ -1,4 +1,4 @@
-/* Fanya Pesa Engine - Version 12.64 */
+/* Fanya Pesa Engine - Version 12.67 */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
 import { getFirestore, collection, getDocs, addDoc, setDoc, doc, onSnapshot, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { getAuth, signInWithPopup, GoogleAuthProvider, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
@@ -122,7 +122,11 @@ const app = {
 
         // Handle initial routing based on user state
         if (this.user) {
-            this.showDashboard();
+            if (this.user.type !== 'ADMIN' && (!this.user.onboardingComplete)) {
+                this.showOnboarding(this.user.onboardingStep || 1);
+            } else {
+                this.showDashboard();
+            }
         } else {
             this.renderHome();
         }
@@ -166,7 +170,9 @@ const app = {
                     name: result.user.displayName,
                     email: result.user.email,
                     type: intentType, // SME, FUNDER, SUPPLIER, or ADMIN
-                    subscribed: false
+                    subscribed: false,
+                    onboardingStep: 1,
+                    onboardingComplete: false
                 };
                 await setDoc(userRef, userData);
             }
@@ -231,9 +237,12 @@ const app = {
                     <span class="badge">South Africa's #1 SME Platform</span>
                     <h1 class="gradient-text">Empowering South African Businesses.</h1>
                     <p>Fast, transparent business and tender funding. Get matched directly with verified funders or receive quotes from national database suppliers.</p>
-                    <div class="hero-actions">
-                        <button class="btn btn-primary btn-large" onclick="app.showAuth('SME')">Apply as SME</button>
-                        <button class="btn btn-outline btn-large" onclick="app.showAuth('FUNDER')">I am a Funder</button>
+                    <div class="hero-actions" style="margin-top: 2rem;">
+                        <button class="btn btn-primary btn-large" onclick="app.showAuth('SME')">Get Funded as SME</button>
+                        <button class="btn btn-outline btn-large" onclick="app.showAuth('FUNDER')">Register as Funder</button>
+                    </div>
+                    <div style="margin-top: 1rem;">
+                        <button class="btn btn-outline btn-sm" onclick="app.showAuth('SUPPLIER')" style="opacity: 0.8; border-color: var(--text-muted);">Join National Supplier Database</button>
                     </div>
                 </div>
                 <div class="hero-visual">
@@ -260,8 +269,9 @@ const app = {
     showAuth(intentType = 'SME') {
         this.setView(`
             <div class="auth-wrapper hero-enter" style="max-width: 450px; margin: 4rem auto;">
-                <h2 style="margin-bottom: 1rem; font-size: 2rem;">Sign In / Join</h2>
-                <p style="color: var(--text-muted); margin-bottom: 2rem;">Use your Google account to access the Fanya Pesa platform.</p>
+                <h2 style="margin-bottom: 0.5rem; font-size: 2rem; font-family: var(--font-heading);">Sign In / Join</h2>
+                <div class="badge" style="margin-bottom: 1.5rem; background: rgba(59,130,246,0.1); color: var(--primary);">Accessing as: ${intentType}</div>
+                <p style="color: var(--text-muted); margin-bottom: 2rem; font-size: 0.9rem;">Please use your Google account to log in. Your profile will be automatically mapped to your chosen role.</p>
                 
                 <div class="glass-card" style="text-align: center; padding: 3rem 2rem;">
                     <!-- Placeholder for Real Google Sign In -->
@@ -282,8 +292,152 @@ const app = {
         `);
     },
 
+    provincesSA: [
+        "Eastern Cape", "Free State", "Gauteng", "KwaZulu-Natal",
+        "Limpopo", "Mpumalanga", "Northern Cape", "North West", "Western Cape"
+    ],
+
+    onboardingSteps: [
+        { title: "Business Identity", subtitle: "Define your company legal name and registration type." },
+        { title: "Industry & Category", subtitle: "Tell us what industry you operate in for better matching." },
+        { title: "Location Details", subtitle: "Verification of your physical operating presence in South Africa." },
+        { title: "KYC & Compliance", subtitle: "Initial document setup to enable platform transactions." }
+    ],
+
+    showOnboarding(step = 1) {
+        this.currentView = 'onboarding';
+        const total = this.onboardingSteps.length;
+        const progress = Math.round((step / total) * 100);
+        const currentData = this.user.onboardingData || {};
+
+        this.setView(`
+            <div class="hero-enter" style="max-width: 600px; margin: 3rem auto;">
+                <div style="margin-bottom: 2rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 0.5rem;">
+                        <h4 style="font-family: var(--font-heading); color: var(--primary);">Step ${step} of ${total}</h4>
+                        <span class="subtext">${progress}% Complete</span>
+                    </div>
+                    <div style="width: 100%; height: 8px; background: var(--secondary); border-radius: 4px; overflow: hidden;">
+                        <div style="width: ${progress}%; height: 100%; background: var(--primary); transition: width 0.5s ease;"></div>
+                    </div>
+                </div>
+
+                <div class="glass-card" style="padding: 2.5rem;">
+                    <h2 style="margin-bottom: 0.5rem;">${this.onboardingSteps[step - 1].title}</h2>
+                    <p class="subtext" style="margin-bottom: 2rem;">${this.onboardingSteps[step - 1].subtitle}</p>
+
+                    <form onsubmit="event.preventDefault(); app.saveOnboardingStep(${step}, this);">
+                        ${step === 1 ? `
+                            <div class="form-group">
+                                <label>Registered Company Name</label>
+                                <input type="text" name="companyName" class="form-control" placeholder="e.g. Acme Printing (Pty) Ltd" value="${currentData.companyName || ''}" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Registration Number (CIPC)</label>
+                                <input type="text" name="regNumber" class="form-control" placeholder="YYYY/NNNNNN/NN" value="${currentData.regNumber || ''}" required>
+                            </div>
+                        ` : ''}
+
+                        ${step === 2 ? `
+                            <div class="form-group">
+                                <label>Primary Industry</label>
+                                <select name="industry" class="form-control" required>
+                                    <option value="">Select Industry</option>
+                                    <option value="Construction" ${currentData.industry === 'Construction' ? 'selected' : ''}>Construction & Infrastructure</option>
+                                    <option value="Manufacturing" ${currentData.industry === 'Manufacturing' ? 'selected' : ''}>Manufacturing</option>
+                                    <option value="Agriculture" ${currentData.industry === 'Agriculture' ? 'selected' : ''}>Agriculture</option>
+                                    <option value="Retail" ${currentData.industry === 'Retail' ? 'selected' : ''}>Retail & Wholesale</option>
+                                    <option value="Services" ${currentData.industry === 'Services' ? 'selected' : ''}>Professional Services</option>
+                                    <option value="Logistics" ${currentData.industry === 'Logistics' ? 'selected' : ''}>Logistics & Transport</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Funding Category Needs</label>
+                                <select name="preferredCategory" class="form-control" required>
+                                    ${this.fundingCategories.map(c => `<option value="${c.name}" ${currentData.preferredCategory === c.name ? 'selected' : ''}>${c.name}</option>`).join('')}
+                                </select>
+                            </div>
+                        ` : ''}
+
+                        ${step === 3 ? `
+                            <div class="form-group">
+                                <label>Province</label>
+                                <select name="province" class="form-control" required>
+                                    <option value="">Select Province</option>
+                                    ${this.provincesSA.map(p => `<option value="${p}" ${currentData.province === p ? 'selected' : ''}>${p}</option>`).join('')}
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Physical Business Address</label>
+                                <textarea name="address" class="form-control" rows="3" placeholder="Street, City, Postal Code" required>${currentData.address || ''}</textarea>
+                            </div>
+                        ` : ''}
+
+                        ${step === 4 ? `
+                            <div style="background: rgba(59, 130, 246, 0.05); padding: 1.5rem; border-radius: 8px; border: 1px dashed var(--border); margin-bottom: 2rem; text-align: center;">
+                                <h4 style="margin-bottom: 0.5rem;">Document Setup Ready</h4>
+                                <p class="subtext" style="font-size: 0.85rem;">Your identity and registration documents will be managed in your <strong>Secure Vault</strong> after onboarding.</p>
+                            </div>
+                            <div class="form-group">
+                                <label style="display: flex; align-items: flex-start; gap: 0.8rem; cursor: pointer;">
+                                    <input type="checkbox" required style="margin-top: 0.3rem;">
+                                    <span style="font-size: 0.9rem;">I confirm that all provided details are legally accurate and represent ${currentData.companyName || 'the business'}.</span>
+                                </label>
+                            </div>
+                        ` : ''}
+
+                        <div style="display: flex; justify-content: space-between; margin-top: 3rem;">
+                            ${step > 1 ? `<button type="button" class="btn btn-outline" onclick="app.showOnboarding(${step - 1})">Back</button>` : '<div></div>'}
+                            <button type="submit" class="btn btn-primary">${step === total ? 'Complete Onboarding' : 'Continue'}</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        `);
+    },
+
+    async saveOnboardingStep(step, form) {
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
+        const total = this.onboardingSteps.length;
+
+        // Update local user state
+        this.user.onboardingData = { ...(this.user.onboardingData || {}), ...data };
+
+        if (step === total) {
+            this.user.onboardingComplete = true;
+            this.user.onboardingStep = total;
+            // Map onboarding data to user profile
+            this.user.name = this.user.onboardingData.companyName || this.user.name;
+        } else {
+            this.user.onboardingStep = step + 1;
+        }
+
+        try {
+            const userRef = doc(db, "users", this.user.id);
+            await setDoc(userRef, this.user, { merge: true });
+
+            localStorage.setItem(STORE_KEY, JSON.stringify(this.user));
+
+            if (this.user.onboardingComplete) {
+                alert("Welcome aboard! Your Fanya Pesa profile is now live.");
+                this.showDashboard();
+            } else {
+                this.showOnboarding(this.user.onboardingStep);
+            }
+        } catch (error) {
+            console.error("Onboarding Save Error:", error);
+            alert("System Error: Failed to save progress.");
+        }
+    },
+
     showDashboard() {
         if (!this.user) return this.showAuth();
+
+        // Ensure onboarding is complete if not Admin
+        if (this.user.type !== 'ADMIN' && !this.user.onboardingComplete) {
+            return this.showOnboarding(this.user.onboardingStep || 1);
+        }
 
         this.setView(`
             <div class="hero-enter" style="margin-top: 2rem;">
