@@ -166,6 +166,80 @@ export default function Home({ onNavigate }) {
                 </div>
             </section>
 
+            {/* Testimonials Section */}
+            <section className="py-24 bg-gray-50 dark:bg-gray-900/20">
+                <div className="max-w-7xl mx-auto px-6">
+                    <div className="text-center mb-16">
+                        <h2 className="text-4xl font-black text-gray-900 dark:text-white mb-4">Success Stories</h2>
+                        <p className="text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">Hear from the businesses and suppliers growing with Fanya Pesa.</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {[
+                            {
+                                type: 'SME',
+                                name: 'Thabo Mndau',
+                                role: 'Director, BuildSA Construction',
+                                text: 'Fanya Pesa transformed our procurement process. We got funded for a R500,000 construction tender in under 48 hours. Absolute game changer.',
+                                icon: '🏗️'
+                            },
+                            {
+                                type: 'SME',
+                                name: 'Sarah Langa',
+                                role: 'Founder, TechNexus Solutions',
+                                text: 'The digital vault made compliance easy. No more chasing paper for every new contract. We stay audit-ready 24/7.',
+                                icon: '💻'
+                            },
+                            {
+                                type: 'Supplier',
+                                name: 'Sipho Nkosi',
+                                role: 'CEO, Nkosi Equipment',
+                                text: 'Since being verified, we’ve seen a 40% increase in contract wins. The guaranteed milestone payouts via escrow give us real peace of mind.',
+                                icon: '⚒️'
+                            },
+                            {
+                                type: 'SME',
+                                name: 'David Khoza',
+                                role: 'Operations, SwiftLogistics',
+                                text: 'Being matched with verified suppliers saved us thousands on our last project. The transparent bidding process is exactly what SA businesses need.',
+                                icon: '🚚'
+                            },
+                            {
+                                type: 'SME',
+                                name: 'Nomusa Zungu',
+                                role: 'Owner, Zungu Manufacturing',
+                                text: 'The Pro tier is worth every cent. Unlimited RFQs means we can scale our business faster than ever before. Highly recommended.',
+                                icon: '⚙️'
+                            },
+                            {
+                                type: 'Supplier',
+                                name: 'Elena Venter',
+                                role: 'Head of Sales, AgriWholesale',
+                                text: 'Fanya Pesa connects us with funded, serious businesses. It eliminates the risk of late payments and bad debt entirely.',
+                                icon: '🌾'
+                            }
+                        ].map((t, i) => (
+                            <div key={i} className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 p-8 rounded-[2.5rem] shadow-sm hover:shadow-xl transition-all relative group">
+                                <div className={`absolute top-0 right-0 px-4 py-1.5 rounded-bl-2xl text-[10px] font-black uppercase tracking-widest ${t.type === 'SME' ? 'bg-blue-50 text-blue-600' : 'bg-emerald-50 text-emerald-600'}`}>
+                                    {t.type}
+                                </div>
+                                <div className="text-3xl mb-6">{t.icon}</div>
+                                <p className="text-gray-600 dark:text-gray-300 italic mb-8 leading-relaxed">"{t.text}"</p>
+                                <div className="flex items-center gap-4">
+                                    <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center font-black text-gray-400">
+                                        {t.name.charAt(0)}
+                                    </div>
+                                    <div>
+                                        <div className="font-bold text-gray-900 dark:text-white">{t.name}</div>
+                                        <div className="text-xs text-gray-500">{t.role}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
             <footer className="text-center p-8 border-t border-gray-200 dark:border-gray-800">
                 <p className="text-gray-500 text-sm">
                     &copy; {new Date().getFullYear()} Fanya Pesa.
