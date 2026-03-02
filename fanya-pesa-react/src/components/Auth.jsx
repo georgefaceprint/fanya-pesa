@@ -7,7 +7,7 @@ import {
     createUserWithEmailAndPassword,
     sendPasswordResetEmail
 } from 'firebase/auth';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 
 export default function Auth({ initialIntent = null, onBack, onLogin }) {
     const [intent, setIntent] = useState(initialIntent);
@@ -23,7 +23,7 @@ export default function Auth({ initialIntent = null, onBack, onLogin }) {
         const userSnap = await getDoc(userRef);
 
         if (!userSnap.exists()) {
-            await setDoc(userRef, {
+            const userData = {
                 uid: user.uid,
                 email: user.email,
                 name: user.displayName || '',
@@ -31,10 +31,28 @@ export default function Auth({ initialIntent = null, onBack, onLogin }) {
                 verified: false,
                 onboardingComplete: false,
                 createdAt: serverTimestamp()
-            });
-            return { uid: user.uid, email: user.email, name: user.displayName || '', type: userType, onboardingComplete: false, verified: false };
+            };
+
+            // Initialize subscription for SMEs
+            if (userType === 'SME') {
+                userData.subscription = {
+                    tier: 'free',
+                    status: 'active',
+                    updatedAt: serverTimestamp()
+                };
+            }
+
+            await setDoc(userRef, userData);
+            return userData;
         } else {
-            return { uid: user.uid, email: user.email, ...userSnap.data() };
+            const data = userSnap.data();
+            // Migrate existing SMEs without subscription object
+            if (data.type === 'SME' && !data.subscription) {
+                const sub = { tier: 'free', status: 'active', updatedAt: serverTimestamp() };
+                await updateDoc(userRef, { subscription: sub });
+                return { uid: user.uid, email: user.email, ...data, subscription: sub };
+            }
+            return { uid: user.uid, email: user.email, ...data };
         }
     };
 

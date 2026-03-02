@@ -10,6 +10,7 @@ const ADMIN_MODULES = [
     { id: 'categories', title: 'Funding Categories', desc: 'Update the platform taxonomy and matching logic for SME funding requests.', icon: '🏷️', color: 'emerald' },
     { id: 'users', title: 'User Management', desc: 'Audit the entire user base including SMEs, Funders, and Suppliers.', icon: '👥', color: 'amber' },
     { id: 'funder_approval', title: 'Funder Verification', desc: 'Approve or reject high-net-worth individuals and corporate funding entities.', icon: '🛡️', color: 'purple' },
+    { id: 'subscriptions', title: 'Subscription Manager', desc: 'Manage SME pricing tiers, pro upgrades, and billing status.', icon: '💳', color: 'indigo' },
     { id: 'activity', title: 'System Activity', desc: 'Live feed of platform notifications, deal statuses, and user sign-ups.', icon: '🔔', color: 'red' },
     { id: 'secrets', title: 'API & Secrets', desc: 'Manage backend keys, Firestore limits, and third-party integration secrets.', icon: '🔑', color: 'gray' }
 ];
@@ -36,6 +37,19 @@ export default function AdminPanel({ user, onBack }) {
             return () => unsub();
         }
     }, [currentModule]);
+
+    const toggleSubscription = async (userId, currentTier) => {
+        try {
+            await updateDoc(doc(db, "users", userId), {
+                "subscription.tier": currentTier === 'pro' ? 'free' : 'pro',
+                "subscription.updatedAt": new Date()
+            });
+            toast.success(`SME upgraded to ${currentTier === 'pro' ? 'Free' : 'Pro'} successfully!`);
+        } catch (error) {
+            console.error("Error toggling subscription:", error);
+            toast.error('Failed to update subscription.');
+        }
+    };
 
     const toggleVerification = async (userId, currentStatus) => {
         try {
@@ -181,6 +195,72 @@ export default function AdminPanel({ user, onBack }) {
                         </div>
                     )}
                     {loading && <div className="p-10 text-center text-gray-400 italic">Synchronizing with capital markets...</div>}
+                </div>
+            </div>
+        );
+    }
+
+    if (currentModule === 'subscriptions') {
+        const smes = users.filter(u => u.type === 'SME');
+        return (
+            <div className="max-w-6xl mx-auto py-10 animate-fade-in">
+                <button onClick={() => setCurrentModule(null)} className="mb-8 text-sm font-bold text-gray-500 hover:text-gray-900 transition-colors">&larr; Back to Control Center</button>
+                <div className="flex justify-between items-end mb-10">
+                    <div>
+                        <h2 className="text-3xl font-black text-gray-900 dark:text-white mb-2">SME Subscription Manager</h2>
+                        <p className="text-gray-500">Manage pricing tiers and premium access for platform SMEs.</p>
+                    </div>
+                    <div className="px-4 py-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-[10px] font-black uppercase tracking-widest rounded-lg border border-indigo-100 dark:border-indigo-800">
+                        {smes.length} SMEs Registered
+                    </div>
+                </div>
+
+                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-3xl overflow-hidden shadow-xl">
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-100 dark:border-gray-700">
+                                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">SME Entity</th>
+                                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Current Tier</th>
+                                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Status</th>
+                                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                            {smes.map(sme => {
+                                const tier = sme.subscription?.tier || 'free';
+                                return (
+                                    <tr key={sme.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-700/30 transition-colors">
+                                        <td className="px-6 py-4">
+                                            <div className="font-bold text-gray-900 dark:text-white">{sme.name || sme.email.split('@')[0]}</div>
+                                            <div className="text-[10px] text-gray-400 mt-0.5">{sme.email}</div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <span className={`px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-wider ${tier === 'pro' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'bg-gray-100 text-gray-500'}`}>
+                                                {tier}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="text-[10px] font-bold text-gray-500 uppercase">
+                                                {tier === 'pro' ? 'R499 / Month' : 'Limited Access'}
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <button
+                                                onClick={() => toggleSubscription(sme.id, tier)}
+                                                className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${tier === 'pro'
+                                                    ? 'border border-red-200 text-red-600 hover:bg-red-50'
+                                                    : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-600/20'
+                                                    }`}
+                                            >
+                                                {tier === 'pro' ? 'Downgrade' : 'Upgrade to Pro'}
+                                            </button>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                    {loading && <div className="p-10 text-center text-gray-400 italic">Scanning decentralized database...</div>}
                 </div>
             </div>
         );

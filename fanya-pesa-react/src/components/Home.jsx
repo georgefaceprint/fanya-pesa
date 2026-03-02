@@ -76,16 +76,40 @@ export default function Home({ onNavigate }) {
                         <h2 className="text-4xl font-black text-gray-900 dark:text-white mb-4">How Fanya Pesa Works</h2>
                         <p className="text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">A seamless 3-step process to bridge the capital gap for South African businesses.</p>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                         {[
-                            { step: '01', title: 'Register & Verify', desc: 'SMEs and Suppliers upload compliance docs to our secure vault for instant verification.' },
-                            { step: '02', title: 'Quote & Coordinate', desc: 'Broadcast RFQs to verified suppliers and receive formal quotes within minutes.' },
-                            { step: '03', title: 'Secure Funding', desc: 'Get matched with funders who provide the capital directly to fulfill your contracts.' }
+                            {
+                                step: '01',
+                                title: 'Digital Onboarding',
+                                desc: 'Register your SME or Supplier entity. Upload CIPC docs, Tax Clearance, and BEE certificates to our encrypted Digital Vault for instant compliance scoring.',
+                                icon: '📑'
+                            },
+                            {
+                                step: '02',
+                                title: 'RFQ Generation',
+                                desc: 'Post your requirements for goods or services. Our smart system matches your RFQ with verified suppliers in the national database automatically.',
+                                icon: '📡'
+                            },
+                            {
+                                step: '03',
+                                title: 'Quote Comparison',
+                                desc: 'Receive and verify formal quotes from local suppliers. Compare pricing, delivery timelines, and supplier ratings within your dashboard.',
+                                icon: '📊'
+                            },
+                            {
+                                step: '04',
+                                title: 'Capital Deployment',
+                                desc: 'Once a quote is accepted, get matched with liquidity partners who provide the capital needed to fulfill the contract and pay the supplier.',
+                                icon: '🏦'
+                            }
                         ].map((item, i) => (
-                            <div key={i} className="relative p-8 rounded-3xl border border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30 hover:border-blue-500/30 transition-all group">
-                                <div className="text-5xl font-black text-blue-600/10 dark:text-blue-400/10 absolute top-4 right-8 group-hover:text-blue-600/20 transition-colors">{item.step}</div>
-                                <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-3">{item.title}</h4>
-                                <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">{item.desc}</p>
+                            <div key={i} className="relative p-8 rounded-3xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-800/40 hover:border-blue-500/30 transition-all group shadow-sm hover:shadow-xl">
+                                <div className="text-6xl font-black text-blue-600/5 dark:text-blue-400/5 absolute top-4 right-6 group-hover:text-blue-600/10 transition-colors pointer-events-none">{item.step}</div>
+                                <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-2xl mb-6 group-hover:scale-110 transition-transform">
+                                    {item.icon}
+                                </div>
+                                <h4 className="text-lg font-black text-gray-900 dark:text-white mb-3 tracking-tight">{item.title}</h4>
+                                <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed font-medium">{item.desc}</p>
                             </div>
                         ))}
                     </div>

@@ -90,9 +90,9 @@ export default function SmeDashboard({ user, onNavigate }) {
         }
     };
 
-    // ─── Suggestive Actions ───────────────────────────────────────────────────
     const renderSuggestiveActions = () => {
         const actions = [];
+        const tier = user.subscription?.tier || 'free';
 
         if (!user.industry || (Array.isArray(user.industry) && user.industry.length === 0)) {
             actions.push({
@@ -104,15 +104,17 @@ export default function SmeDashboard({ user, onNavigate }) {
             });
         }
 
-        if (!user.subscribed) {
+        if (tier === 'free') {
             actions.push({
-                title: "Unlock Premium Access",
-                desc: "Subscribe to request quotes from the national database.",
+                title: "Upgrade to Pro",
+                desc: "Get unlimited RFQs and priority matching for just R499/month.",
                 icon: "💎",
-                action: () => onNavigate('subscription'),
-                color: "emerald"
+                action: () => onNavigate('subscription'), // Future subscription page
+                color: "indigo"
             });
-        } else if (rfqs.length === 0) {
+        }
+
+        if (rfqs.length === 0) {
             actions.push({
                 title: "Create Your First RFQ",
                 desc: "Broadcast a request to verified suppliers for your business needs.",
@@ -144,6 +146,7 @@ export default function SmeDashboard({ user, onNavigate }) {
             blue: { bg: 'bg-blue-50 dark:bg-blue-900/20', text: 'text-blue-600 dark:text-blue-400' },
             emerald: { bg: 'bg-emerald-50 dark:bg-emerald-900/20', text: 'text-emerald-600 dark:text-emerald-400' },
             purple: { bg: 'bg-purple-50 dark:bg-purple-900/20', text: 'text-purple-600 dark:text-purple-400' },
+            indigo: { bg: 'bg-indigo-50 dark:bg-indigo-900/20', text: 'text-indigo-600 dark:text-indigo-400' },
         };
 
         return (
@@ -361,6 +364,12 @@ export default function SmeDashboard({ user, onNavigate }) {
                             <span className="font-medium text-gray-900 dark:text-white">{user.email}</span>
                         </div>
                         <div className="flex justify-between items-center text-sm">
+                            <span className="text-gray-500 dark:text-gray-400">Subscription Tier</span>
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest ${user.subscription?.tier === 'pro' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'bg-gray-100 dark:bg-gray-700 text-gray-500'}`}>
+                                {user.subscription?.tier || 'Free'}
+                            </span>
+                        </div>
+                        <div className="flex justify-between items-center text-sm">
                             <span className="text-gray-500 dark:text-gray-400">Fanya ID</span>
                             <span className="font-mono text-xs bg-gray-50 dark:bg-gray-900 px-2 py-1 rounded text-blue-600 dark:text-blue-400">FP-{user.id?.substring(0, 8).toUpperCase() || 'NEW'}</span>
                         </div>
@@ -374,16 +383,17 @@ export default function SmeDashboard({ user, onNavigate }) {
 
                 {/* RFQ / Funding List */}
                 <div className="lg:col-span-2 space-y-6">
-                    {!user.subscribed ? (
-                        <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl p-10 text-white relative overflow-hidden shadow-2xl shadow-blue-600/20">
+                    {user.subscription?.tier !== 'pro' ? (
+                        <div className="bg-gradient-to-br from-indigo-600 to-blue-700 rounded-3xl p-10 text-white relative overflow-hidden shadow-2xl shadow-indigo-600/20">
                             <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl"></div>
                             <div className="relative z-10 max-w-md">
-                                <h3 className="text-3xl font-bold mb-4">Unlock Premium Growth Plan</h3>
-                                <p className="text-white/80 mb-8 leading-relaxed">
-                                    Subscribe for R299/mo to request accurate quotes from verified national suppliers and apply for direct funding facilities.
+                                <h2 className="text-xs font-black uppercase tracking-[0.2em] mb-4 text-white/60">Expansion Opportunity</h2>
+                                <h3 className="text-3xl font-black mb-4 italic">SME Pro: Scale Your Operations</h3>
+                                <p className="text-white/80 mb-8 leading-relaxed font-medium">
+                                    Subscribe for **R499/mo** for unlimited RFQs, priority supplier matching, and dedicated funding support.
                                 </p>
-                                <button onClick={() => onNavigate('subscription')} className="px-8 py-4 bg-white text-blue-600 rounded-2xl font-bold hover:bg-gray-50 transition-all shadow-xl active:scale-95">
-                                    Subscribe Now &rarr;
+                                <button onClick={() => onNavigate('subscription')} className="px-8 py-4 bg-white text-indigo-600 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-gray-50 transition-all shadow-xl active:scale-95">
+                                    Upgrade to Pro &rarr;
                                 </button>
                             </div>
                         </div>
