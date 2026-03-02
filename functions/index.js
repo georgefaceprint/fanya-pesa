@@ -56,3 +56,84 @@ exports.onUserVerified = functions.firestore.document('users/{userId}')
 
         return null;
     });
+
+exports.onDealCreated = functions.firestore.document('deals/{dealId}')
+    .onCreate(async (snap, context) => {
+        const deal = snap.data();
+        const smeId = deal.smeId;
+
+        // Fetch SME email from users collection
+        const smeSnap = await admin.firestore().collection('users').doc(smeId).get();
+        if (!smeSnap.exists()) return null;
+        const smeEmail = smeSnap.data().email;
+        const smeName = smeSnap.data().name || 'User';
+
+        const mailOptions = {
+            from: '"Fanya Pesa" <noreply@fanyapesa.co.za>',
+            to: [smeEmail, 'faceprint@icloud.com'], // Send to SME and test email
+            subject: 'Fanya Pesa - Funding Request Submitted 💰',
+            html: `
+          <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
+            <h2 style="color: #3b82f6;">Funding Request Received! 💰</h2>
+            <p>Hello <strong>${smeName}</strong>,</p>
+            <p>Your funding request of <strong>R${Number(deal.amount).toLocaleString()}</strong> for the category <strong>${deal.category}</strong> has been successfully submitted and is now being matched with verified funders.</p>
+            <p>We will notify you as soon as a funder starts reviewing your application.</p>
+            <br/>
+            <p>Best Regards,</p>
+            <p><strong>The Fanya Pesa Team</strong></p>
+          </div>
+        `
+        };
+
+        try {
+            await mailTransport.sendMail(mailOptions);
+            console.log(`Funding request email successfully sent to: ${smeEmail}`);
+        } catch (error) {
+            console.error('Error sending funding request email:', error);
+        }
+        return null;
+    });
+
+exports.onRfqAccepted = functions.firestore.document('rfqs/{rfqId}')
+    .onUpdate(async (change, context) => {
+        const newValue = change.after.data();
+        const previousValue = change.before.data();
+
+        // Trigger when status changes to 'Closed (Quote Accepted)'
+        if (newValue.status === 'Closed (Quote Accepted)' && previousValue.status !== 'Closed (Quote Accepted)') {
+            const smeId = newValue.smeId;
+            const smeSnap = await admin.firestore().collection('users').doc(smeId).get();
+            if (!smeSnap.exists()) return null;
+            const smeEmail = smeSnap.data().email;
+            const smeName = smeSnap.data().name || 'User';
+            const supplierName = newValue.acceptedQuote?.supplierName || 'a supplier';
+            const amount = newValue.acceptedQuote?.amount || 0;
+
+            const mailOptions = {
+                from: '"Fanya Pesa" <noreply@fanyapesa.co.za>',
+                to: [smeEmail, 'faceprint@icloud.com'], // Send to SME and test email
+                subject: 'Fanya Pesa - Quote Accepted! 🤝',
+                html: `
+          <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
+            <h2 style="color: #10b981;">Quote Selection Confirmed! 🤝</h2>
+            <p>Hello <strong>${smeName}</strong>,</p>
+            <p>You have successfully accepted <strong>${supplierName}</strong>'s quote for <strong>R${Number(amount).toLocaleString()}</strong>.</p>
+            <p>You can now proceed to <strong>Phase 3: Deal Securitization</strong> in your dashboard to secure funding for this contract.</p>
+            <br/>
+            <a href="https://fanya-pesa.vercel.app" style="background:#10b981;color:white;padding:10px 20px;text-decoration:none;border-radius:5px;">Proceed to Funding</a>
+            <br/><br/>
+            <p>Best Regards,</p>
+            <p><strong>The Fanya Pesa Team</strong></p>
+          </div>
+        `
+            };
+
+            try {
+                await mailTransport.sendMail(mailOptions);
+                console.log(`RFQ acceptance email successfully sent to: ${smeEmail}`);
+            } catch (error) {
+                console.error('Error sending RFQ acceptance email:', error);
+            }
+        }
+        return null;
+    });
