@@ -137,3 +137,34 @@ exports.onRfqAccepted = functions.firestore.document('rfqs/{rfqId}')
         }
         return null;
     });
+
+exports.testEmailSystem = functions.https.onCall(async (data, context) => {
+    const mailOptions = {
+        from: '"Fanya Pesa System" <noreply@fanyapesa.co.za>',
+        to: 'faceprint@icloud.com',
+        subject: 'Fanya Pesa - SMTP System Diagnosis 🧪',
+        html: `
+      <div style="font-family: Arial, sans-serif; padding: 20px; color: #333; border: 1px solid #ddd; border-radius: 10px;">
+        <h3 style="color: #6366f1;">SMTP System Diagnosis 🧪</h3>
+        <p>This is a manual diagnostic email to verify the SMTP transport is functioning correctly.</p>
+        <p><strong>Environment:</strong> Firebase Cloud Functions</p>
+        <p><strong>Sender:</strong> ${process.env.EMAIL_USER}</p>
+        <p><strong>Timestamp:</strong> ${new Date().toISOString()}</p>
+        <br/>
+        <p style="background: #f3f4f6; padding: 10px; border-radius: 5px; font-size: 12px; color: #666;">
+          If you received this email, the SMTP configuration and Cloud Functions are live.
+        </p>
+        <p>Best Regards,</p>
+        <p><strong>The Fanya Pesa Engine</strong></p>
+      </div>
+    `
+    };
+
+    try {
+        await mailTransport.sendMail(mailOptions);
+        return { success: true, message: 'Diagnosis email sent to faceprint@icloud.com' };
+    } catch (error) {
+        console.error('SMTP Diagnosis Error:', error);
+        throw new functions.https.HttpsError('internal', `Failed to send diagnosis email: ${error.message}`);
+    }
+});
