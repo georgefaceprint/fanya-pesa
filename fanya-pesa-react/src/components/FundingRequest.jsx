@@ -5,14 +5,14 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { CATEGORIES } from '../constants/categories';
 import { useToast } from './Toast';
 
-export default function FundingRequest({ user, onBack }) {
+export default function FundingRequest({ user, params, onBack }) {
     const [loading, setLoading] = useState(false);
     const toast = useToast();
     const [matches, setMatches] = useState(0);
     const [formData, setFormData] = useState({
-        amount: '',
-        category: '',
-        description: '',
+        amount: params?.amount || '',
+        category: params?.category || '',
+        description: params?.description || '',
         file: null
     });
 

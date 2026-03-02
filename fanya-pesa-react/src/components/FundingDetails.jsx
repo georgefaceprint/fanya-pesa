@@ -43,7 +43,7 @@ export default function FundingDetails({ user, dealId, onBack }) {
                 const notifRef = doc(db, 'user_notifications', userId);
                 const snap = await getDoc(notifRef);
                 const existing = snap.exists() ? (snap.data().data || []) : [];
-                existing.unshift({ id: Date.now(), text: message, read: false, time: 'Just now' });
+                existing.unshift({ id: Date.now(), text: message, read: false, timestamp: Date.now() });
                 await setDoc(notifRef, { data: existing }, { merge: true });
             };
 

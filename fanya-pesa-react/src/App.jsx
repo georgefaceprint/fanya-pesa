@@ -61,13 +61,14 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  const navigateTo = (view, intent = null) => {
-    if (intent && typeof intent === 'object' && intent.dealId) {
-      setViewParam(intent.dealId);
+  const navigateTo = (view, params = null) => {
+    // If params is an object with dealId, extract for backward compatibility
+    if (params && typeof params === 'object' && params.dealId) {
+      setViewParam(params.dealId);
       setAuthIntent(null);
     } else {
-      setAuthIntent(intent);
-      setViewParam(null);
+      setViewParam(params);
+      setAuthIntent(typeof params === 'string' ? params : null);
     }
     setCurrentView(view);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -119,7 +120,7 @@ export default function App() {
       {currentView === 'onboarding' && user && <Onboarding user={user} onComplete={handleOnboardingComplete} />}
       {currentView === 'vault' && user && <Vault user={user} onBack={() => setCurrentView('dashboard')} />}
       {currentView === 'rfq-form' && user && <RfqForm user={user} onBack={() => setCurrentView('dashboard')} />}
-      {currentView === 'funding-request' && user && <FundingRequest user={user} onBack={() => setCurrentView('dashboard')} />}
+      {currentView === 'funding-request' && user && <FundingRequest user={user} params={viewParam} onBack={() => setCurrentView('dashboard')} />}
       {currentView === 'subscription' && user && (
         <Subscription
           user={user}

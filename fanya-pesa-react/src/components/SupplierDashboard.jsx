@@ -84,7 +84,7 @@ export default function SupplierDashboard({ user, onNavigate }) {
                     id: Date.now(),
                     text: `💬 ${user.name} submitted a quote of R${Number(quoteForm.amount).toLocaleString()} for your RFQ: "${rfq.title}"`,
                     read: false,
-                    time: 'Just now'
+                    timestamp: Date.now()
                 });
                 const { setDoc } = await import('firebase/firestore');
                 await setDoc(notifRef, { data: existing }, { merge: true });

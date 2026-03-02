@@ -57,7 +57,7 @@ export default function SmeDashboard({ user, onNavigate }) {
                     id: Date.now(),
                     text: `🎉 Your quote of R${Number(quote.amount).toLocaleString()} for "${reviewingRfq.title}" has been ACCEPTED by ${user.name}!`,
                     read: false,
-                    time: 'Just now'
+                    timestamp: Date.now()
                 });
                 await setDoc(notifRef, { data: existing }, { merge: true });
             }
@@ -74,7 +74,7 @@ export default function SmeDashboard({ user, onNavigate }) {
                         id: Date.now(),
                         text: `📋 Your quote for "${reviewingRfq.title}" was not selected this time. Keep submitting!`,
                         read: false,
-                        time: 'Just now'
+                        timestamp: Date.now()
                     });
                     await setDoc(notifRef, { data: existing }, { merge: true });
                 } catch (_) { }
@@ -122,26 +122,51 @@ export default function SmeDashboard({ user, onNavigate }) {
             });
         }
 
+        // Phase 3: Check for RFQs with accepted quotes that need funding
+        const needsFunding = rfqs.find(r => r.status === 'Closed (Quote Accepted)');
+        if (needsFunding && deals.length === 0) {
+            actions.push({
+                title: "Secure Deal Funding",
+                desc: `Phase 3 started! Apply for funding for "${needsFunding.title}" quoting R${Number(needsFunding.acceptedQuote?.amount || 0).toLocaleString()}.`,
+                icon: "💰",
+                action: () => onNavigate('funding-request', {
+                    amount: needsFunding.acceptedQuote?.amount,
+                    category: needsFunding.category,
+                    description: `Funding needed for ${needsFunding.title} with ${needsFunding.acceptedQuote?.supplierName}. RFQ Specs: ${needsFunding.specs}`
+                }),
+                color: "emerald"
+            });
+        }
+
         if (actions.length === 0) return null;
+
+        const colorMap = {
+            blue: { bg: 'bg-blue-50 dark:bg-blue-900/20', text: 'text-blue-600 dark:text-blue-400' },
+            emerald: { bg: 'bg-emerald-50 dark:bg-emerald-900/20', text: 'text-emerald-600 dark:text-emerald-400' },
+            purple: { bg: 'bg-purple-50 dark:bg-purple-900/20', text: 'text-purple-600 dark:text-purple-400' },
+        };
 
         return (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-                {actions.map((action, i) => (
-                    <div key={i} className="bg-white dark:bg-gray-800/40 border border-gray-200 dark:border-gray-700/50 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all group cursor-pointer" onClick={action.action}>
-                        <div className="flex items-start gap-4">
-                            <div className={`p-3 rounded-xl bg-${action.color}-50 dark:bg-${action.color}-900/20 text-${action.color}-600 dark:text-${action.color}-400 text-xl`}>
-                                {action.icon}
-                            </div>
-                            <div className="flex-1">
-                                <h4 className="font-bold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{action.title}</h4>
-                                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">{action.desc}</p>
-                                <div className="mt-4 flex items-center gap-2 text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
-                                    Take Action <span>&rarr;</span>
+                {actions.map((action, i) => {
+                    const colors = colorMap[action.color] || colorMap.blue;
+                    return (
+                        <div key={i} className="bg-white dark:bg-gray-800/40 border border-gray-200 dark:border-gray-700/50 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all group cursor-pointer" onClick={action.action}>
+                            <div className="flex items-start gap-4">
+                                <div className={`p-3 rounded-xl ${colors.bg} ${colors.text} text-xl`}>
+                                    {action.icon}
+                                </div>
+                                <div className="flex-1">
+                                    <h4 className="font-bold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{action.title}</h4>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">{action.desc}</p>
+                                    <div className="mt-4 flex items-center gap-2 text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
+                                        Take Action <span>&rarr;</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
         );
     };
@@ -183,6 +208,31 @@ export default function SmeDashboard({ user, onNavigate }) {
                             >×</button>
                         </div>
                     </div>
+
+                    {isClosed && (
+                        <div className="px-6 py-4 bg-emerald-50/50 dark:bg-emerald-900/10 border-b border-emerald-100 dark:border-emerald-800/30 flex justify-between items-center transition-all animate-fade-in">
+                            <div className="flex items-center gap-3">
+                                <span className="text-xl">🚀</span>
+                                <div>
+                                    <p className="text-xs font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-widest">Phase 3: Deal Securitization</p>
+                                    <p className="text-[10px] text-emerald-600/70 dark:text-emerald-500/70 font-bold uppercase tracking-tighter">Ready to secure capital for this contract?</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    setReviewingRfq(null);
+                                    onNavigate('funding-request', {
+                                        amount: acceptedQuote?.amount,
+                                        category: reviewingRfq.category,
+                                        description: `Funding for ${reviewingRfq.title} with ${acceptedQuote?.supplierName}.`
+                                    });
+                                }}
+                                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20 transition-all active:scale-95"
+                            >
+                                Apply for Funding →
+                            </button>
+                        </div>
+                    )}
 
                     {/* Quote Specs */}
                     <div className="px-6 pt-4 pb-2 flex-shrink-0">

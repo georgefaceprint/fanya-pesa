@@ -2,6 +2,32 @@ import React, { useState, useEffect, useRef } from 'react';
 import { db } from '../firebase';
 import { doc, onSnapshot, setDoc, getDoc } from 'firebase/firestore';
 
+// ── Relative Time Helper ───────────────────────────────────────────────────────
+function timeAgo(value) {
+    if (!value) return 'Just now';
+    let date;
+    // Handle Firestore Timestamp objects
+    if (value?.seconds) {
+        date = new Date(value.seconds * 1000);
+    } else if (typeof value === 'number') {
+        date = new Date(value);
+    } else {
+        date = new Date(value);
+    }
+    if (isNaN(date.getTime())) return 'Just now';
+
+    const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+    if (seconds < 30) return 'Just now';
+    if (seconds < 60) return `${seconds}s ago`;
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `${days}d ago`;
+    return date.toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' });
+}
+
 export default function NotificationBell({ user }) {
     const [notifications, setNotifications] = useState([]);
     const [open, setOpen] = useState(false);
@@ -18,7 +44,7 @@ export default function NotificationBell({ user }) {
         const unsub = onSnapshot(notifRef, (snap) => {
             if (snap.exists()) {
                 const data = snap.data().data || [];
-                setNotifications(data.slice(0, 50)); // cap at 50
+                setNotifications(data.slice(0, 50));
             } else {
                 setNotifications([]);
             }
@@ -71,8 +97,8 @@ export default function NotificationBell({ user }) {
             <button
                 onClick={handleOpen}
                 className={`relative w-10 h-10 flex items-center justify-center rounded-xl transition-all ${open
-                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
-                        : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
                     }`}
                 aria-label="Notifications"
             >
@@ -131,8 +157,8 @@ export default function NotificationBell({ user }) {
                                     >
                                         {/* Icon */}
                                         <div className={`w-9 h-9 flex-shrink-0 rounded-xl flex items-center justify-center text-base ${!n.read
-                                                ? 'bg-blue-100 dark:bg-blue-900/40'
-                                                : 'bg-gray-100 dark:bg-gray-800'
+                                            ? 'bg-blue-100 dark:bg-blue-900/40'
+                                            : 'bg-gray-100 dark:bg-gray-800'
                                             }`}>
                                             {getIcon(n.text)}
                                         </div>
@@ -143,7 +169,7 @@ export default function NotificationBell({ user }) {
                                                 {n.text}
                                             </p>
                                             <p className="text-[10px] text-gray-400 uppercase font-bold tracking-widest mt-1">
-                                                {n.time || 'Just now'}
+                                                {timeAgo(n.timestamp || n.time)}
                                             </p>
                                         </div>
 

@@ -101,7 +101,7 @@ export default function StructureDeal({ user, dealId, onBack, onContractGenerate
                         id: Date.now(),
                         text: `🎉 Deal APPROVED! ${user.name} has secured R${Number(terms.principal).toLocaleString()} in Fanya Pesa escrow for your ${deal.category} contract.`,
                         read: false,
-                        time: 'Just now'
+                        timestamp: Date.now()
                     });
                     await setDoc(notifRef, { data: existing }, { merge: true });
                 }

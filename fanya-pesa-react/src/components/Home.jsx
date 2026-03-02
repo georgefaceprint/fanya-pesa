@@ -3,8 +3,8 @@ import React from 'react';
 export default function Home({ onNavigate }) {
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-[#1a1a2e] text-gray-900 dark:text-gray-100 font-sans transition-colors duration-300">
-            <nav className="flex justify-between items-center p-6 border-b border-gray-200 dark:border-gray-800">
-                <div className="text-xl font-bold cursor-pointer flex items-center gap-2">
+            <nav className="flex justify-between items-center p-6 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-800/50 backdrop-blur-md sticky top-0 z-50">
+                <div className="text-xl font-bold cursor-pointer flex items-center gap-2" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
                     <span>💸</span> Fanya Pesa
                 </div>
                 <div className="hidden md:flex gap-6 text-sm font-medium">
@@ -45,14 +45,6 @@ export default function Home({ onNavigate }) {
                             Register as Funder
                         </button>
                     </div>
-                    <div className="pt-2">
-                        <button
-                            onClick={() => onNavigate('auth', 'SUPPLIER')}
-                            className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors underline underline-offset-4"
-                        >
-                            Join National Supplier Database
-                        </button>
-                    </div>
                 </div>
 
                 <div className="flex-1 w-full max-w-md perspective-1000">
@@ -77,7 +69,80 @@ export default function Home({ onNavigate }) {
                 </div>
             </main>
 
-            <footer className="text-center p-8 border-t border-gray-200 dark:border-gray-800 mt-20">
+            {/* How it Works Section */}
+            <section id="how" className="py-24 bg-white dark:bg-gray-900/50">
+                <div className="max-w-7xl mx-auto px-6">
+                    <div className="text-center mb-16">
+                        <h2 className="text-4xl font-black text-gray-900 dark:text-white mb-4">How Fanya Pesa Works</h2>
+                        <p className="text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">A seamless 3-step process to bridge the capital gap for South African businesses.</p>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+                        {[
+                            { step: '01', title: 'Register & Verify', desc: 'SMEs and Suppliers upload compliance docs to our secure vault for instant verification.' },
+                            { step: '02', title: 'Quote & Coordinate', desc: 'Broadcast RFQs to verified suppliers and receive formal quotes within minutes.' },
+                            { step: '03', title: 'Secure Funding', desc: 'Get matched with funders who provide the capital directly to fulfill your contracts.' }
+                        ].map((item, i) => (
+                            <div key={i} className="relative p-8 rounded-3xl border border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30 hover:border-blue-500/30 transition-all group">
+                                <div className="text-5xl font-black text-blue-600/10 dark:text-blue-400/10 absolute top-4 right-8 group-hover:text-blue-600/20 transition-colors">{item.step}</div>
+                                <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-3">{item.title}</h4>
+                                <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">{item.desc}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* Categories Section */}
+            <section id="categories" className="py-24">
+                <div className="max-w-7xl mx-auto px-6">
+                    <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
+                        <div className="max-w-xl">
+                            <h2 className="text-4xl font-black text-gray-900 dark:text-white mb-4">Funding Categories</h2>
+                            <p className="text-gray-500 dark:text-gray-400">We support a wide range of industries with specialized funding mandates.</p>
+                        </div>
+                        <button onClick={() => onNavigate('auth')} className="text-blue-600 font-bold hover:underline">View all categories &rarr;</button>
+                    </div>
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        {['Construction', 'Information Tech', 'Agriculture', 'Logistics', 'Healthcare', 'Manufacturing', 'Mining', 'Retail'].map(cat => (
+                            <div key={cat} className="p-6 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl hover:shadow-lg transition-all cursor-pointer group">
+                                <div className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-900 flex items-center justify-center mb-4 group-hover:bg-blue-600 group-hover:text-white transition-colors">📦</div>
+                                <h5 className="font-bold text-gray-900 dark:text-white">{cat}</h5>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* Suppliers Section */}
+            <section id="suppliers" className="py-24 bg-blue-600 text-white rounded-[4rem] mx-6 mb-24 overflow-hidden relative">
+                <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full translate-x-1/2 -translate-y-1/2 blur-3xl"></div>
+                <div className="max-w-7xl mx-auto px-12 relative z-10 flex flex-col md:flex-row items-center gap-16">
+                    <div className="flex-1 space-y-6">
+                        <h2 className="text-4xl font-black leading-tight">Join the National <br />Supplier Database</h2>
+                        <p className="text-white/80 leading-relaxed">
+                            Verified suppliers get direct access to funded SME contracts, guaranteed milestone payouts via escrow, and national visibility.
+                        </p>
+                        <button onClick={() => onNavigate('auth', 'SUPPLIER')} className="bg-white text-blue-600 px-8 py-4 rounded-xl font-bold shadow-xl hover:bg-gray-100 transition-all active:scale-95">
+                            Register as Supplier
+                        </button>
+                    </div>
+                    <div className="flex-1 grid grid-cols-2 gap-4">
+                        {[
+                            { label: 'Verified Suppliers', value: '2,400+' },
+                            { label: 'Total RFQs', value: '18k+' },
+                            { label: 'Capital Secured', value: 'R450M+' },
+                            { label: 'Growth rate', value: '24% MoM' }
+                        ].map(stat => (
+                            <div key={stat.label} className="p-6 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20">
+                                <div className="text-2xl font-black mb-1">{stat.value}</div>
+                                <div className="text-[10px] uppercase font-bold tracking-widest text-white/60">{stat.label}</div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            <footer className="text-center p-8 border-t border-gray-200 dark:border-gray-800">
                 <p className="text-gray-500 text-sm">
                     &copy; {new Date().getFullYear()} Fanya Pesa.
                     <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('auth', 'ADMIN'); }} className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 ml-4 font-medium transition-colors">
@@ -88,3 +153,4 @@ export default function Home({ onNavigate }) {
         </div>
     );
 }
+

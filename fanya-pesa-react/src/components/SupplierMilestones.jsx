@@ -75,7 +75,7 @@ export default function SupplierMilestones({ user, dealId, onBack }) {
                     id: Date.now(),
                     text: `📦 ${user.name} has uploaded a waybill for your ${deal.category} contract. Please confirm delivery to release the final 30% payment.`,
                     read: false,
-                    time: 'Just now'
+                    timestamp: Date.now()
                 });
                 await setDoc(notifRef, { data: existing }, { merge: true });
             }
