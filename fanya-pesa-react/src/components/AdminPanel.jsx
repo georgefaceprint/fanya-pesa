@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
 import { collection, query, getDocs, doc, updateDoc, onSnapshot } from 'firebase/firestore';
+import { httpsCallable } from 'firebase/functions';
+import { functions } from '../firebase';
 import { useToast } from './Toast';
 
 const ADMIN_MODULES = [
@@ -44,6 +46,20 @@ export default function AdminPanel({ user, onBack }) {
         } catch (error) {
             console.error("Error toggling verification:", error);
             toast.error('Failed to update user status.');
+        }
+    };
+
+    const runEmailDiagnosis = async () => {
+        setLoading(true);
+        try {
+            const testEmail = httpsCallable(functions, 'testEmailSystem');
+            const result = await testEmail();
+            toast.success(result.data.message || 'Diagnosis email sent!');
+        } catch (error) {
+            console.error("Diagnosis error:", error);
+            toast.error(error.message || 'Failed to run diagnosis.');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -165,6 +181,55 @@ export default function AdminPanel({ user, onBack }) {
                         </div>
                     )}
                     {loading && <div className="p-10 text-center text-gray-400 italic">Synchronizing with capital markets...</div>}
+                </div>
+            </div>
+        );
+    }
+
+    if (currentModule === 'secrets') {
+        return (
+            <div className="max-w-4xl mx-auto py-10 animate-fade-in px-6">
+                <button onClick={() => setCurrentModule(null)} className="mb-8 text-sm font-bold text-gray-500 hover:text-gray-900 transition-colors">&larr; Back to Control Center</button>
+                <div className="bg-gray-900 rounded-[2.5rem] p-10 border border-white/10 shadow-2xl relative overflow-hidden">
+                    <div className="relative z-10">
+                        <h2 className="text-3xl font-black text-white mb-2">Back-office Engine Secrets</h2>
+                        <p className="text-gray-400 mb-12">Manage master keys, SMTP transports, and core infrastructure settings.</p>
+
+                        <div className="space-y-6">
+                            <div className="p-6 bg-white/5 border border-white/10 rounded-3xl flex items-center justify-between group hover:bg-white/10 transition-colors">
+                                <div>
+                                    <h4 className="font-bold text-white text-lg">SMTP Mail Transport</h4>
+                                    <p className="text-sm text-gray-500 mt-1">Status: Active &bull; Primary: Gmail Auth</p>
+                                </div>
+                                <button
+                                    onClick={runEmailDiagnosis}
+                                    disabled={loading}
+                                    className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-xl shadow-indigo-600/20 transition-all disabled:opacity-50"
+                                >
+                                    {loading ? 'Running...' : 'Run Email Diagnosis'}
+                                </button>
+                            </div>
+
+                            <div className="p-6 bg-white/5 border border-white/10 rounded-3xl flex items-center justify-between group opacity-50 grayscale">
+                                <div>
+                                    <h4 className="font-bold text-white text-lg">Vercel Build Hooks</h4>
+                                    <p className="text-sm text-gray-400 mt-1">Status: Operational &bull; main-branch-sync</p>
+                                </div>
+                                <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Read Only</span>
+                            </div>
+                        </div>
+
+                        <div className="mt-12 p-8 bg-amber-500/10 border border-amber-500/30 rounded-3xl">
+                            <h5 className="text-amber-500 font-black text-xs uppercase tracking-widest mb-2 flex items-center gap-2">
+                                <span>⚠️</span> Security Warning
+                            </h5>
+                            <p className="text-amber-200/70 text-sm leading-relaxed">
+                                Accessing the diagnostic tools triggers a logged event in the SOC2 audit trail. Avoid repeated diagnostic runs in production unless troubleshooting a platform-wide outage.
+                            </p>
+                        </div>
+                    </div>
+                    {/* Abstract background element */}
+                    <div className="absolute -right-20 -top-20 w-80 h-80 bg-indigo-600/20 rounded-full blur-[100px]" />
                 </div>
             </div>
         );
