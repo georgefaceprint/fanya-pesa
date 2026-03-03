@@ -26,12 +26,16 @@ export default function App() {
   const [viewParam, setViewParam] = useState(null); // for passing dealId etc.
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [liveContext, setLiveContext] = useState({ rfqs: [], deals: [] });
   const toast = useToast();
 
   useEffect(() => {
     document.documentElement.classList.add('dark');
 
-    const unsubscribe = onAuthStateChanged(auth, async (authUser) => {
+    let unsubRFQs = null;
+    let unsubDeals = null;
+
+    const unsubscribeAuth = onAuthStateChanged(auth, async (authUser) => {
       setLoading(true);
       if (authUser) {
         // Fetch profile from Firestore
@@ -40,8 +44,22 @@ export default function App() {
 
         if (userSnap.exists()) {
           const userData = userSnap.data();
-          // Normalize: ensure both .uid and .id always point to Firebase Auth UID
           setUser({ ...authUser, ...userData, uid: authUser.uid, id: authUser.uid });
+
+          // Setup Live Context Listeners
+          const { collection, query, where, onSnapshot } = await import('firebase/firestore');
+
+          const qRfqs = query(collection(db, "rfqs"), where(userData.role === 'SME' ? "smeId" : "supplierId", "==", authUser.uid));
+          unsubRFQs = onSnapshot(qRfqs, (snap) => {
+            const rfqs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            setLiveContext(prev => ({ ...prev, rfqs }));
+          });
+
+          const qDeals = query(collection(db, "deals"), where(userData.role === 'SME' ? "smeId" : "supplierId", "==", authUser.uid));
+          unsubDeals = onSnapshot(qDeals, (snap) => {
+            const deals = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            setLiveContext(prev => ({ ...prev, deals }));
+          });
 
           if (userData.onboardingComplete) {
             setCurrentView('dashboard');
@@ -49,17 +67,23 @@ export default function App() {
             setCurrentView('onboarding');
           }
         } else {
-          // No Firestore doc yet — set both fields
           setUser({ ...authUser, uid: authUser.uid, id: authUser.uid });
         }
       } else {
         setUser(null);
+        setLiveContext({ rfqs: [], deals: [] });
         setCurrentView('home');
+        if (unsubRFQs) unsubRFQs();
+        if (unsubDeals) unsubDeals();
       }
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribeAuth();
+      if (unsubRFQs) unsubRFQs();
+      if (unsubDeals) unsubDeals();
+    };
   }, []);
 
   const navigateTo = (view, params = null) => {
@@ -183,7 +207,7 @@ export default function App() {
           onNavigate={(view, params) => navigateTo(view, params)}
         />
       )}
-      <PesaChatbot user={user} />
+      <PesaChatbot user={user} liveContext={liveContext} />
     </div>
   );
 }

@@ -60,13 +60,32 @@ export const PESA_KNOWLEDGE = [
         answer: "Financial institutions and private funders can register to review verified SME tender opportunities and deploy capital securely through our platform."
     },
     {
+        keywords: ['status', 'my', 'rfq', 'active', 'requests'],
+        question: "What is the status of my RFQs?",
+        answer: (ctx) => {
+            if (!ctx.rfqs || ctx.rfqs.length === 0) return "You don't have any active RFQs at the moment. Would you like to create one?";
+            const active = ctx.rfqs.filter(r => r.status === 'Requested').length;
+            const closed = ctx.rfqs.filter(r => r.status.includes('Closed')).length;
+            return `You have ${ctx.rfqs.length} total RFQs: ${active} are currently active/awaiting quotes, and ${closed} have been successfully closed.`;
+        }
+    },
+    {
+        keywords: ['my', 'deals', 'funding', 'progress', 'money'],
+        question: "How is my funding progressing?",
+        answer: (ctx) => {
+            if (!ctx.deals || ctx.deals.length === 0) return "I couldn't find any active funding deals for your account. You can apply for funding once an RFQ quote is accepted.";
+            const secured = ctx.deals.filter(d => d.status === 'Capital Secured').length;
+            return `You have ${ctx.deals.length} active deals. ${secured > 0 ? `${secured} of them have successfully secured capital!` : "They are currently being reviewed by our liquidty partners."}`;
+        }
+    },
+    {
         keywords: ['contact', 'support', 'help', 'email'],
         question: "How can I get more help?",
         answer: "You can reach out to our support team via the 'Help' section in your dashboard or email us directly at support@fanyapesa.co.za."
     }
 ];
 
-export const getPesaResponse = (input) => {
+export const getPesaResponse = (input, liveContext = {}) => {
     const query = input.toLowerCase();
 
     // Find the best match based on keywords
@@ -82,8 +101,11 @@ export const getPesaResponse = (input) => {
     }
 
     if (maxKeywords > 0) {
+        if (typeof bestMatch.answer === 'function') {
+            return bestMatch.answer(liveContext);
+        }
         return bestMatch.answer;
     }
 
-    return "I'm not sure I understand that. Try asking about 'funding categories', 'SME Pro', 'the Digital Vault', or 'how it works'.";
+    return "I'm not sure I understand that. Try asking about 'my RFQ status', 'funding progress', 'SME Pro', or 'how it works'.";
 };

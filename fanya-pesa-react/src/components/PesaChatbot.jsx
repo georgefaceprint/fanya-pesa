@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { getPesaResponse, PESA_KNOWLEDGE } from '../constants/pesaKnowledge';
 
-export default function PesaChatbot({ user }) {
+export default function PesaChatbot({ user, liveContext }) {
     const role = user?.role || 'GUEST';
     const [isOpen, setIsOpen] = useState(false);
 
@@ -34,7 +34,7 @@ export default function PesaChatbot({ user }) {
 
         // Simulate typing delay
         setTimeout(() => {
-            const response = getPesaResponse(text);
+            const response = getPesaResponse(text, liveContext);
             setMessages([...newMessages, { role: 'assistant', text: response }]);
             setIsTyping(false);
         }, 800);
