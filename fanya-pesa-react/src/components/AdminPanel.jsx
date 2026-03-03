@@ -13,6 +13,7 @@ const ADMIN_MODULES = [
     { id: 'funder_approval', title: 'Funder Verification', desc: 'Approve or reject high-net-worth individuals and corporate funding entities.', icon: '🛡️', color: 'purple' },
     { id: 'subscriptions', title: 'Subscription Manager', desc: 'Manage SME pricing tiers, pro upgrades, and billing status.', icon: '💳', color: 'indigo' },
     { id: 'activity', title: 'System Activity', desc: 'Live feed of platform notifications, deal statuses, and user sign-ups.', icon: '🔔', color: 'red' },
+    { id: 'payments', title: 'Payment Settings', desc: 'Securely manage Yoco API keys and platform subscription pricing.', icon: '💰', color: 'indigo' },
     { id: 'secrets', title: 'API & Secrets', desc: 'Manage backend keys, Firestore limits, and third-party integration secrets.', icon: '🔑', color: 'gray' }
 ];
 
@@ -465,50 +466,73 @@ export default function AdminPanel({ user, onBack }) {
         );
     }
 
-    if (currentModule === 'secrets') {
+    if (currentModule === 'payments') {
+        const [yocoKeys, setYocoKeys] = useState({ publicKey: '', secretKey: '' });
+        const [saving, setSaving] = useState(false);
+
+        useEffect(() => {
+            const fetchKeys = async () => {
+                const { getDoc } = await import('firebase/firestore');
+                const docSnap = await getDoc(doc(db, "settings", "payments"));
+                if (docSnap.exists()) {
+                    setYocoKeys(docSnap.data());
+                }
+            };
+            fetchKeys();
+        }, []);
+
+        const saveKeys = async (e) => {
+            e.preventDefault();
+            setSaving(true);
+            try {
+                const { setDoc } = await import('firebase/firestore');
+                await setDoc(doc(db, "settings", "payments"), yocoKeys, { merge: true });
+                toast.success('Payment keys updated successfully!');
+            } catch (err) {
+                toast.error('Failed to update keys. Check console.');
+            } finally {
+                setSaving(false);
+            }
+        };
+
         return (
             <div className="max-w-4xl mx-auto py-10 animate-fade-in px-6">
                 <button onClick={() => setCurrentModule(null)} className="mb-8 text-sm font-bold text-gray-500 hover:text-gray-900 transition-colors">&larr; Back to Control Center</button>
-                <div className="bg-gray-900 rounded-[2.5rem] p-10 border border-white/10 shadow-2xl relative overflow-hidden">
-                    <div className="relative z-10">
-                        <h2 className="text-3xl font-black text-white mb-2">Back-office Engine Secrets</h2>
-                        <p className="text-gray-400 mb-12">Manage master keys, SMTP transports, and core infrastructure settings.</p>
+                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-[2.5rem] p-10 shadow-xl">
+                    <h2 className="text-3xl font-black text-gray-900 dark:text-white mb-2">Payment Settings</h2>
+                    <p className="text-gray-500 mb-10">Configure your Yoco API integration keys here.</p>
 
-                        <div className="space-y-6">
-                            <div className="p-6 bg-white/5 border border-white/10 rounded-3xl flex items-center justify-between group hover:bg-white/10 transition-colors">
-                                <div>
-                                    <h4 className="font-bold text-white text-lg">SMTP Mail Transport</h4>
-                                    <p className="text-sm text-gray-500 mt-1">Status: Active &bull; Primary: Gmail Auth</p>
-                                </div>
-                                <button
-                                    onClick={runEmailDiagnosis}
-                                    disabled={loading}
-                                    className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-xl shadow-indigo-600/20 transition-all disabled:opacity-50"
-                                >
-                                    {loading ? 'Running...' : 'Run Email Diagnosis'}
-                                </button>
-                            </div>
-
-                            <div className="p-6 bg-white/5 border border-white/10 rounded-3xl flex items-center justify-between group opacity-50 grayscale">
-                                <div>
-                                    <h4 className="font-bold text-white text-lg">Vercel Build Hooks</h4>
-                                    <p className="text-sm text-gray-400 mt-1">Status: Operational &bull; main-branch-sync</p>
-                                </div>
-                                <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Read Only</span>
-                            </div>
+                    <form onSubmit={saveKeys} className="space-y-6">
+                        <div>
+                            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Yoco Public Key</label>
+                            <input
+                                type="text"
+                                required
+                                value={yocoKeys.publicKey}
+                                onChange={e => setYocoKeys({ ...yocoKeys, publicKey: e.target.value })}
+                                placeholder="pk_test_..."
+                                className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-white font-mono outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                            />
                         </div>
-
-                        <div className="mt-12 p-8 bg-amber-500/10 border border-amber-500/30 rounded-3xl">
-                            <h5 className="text-amber-500 font-black text-xs uppercase tracking-widest mb-2 flex items-center gap-2">
-                                <span>⚠️</span> Security Warning
-                            </h5>
-                            <p className="text-amber-200/70 text-sm leading-relaxed">
-                                Accessing the diagnostic tools triggers a logged event in the SOC2 audit trail. Avoid repeated diagnostic runs in production unless troubleshooting a platform-wide outage.
-                            </p>
+                        <div>
+                            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Yoco Secret Key</label>
+                            <input
+                                type="password"
+                                required
+                                value={yocoKeys.secretKey}
+                                onChange={e => setYocoKeys({ ...yocoKeys, secretKey: e.target.value })}
+                                placeholder="sk_test_..."
+                                className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-white font-mono outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                            />
                         </div>
-                    </div>
-                    {/* Abstract background element */}
-                    <div className="absolute -right-20 -top-20 w-80 h-80 bg-indigo-600/20 rounded-full blur-[100px]" />
+                        <button
+                            type="submit"
+                            disabled={saving}
+                            className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black text-lg shadow-xl shadow-blue-500/20 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3"
+                        >
+                            {saving ? 'Saving System Config...' : 'Save Configuration'}
+                        </button>
+                    </form>
                 </div>
             </div>
         );

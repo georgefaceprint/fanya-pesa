@@ -49,15 +49,31 @@ export default function Subscription({ user, onBack, onSuccess }) {
     const plan = PLANS[user.type] || PLANS.SME;
     const [step, setStep] = useState('review'); // 'review' | 'success'
     const [loading, setLoading] = useState(false);
+    const [yocoConfig, setYocoConfig] = useState(null);
     const toast = useToast();
 
-    // Initialize Yoco
-    const yoco = new window.YocoSDK({
-        publicKey: 'pk_test_ed3c8433y8p9pjs79998', // Test key
-    });
+    // Initialize Yoco when config is fetched
+    useEffect(() => {
+        const fetchConfig = async () => {
+            const { getDoc, doc } = await import('firebase/firestore');
+            const docSnap = await getDoc(doc(db, "settings", "payments"));
+            if (docSnap.exists() && docSnap.data().publicKey) {
+                setYocoConfig(docSnap.data());
+            } else {
+                // Fallback to test key
+                setYocoConfig({ publicKey: 'pk_test_ed3c8433y8p9pjs79998' });
+            }
+        };
+        fetchConfig();
+    }, []);
 
     const handlePayment = () => {
+        if (!yocoConfig) return;
         setLoading(true);
+
+        const yoco = new window.YocoSDK({
+            publicKey: yocoConfig.publicKey,
+        });
 
         yoco.showPopup({
             amountInCents: plan.price * 100,
@@ -78,7 +94,8 @@ export default function Subscription({ user, onBack, onSuccess }) {
                             subscribed: true,
                             plan: plan.name,
                             subscribedAt: new Date().toISOString(),
-                            yocoToken: result.id
+                            yocoToken: result.id,
+                            yocoPubKey: yocoConfig.publicKey
                         }, { merge: true });
 
                         setStep('success');
