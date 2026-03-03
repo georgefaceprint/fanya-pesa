@@ -69,6 +69,7 @@ export default function SupplierDashboard({ user, onNavigate }) {
             const newQuote = {
                 supplierId,
                 supplierName: user.name,
+                isGold: user.isGold || false,
                 amount: Number(quoteForm.amount),
                 note: quoteForm.note,
                 submittedAt: new Date().toISOString(),
@@ -162,8 +163,13 @@ export default function SupplierDashboard({ user, onNavigate }) {
                             <div className="space-y-4">
                                 {rfqs.map(rfq => (
                                     <div key={rfq.id} className="border border-gray-100 dark:border-gray-700 rounded-2xl p-6 hover:shadow-md transition-shadow relative">
-                                        <span className="absolute top-6 right-6 text-[10px] font-bold uppercase tracking-widest px-2 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-md">{rfq.status}</span>
-                                        <div className="max-w-[80%] mb-4">
+                                        <div className="absolute top-6 right-6 flex flex-col items-end gap-2">
+                                            <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-md">{rfq.status}</span>
+                                            {rfq.smeTier === 'pro' && (
+                                                <span className="text-[10px] font-black uppercase tracking-widest px-2 py-1 bg-indigo-600 text-white rounded-md shadow-lg shadow-indigo-500/20">💎 Verified Funding</span>
+                                            )}
+                                        </div>
+                                        <div className="max-w-[75%] mb-4">
                                             <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-1">{rfq.title}</h4>
                                             <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-2">
                                                 <span>Buyer: {rfq.smeName}</span>
@@ -249,7 +255,14 @@ export default function SupplierDashboard({ user, onNavigate }) {
                                             <div className="flex justify-between items-start mb-4">
                                                 <div className="max-w-[70%]">
                                                     <h4 className="font-bold text-gray-900 dark:text-white truncate">Active: {deal.category}</h4>
-                                                    <p className="text-[10px] text-gray-400 uppercase font-black tracking-widest mt-1">SME: {deal.smeName}</p>
+                                                    <div className="flex items-center gap-2 mt-1">
+                                                        <p className="text-[10px] text-gray-400 uppercase font-black tracking-widest">SME: {deal.smeName}</p>
+                                                        {(deal.status === 'Capital Secured' || deal.status === 'Waybill Uploaded' || deal.status === 'Delivery Confirmed') && (
+                                                            <span className="text-[9px] font-black uppercase tracking-tighter text-emerald-600 flex items-center gap-0.5">
+                                                                <span className="text-xs">🔒</span> CASH SECURED
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 </div>
                                                 <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${deal.status === 'Delivery Confirmed'
                                                     ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400'

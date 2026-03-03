@@ -5,7 +5,9 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { CATEGORIES } from '../constants/categories';
 import { useToast } from './Toast';
 
-export default function RfqForm({ user, onBack }) {
+export default function RfqForm({ user, rfqCount, onBack }) {
+    const tier = user.subscription?.tier || 'free';
+    const isLimitReached = tier === 'free' && rfqCount >= 2;
     const [loading, setLoading] = useState(false);
     const toast = useToast();
     const [formData, setFormData] = useState({
@@ -18,6 +20,10 @@ export default function RfqForm({ user, onBack }) {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (isLimitReached) {
+            toast.error('Free tier limit reached (2 active RFQs). Please upgrade to Pro for unlimited requests.');
+            return;
+        }
         setLoading(true);
 
         try {
@@ -31,6 +37,7 @@ export default function RfqForm({ user, onBack }) {
             await addDoc(collection(db, "rfqs"), {
                 smeId: user.id,
                 smeName: user.name,
+                smeTier: user.subscription?.tier || 'free',
                 title: formData.title,
                 category: formData.category,
                 specs: formData.specs,
@@ -110,10 +117,10 @@ export default function RfqForm({ user, onBack }) {
                     </div>
                     <button
                         type="submit"
-                        disabled={loading}
-                        className="w-full py-4 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-2xl font-black shadow-xl transition-all active:scale-95 disabled:opacity-50"
+                        disabled={loading || isLimitReached}
+                        className={`w-full py-4 rounded-2xl font-black shadow-xl transition-all active:scale-95 disabled:opacity-50 ${isLimitReached ? 'bg-indigo-600 text-white' : 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'}`}
                     >
-                        {loading ? 'Broadcasting...' : 'Broadcast Request'}
+                        {loading ? 'Broadcasting...' : isLimitReached ? '💎 Upgrade to Pro' : 'Broadcast Request'}
                     </button>
                 </form>
             </div>

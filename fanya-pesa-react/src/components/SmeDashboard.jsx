@@ -177,7 +177,12 @@ export default function SmeDashboard({ user, onNavigate }) {
     // ─── Quote Review Drawer ──────────────────────────────────────────────────
     const renderQuoteDrawer = () => {
         if (!reviewingRfq) return null;
-        const quotes = reviewingRfq.quotes || [];
+        // Sort quotes: isGold first, then by lowest price
+        const quotes = [...(reviewingRfq.quotes || [])].sort((a, b) => {
+            if (a.isGold && !b.isGold) return -1;
+            if (!a.isGold && b.isGold) return 1;
+            return a.amount - b.amount;
+        });
         const isClosed = reviewingRfq.status === 'Closed (Quote Accepted)';
         const acceptedQuote = reviewingRfq.acceptedQuote;
 
@@ -264,7 +269,10 @@ export default function SmeDashboard({ user, onNavigate }) {
                                         : 'border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800/40 hover:border-blue-200 dark:hover:border-blue-800'
                                         }`}>
                                         {/* Badges */}
-                                        <div className="absolute top-4 right-4 flex gap-2">
+                                        <div className="absolute top-4 right-4 flex flex-wrap justify-end gap-2">
+                                            {q.isGold && (
+                                                <span className="text-[10px] font-black uppercase tracking-widest px-2 py-1 bg-amber-500 text-white rounded-lg shadow-lg shadow-amber-500/20 ring-2 ring-amber-200">⭐ Gold Verified</span>
+                                            )}
                                             {isAccepted && (
                                                 <span className="text-[10px] font-black uppercase tracking-widest px-2 py-1 bg-emerald-500 text-white rounded-lg">✓ Accepted</span>
                                             )}
@@ -329,7 +337,16 @@ export default function SmeDashboard({ user, onNavigate }) {
                 </div>
                 {user.subscribed && (
                     <div className="flex gap-3">
-                        <button onClick={() => onNavigate('rfq-form')} className="px-5 py-2.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-xl font-bold text-sm hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">Request Quote</button>
+                        {user.subscription?.tier === 'free' && rfqs.length >= 2 ? (
+                            <button
+                                onClick={() => onNavigate('subscription')}
+                                className="px-5 py-2.5 bg-indigo-600 text-white rounded-xl font-black text-sm shadow-lg shadow-indigo-500/20 transition-all hover:bg-indigo-700 active:scale-95"
+                            >
+                                💎 Upgrade for more RFQs
+                            </button>
+                        ) : (
+                            <button onClick={() => onNavigate('rfq-form')} className="px-5 py-2.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-xl font-bold text-sm hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">Request Quote</button>
+                        )}
                         <button onClick={() => onNavigate('funding-request')} className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-500/20 transition-all">Apply for Funding</button>
                     </div>
                 )}
@@ -404,9 +421,15 @@ export default function SmeDashboard({ user, onNavigate }) {
                                 <div className="flex justify-between items-center mb-8">
                                     <div>
                                         <h3 className="text-xl font-bold text-gray-900 dark:text-white">Active Quotation Requests (RFQs)</h3>
-                                        <p className="text-sm text-gray-500 dark:text-gray-400">Click "Review Quotes" to compare and accept supplier bids.</p>
+                                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                                            {tier === 'free' ? `${rfqs.length}/2 RFQs used in Free Tier` : 'Unlimited Pro RFQs active'}
+                                        </p>
                                     </div>
-                                    <span className="px-3 py-1 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold uppercase tracking-widest rounded-full border border-emerald-100 dark:border-emerald-800">SME Pro Active</span>
+                                    <span className={`px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full border ${tier === 'pro'
+                                        ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 border-indigo-100 dark:border-indigo-800'
+                                        : 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-800'}`}>
+                                        SME {tier === 'pro' ? 'Pro' : 'Starter'} Active
+                                    </span>
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -16,6 +16,7 @@ import FunderReview from './components/FunderReview';
 import StructureDeal from './components/StructureDeal';
 import SupplierMilestones from './components/SupplierMilestones';
 import FundingDetails from './components/FundingDetails';
+import PesaChatbot from './components/PesaChatbot';
 import { useToast } from './components/Toast';
 import './index.css';
 
@@ -119,7 +120,7 @@ export default function App() {
       {currentView === 'auth' && <Auth initialIntent={authIntent} onBack={() => navigateTo('home')} onLogin={(intent) => navigateTo('dashboard', intent)} />}
       {currentView === 'onboarding' && user && <Onboarding user={user} onComplete={handleOnboardingComplete} />}
       {currentView === 'vault' && user && <Vault user={user} onBack={() => setCurrentView('dashboard')} />}
-      {currentView === 'rfq-form' && user && <RfqForm user={user} onBack={() => setCurrentView('dashboard')} />}
+      {currentView === 'rfq-form' && user && <RfqForm user={user} rfqCount={viewParam} onBack={() => setCurrentView('dashboard')} />}
       {currentView === 'funding-request' && user && <FundingRequest user={user} params={viewParam} onBack={() => setCurrentView('dashboard')} />}
       {currentView === 'subscription' && user && (
         <Subscription
@@ -182,6 +183,7 @@ export default function App() {
           onNavigate={(view, params) => navigateTo(view, params)}
         />
       )}
+      <PesaChatbot user={user} />
     </div>
   );
 }

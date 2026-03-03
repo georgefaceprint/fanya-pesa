@@ -7,6 +7,7 @@ import { useToast } from './Toast';
 
 const ADMIN_MODULES = [
     { id: 'compliance', title: 'Compliance Engine', desc: 'Manage mandatory CSD, Tax, and FICA document requirements across all roles.', icon: '📄', color: 'blue' },
+    { id: 'growth', title: 'Growth Analytics', desc: 'Bird\'s-eye view of MRR, capital matched, and platform growth velocity.', icon: '📈', color: 'emerald' },
     { id: 'categories', title: 'Funding Categories', desc: 'Update the platform taxonomy and matching logic for SME funding requests.', icon: '🏷️', color: 'emerald' },
     { id: 'users', title: 'User Management', desc: 'Audit the entire user base including SMEs, Funders, and Suppliers.', icon: '👥', color: 'amber' },
     { id: 'funder_approval', title: 'Funder Verification', desc: 'Approve or reject high-net-worth individuals and corporate funding entities.', icon: '🛡️', color: 'purple' },
@@ -18,6 +19,8 @@ const ADMIN_MODULES = [
 export default function AdminPanel({ user, onBack }) {
     const [currentModule, setCurrentModule] = useState(null);
     const [users, setUsers] = useState([]);
+    const [deals, setDeals] = useState([]);
+    const [rfqs, setRfqs] = useState([]);
     const [loading, setLoading] = useState(false);
     const toast = useToast();
     const [stats] = useState({
@@ -27,14 +30,27 @@ export default function AdminPanel({ user, onBack }) {
     });
 
     useEffect(() => {
-        if (currentModule === 'users' || currentModule === 'funder_approval') {
+        if (currentModule === 'users' || currentModule === 'funder_approval' || currentModule === 'growth' || currentModule === 'subscriptions') {
             setLoading(true);
-            const unsub = onSnapshot(collection(db, "users"), (snapshot) => {
+            const unsubUsers = onSnapshot(collection(db, "users"), (snapshot) => {
                 const userList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 setUsers(userList);
                 setLoading(false);
             });
-            return () => unsub();
+
+            const unsubDeals = onSnapshot(collection(db, "deals"), (snapshot) => {
+                setDeals(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+            });
+
+            const unsubRfqs = onSnapshot(collection(db, "rfqs"), (snapshot) => {
+                setRfqs(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+            });
+
+            return () => {
+                unsubUsers();
+                unsubDeals();
+                unsubRfqs();
+            };
         }
     }, [currentModule]);
 
@@ -63,6 +79,18 @@ export default function AdminPanel({ user, onBack }) {
         }
     };
 
+    const toggleGoldStatus = async (userId, currentStatus) => {
+        try {
+            await updateDoc(doc(db, "users", userId), {
+                isGold: !currentStatus
+            });
+            toast.success(`Supplier ${currentStatus ? 'removed from Gold' : 'upgraded to Gold'} successfully!`);
+        } catch (error) {
+            console.error("Error toggling Gold status:", error);
+            toast.error('Failed to update Supplier tier.');
+        }
+    };
+
     const runEmailDiagnosis = async () => {
         setLoading(true);
         try {
@@ -76,6 +104,56 @@ export default function AdminPanel({ user, onBack }) {
             setLoading(false);
         }
     };
+
+    if (currentModule === 'compliance') {
+        return (
+            <div className="max-w-4xl mx-auto py-10 animate-fade-in">
+                <button onClick={() => setCurrentModule(null)} className="mb-8 text-sm font-bold text-gray-500 hover:text-gray-900 transition-colors">&larr; Back to Control Center</button>
+                <div className="flex justify-between items-end mb-10">
+                    <div>
+                        <h2 className="text-3xl font-black text-gray-900 dark:text-white mb-2">Compliance Engine</h2>
+                        <p className="text-gray-500">Manage mandatory KYC/KYB document requirements.</p>
+                    </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {['CIPC Registration', 'Tax Clearance', 'BEE Certificate', 'Director ID Copies', 'Proof of Address', 'Bank Confirmation'].map(docName => (
+                        <div key={docName} className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 p-6 rounded-3xl flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                                <div className="p-3 bg-blue-50 dark:bg-blue-900/30 rounded-xl text-blue-600">📄</div>
+                                <div className="font-bold text-gray-900 dark:text-white">{docName}</div>
+                            </div>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-emerald-500">Active</span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+    }
+
+    if (currentModule === 'categories') {
+        const categories = ['Construction', 'Logistics', 'Agriculture', 'Healthcare', 'Information Tech', 'Manufacturing', 'Retail', 'Mining'];
+        return (
+            <div className="max-w-4xl mx-auto py-10 animate-fade-in">
+                <button onClick={() => setCurrentModule(null)} className="mb-8 text-sm font-bold text-gray-500 hover:text-gray-900 transition-colors">&larr; Back to Control Center</button>
+                <div className="flex justify-between items-end mb-10">
+                    <div>
+                        <h2 className="text-3xl font-black text-gray-900 dark:text-white mb-2">Funding Categories</h2>
+                        <p className="text-gray-500">Industry taxonomy for deal matching.</p>
+                    </div>
+                    <button className="px-6 py-2 bg-emerald-600 text-white rounded-xl text-xs font-black uppercase tracking-widest">Add Category</button>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                    {categories.map(cat => (
+                        <div key={cat} className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 p-6 rounded-3xl group hover:border-emerald-500/30 transition-all">
+                            <div className="text-2xl mb-4 group-hover:scale-110 transition-transform text-center">🏷️</div>
+                            <div className="font-bold text-gray-900 dark:text-white text-center">{cat}</div>
+                            <div className="text-[10px] text-gray-400 mt-2 text-center">42 Active Deals</div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+    }
 
     if (currentModule === 'users') {
         return (
@@ -117,15 +195,28 @@ export default function AdminPanel({ user, onBack }) {
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 text-right">
-                                        <button
-                                            onClick={() => toggleVerification(u.id, u.verified)}
-                                            className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${u.verified
-                                                ? 'border border-red-200 text-red-600 hover:bg-red-50'
-                                                : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-lg shadow-emerald-600/20'
-                                                }`}
-                                        >
-                                            {u.verified ? 'Revoke' : 'Approve'}
-                                        </button>
+                                        <div className="flex justify-end gap-2">
+                                            {u.type === 'SUPPLIER' && (
+                                                <button
+                                                    onClick={() => toggleGoldStatus(u.id, u.isGold)}
+                                                    className={`px-3 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${u.isGold
+                                                        ? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+                                                        : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                                                        }`}
+                                                >
+                                                    {u.isGold ? '⭐ Gold' : 'Standard'}
+                                                </button>
+                                            )}
+                                            <button
+                                                onClick={() => toggleVerification(u.id, u.verified)}
+                                                className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${u.verified
+                                                    ? 'border border-red-200 text-red-600 hover:bg-red-50'
+                                                    : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-lg shadow-emerald-600/20'
+                                                    }`}
+                                            >
+                                                {u.verified ? 'Revoke' : 'Approve'}
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}
@@ -266,6 +357,114 @@ export default function AdminPanel({ user, onBack }) {
         );
     }
 
+    if (currentModule === 'activity') {
+        const activities = [
+            { type: 'signup', user: 'GreenPower Ltd', detail: 'New SME registration verified.', time: '2 mins ago', icon: '🌱' },
+            { type: 'deal', user: 'Thabo Mndau', detail: 'Funded R250k for Construction Tender.', time: '15 mins ago', icon: '💰' },
+            { type: 'rfq', user: 'Alpha Logistics', detail: 'New RFQ broadcast to 12 suppliers.', time: '1 hour ago', icon: '📦' },
+            { type: 'compliance', user: 'Sipho Nkosi', detail: 'BEE Certificate updated and verified.', time: '3 hours ago', icon: '🛡️' },
+            { type: 'funder', user: 'Zenith Capital', detail: 'New funder application pending review.', time: '5 hours ago', icon: '💎' }
+        ];
+
+        return (
+            <div className="max-w-4xl mx-auto py-10 animate-fade-in">
+                <button onClick={() => setCurrentModule(null)} className="mb-8 text-sm font-bold text-gray-500 hover:text-gray-900 transition-colors">&larr; Back to Control Center</button>
+                <div className="flex justify-between items-end mb-10">
+                    <div>
+                        <h2 className="text-3xl font-black text-gray-900 dark:text-white mb-2">System Activity</h2>
+                        <p className="text-gray-500">Live feed of global platform operations.</p>
+                    </div>
+                    <span className="flex items-center gap-2 text-blue-600 text-[10px] font-black uppercase tracking-widest bg-blue-50 px-3 py-1.5 rounded-full">
+                        <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+                        Live Stream
+                    </span>
+                </div>
+                <div className="space-y-4">
+                    {activities.map((act, i) => (
+                        <div key={i} className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 p-6 rounded-3xl flex items-center justify-between hover:translate-x-2 transition-transform cursor-pointer group">
+                            <div className="flex items-center gap-6">
+                                <div className="w-12 h-12 rounded-2xl bg-gray-50 dark:bg-gray-900 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
+                                    {act.icon}
+                                </div>
+                                <div>
+                                    <div className="font-bold text-gray-900 dark:text-white">{act.user}</div>
+                                    <div className="text-xs text-gray-500 mt-1">{act.detail}</div>
+                                </div>
+                            </div>
+                            <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{act.time}</div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+    }
+
+    if (currentModule === 'growth') {
+        const totalCapital = deals.reduce((sum, d) => sum + (Number(d.amount) || 0), 0);
+        const proSmes = users.filter(u => u.type === 'SME' && u.subscription?.tier === 'pro').length;
+        const mrr = proSmes * 499;
+        const supplierCount = users.filter(u => u.type === 'SUPPLIER').length;
+        const smeCount = users.filter(u => u.type === 'SME').length;
+
+        const growthStats = [
+            { label: 'Total Capital Matched', value: `R${(totalCapital / 1000000).toFixed(1)}M`, trend: '+12%', color: 'emerald' },
+            { label: 'Monthly Recurring Revenue', value: `R${mrr.toLocaleString()}`, trend: '+5%', color: 'indigo' },
+            { label: 'SME Base Expansion', value: smeCount, trend: '+18%', color: 'blue' },
+            { label: 'Supplier Ecosystem', value: supplierCount, trend: '+8%', color: 'amber' }
+        ];
+
+        return (
+            <div className="max-w-5xl mx-auto py-10 animate-fade-in">
+                <button onClick={() => setCurrentModule(null)} className="mb-8 text-sm font-bold text-gray-500 hover:text-gray-900 transition-colors">&larr; Back to Control Center</button>
+                <div className="mb-12">
+                    <h2 className="text-3xl font-black text-gray-900 dark:text-white mb-2">Growth Analytics</h2>
+                    <p className="text-gray-500">Real-time performance metrics and revenue tracking.</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+                    {growthStats.map((stat, i) => (
+                        <div key={i} className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 p-8 rounded-3xl shadow-sm">
+                            <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-4">{stat.label}</p>
+                            <div className="flex items-end justify-between">
+                                <h3 className="text-2xl font-black text-gray-900 dark:text-white">{stat.value}</h3>
+                                <span className="text-xs font-bold text-emerald-500">{stat.trend}</span>
+                            </div>
+                            <div className={`h-1 w-full bg-${stat.color}-500/10 rounded-full mt-6 overflow-hidden`}>
+                                <div className={`h-full bg-${stat.color}-500 w-2/3 rounded-full opacity-50`}></div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div className="bg-gray-900 rounded-3xl p-10 text-white relative h-64 overflow-hidden">
+                        <div className="relative z-10">
+                            <h4 className="text-xs font-black uppercase tracking-widest text-white/50 mb-4">Revenue Velocity</h4>
+                            <div className="text-4xl font-black mb-2">R{mrr.toLocaleString()}<span className="text-sm font-medium opacity-50 ml-2">MRR</span></div>
+                            <p className="text-white/40 text-sm max-w-[200px]">Projected year-end revenue based on current growth delta.</p>
+                        </div>
+                        <div className="absolute bottom-0 left-0 right-0 h-32 flex items-end px-4 gap-2">
+                            {[40, 60, 45, 75, 55, 90, 85].map((h, i) => (
+                                <div key={i} className="flex-1 bg-blue-500/20 rounded-t-lg transition-all hover:bg-blue-500" style={{ height: `${h}%` }}></div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-3xl p-10 flex flex-col justify-center">
+                        <div className="flex items-center gap-6">
+                            <div className="w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-3xl">💎</div>
+                            <div>
+                                <h4 className="font-bold text-gray-900 dark:text-white">Pro Tier Conversion</h4>
+                                <p className="text-sm text-gray-500">{(proSmes / (smeCount || 1) * 100).toFixed(1)}% of SMEs are on paid plans.</p>
+                            </div>
+                        </div>
+                        <button onClick={() => setCurrentModule('subscriptions')} className="mt-8 w-full py-4 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded-2xl font-bold text-sm hover:bg-gray-200 transition-colors">Manage Subscriptions &rarr;</button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     if (currentModule === 'secrets') {
         return (
             <div className="max-w-4xl mx-auto py-10 animate-fade-in px-6">
@@ -343,23 +542,34 @@ export default function AdminPanel({ user, onBack }) {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {ADMIN_MODULES.map(module => (
-                    <div
-                        key={module.id}
-                        onClick={() => setCurrentModule(module.id)}
-                        className="group bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700/50 rounded-3xl p-8 shadow-sm hover:shadow-xl hover:translate-y-[-4px] transition-all cursor-pointer"
-                    >
-                        <div className={`w-14 h-14 rounded-2xl bg-${module.color}-50 dark:bg-${module.color}-900/20 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform mb-6`}>
-                            {module.icon}
+                {ADMIN_MODULES.map(module => {
+                    const colorMap = {
+                        blue: 'bg-blue-50 dark:bg-blue-900/20',
+                        emerald: 'bg-emerald-50 dark:bg-emerald-900/20',
+                        amber: 'bg-amber-50 dark:bg-amber-900/20',
+                        purple: 'bg-purple-50 dark:bg-purple-900/20',
+                        indigo: 'bg-indigo-50 dark:bg-indigo-900/20',
+                        red: 'bg-red-50 dark:bg-red-900/20',
+                        gray: 'bg-gray-50 dark:bg-gray-900/20'
+                    };
+                    return (
+                        <div
+                            key={module.id}
+                            onClick={() => setCurrentModule(module.id)}
+                            className="group bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700/50 rounded-3xl p-8 shadow-sm hover:shadow-xl hover:translate-y-[-4px] transition-all cursor-pointer"
+                        >
+                            <div className={`w-14 h-14 rounded-2xl ${colorMap[module.color]} flex items-center justify-center text-2xl group-hover:scale-110 transition-transform mb-6`}>
+                                {module.icon}
+                            </div>
+                            <h4 className="text-xl font-black text-gray-900 dark:text-white group-hover:text-blue-600 transition-colors uppercase tracking-tight">{module.title}</h4>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 leading-relaxed">{module.desc}</p>
+                            <div className="mt-8 pt-8 border-t border-gray-50 dark:border-gray-700/50 flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-gray-400">
+                                <span>Manager Module</span>
+                                <span className="group-hover:text-blue-600">&rarr;</span>
+                            </div>
                         </div>
-                        <h4 className="text-xl font-black text-gray-900 dark:text-white group-hover:text-blue-600 transition-colors uppercase tracking-tight">{module.title}</h4>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 leading-relaxed">{module.desc}</p>
-                        <div className="mt-8 pt-8 border-t border-gray-50 dark:border-gray-700/50 flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-gray-400">
-                            <span>Manager Module</span>
-                            <span className="group-hover:text-blue-600">&rarr;</span>
-                        </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
 
             <div className="mt-20 pt-10 border-t border-gray-100 dark:border-gray-800 text-center">
