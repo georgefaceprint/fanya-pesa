@@ -47,48 +47,52 @@ const PLANS = {
 
 export default function Subscription({ user, onBack, onSuccess }) {
     const plan = PLANS[user.type] || PLANS.SME;
-    const [step, setStep] = useState('review'); // 'review' | 'payment' | 'success'
+    const [step, setStep] = useState('review'); // 'review' | 'success'
     const [loading, setLoading] = useState(false);
-    const [card, setCard] = useState({ name: '', number: '', expiry: '', cvv: '' });
     const toast = useToast();
-    const [cardFocused, setCardFocused] = useState(null);
 
-    const formatCardNumber = (val) => {
-        return val.replace(/\D/g, '').replace(/(.{4})/g, '$1 ').trim().slice(0, 19);
-    };
+    // Initialize Yoco
+    const yoco = new window.YocoSDK({
+        publicKey: 'pk_test_ed3c8433y8p9pjs79998', // Test key
+    });
 
-    const formatExpiry = (val) => {
-        const clean = val.replace(/\D/g, '').slice(0, 4);
-        if (clean.length >= 3) return clean.slice(0, 2) + '/' + clean.slice(2);
-        return clean;
-    };
-
-    const handlePayment = async (e) => {
-        e.preventDefault();
+    const handlePayment = () => {
         setLoading(true);
 
-        // Simulate payment processing (1.5s)
-        await new Promise(r => setTimeout(r, 1500));
+        yoco.showPopup({
+            amountInCents: plan.price * 100,
+            currency: 'ZAR',
+            name: 'Fanya Pesa',
+            description: plan.name,
+            callback: async (result) => {
+                // This callback is called when the token is generated
+                if (result.error) {
+                    toast.error("Payment failed: " + result.error.message);
+                    setLoading(false);
+                } else {
+                    // Success! result.id is the token
+                    // In a production app, you'd send result.id to your server to charge it
+                    // For this implementation, we treat token generation as successful commitment
+                    try {
+                        await setDoc(doc(db, 'users', user.uid || user.id), {
+                            subscribed: true,
+                            plan: plan.name,
+                            subscribedAt: new Date().toISOString(),
+                            yocoToken: result.id
+                        }, { merge: true });
 
-        try {
-            await setDoc(doc(db, 'users', user.uid || user.id), {
-                subscribed: true,
-                plan: plan.name,
-                subscribedAt: new Date().toISOString(),
-            }, { merge: true });
-
-            setStep('success');
-
-            // Auto-redirect after 2.5s
-            setTimeout(() => {
-                onSuccess && onSuccess();
-            }, 2500);
-        } catch (err) {
-            console.error('Subscription activation failed:', err);
-            toast.error('Payment succeeded but activation failed. Contact support@fanyapesa.co.za');
-        } finally {
-            setLoading(false);
-        }
+                        setStep('success');
+                        setTimeout(() => {
+                            onSuccess && onSuccess();
+                        }, 2500);
+                    } catch (err) {
+                        toast.error("Activation failed. Contact support.");
+                    } finally {
+                        setLoading(false);
+                    }
+                }
+            }
+        });
     };
 
     const colorMap = {
@@ -148,127 +152,50 @@ export default function Subscription({ user, onBack, onSuccess }) {
                                 </ul>
 
                                 <div className="mt-8 pt-6 border-t border-white/20 flex items-center gap-2 text-white/50 text-xs font-bold uppercase tracking-widest">
-                                    <span>🔒</span> Secured by PayFast
+                                    <span>🔒</span> Secured by Yoco
                                 </div>
                             </div>
                         </div>
 
                         <div className="mt-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-4">
                             <p className="text-xs text-gray-500 dark:text-gray-400 text-center leading-relaxed">
-                                All subscriptions are processed securely. Your card details are encrypted and never stored on our servers.
+                                Subscription payments are processed securely via Yoco. Your card details are never stored on our servers.
                             </p>
                         </div>
                     </div>
 
-                    {/* Payment Form */}
+                    {/* Payment CTA */}
                     <div className="lg:col-span-3">
-                        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-3xl p-8 shadow-xl">
-                            <h3 className="text-xl font-black text-gray-900 dark:text-white mb-2">Secure Payment</h3>
-                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-8">Enter your card details to activate your plan.</p>
-
-                            {/* Mock Card Visual */}
-                            <div className={`relative bg-gradient-to-br ${c.glow} rounded-2xl p-6 mb-8 text-white shadow-lg overflow-hidden`}>
-                                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-                                <div className="flex justify-between items-start mb-8">
-                                    <div className="text-xs font-bold uppercase tracking-widest opacity-70">Fanya Pesa</div>
-                                    <div className="text-2xl opacity-80">💳</div>
-                                </div>
-                                <div className="font-mono text-xl tracking-widest mb-6 min-h-[1.5rem]">
-                                    {card.number ? card.number.padEnd(19, '•').replace(/(.{4})/g, '$1 ').trim() : '•••• •••• •••• ••••'}
-                                </div>
-                                <div className="flex justify-between items-end">
-                                    <div>
-                                        <p className="text-[10px] opacity-50 uppercase font-bold mb-0.5">Card Holder</p>
-                                        <p className="font-bold text-sm">{card.name || user.name || 'YOUR NAME'}</p>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="text-[10px] opacity-50 uppercase font-bold mb-0.5">Expires</p>
-                                        <p className="font-bold text-sm font-mono">{card.expiry || 'MM/YY'}</p>
-                                    </div>
-                                </div>
+                        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-3xl p-10 shadow-xl text-center h-full flex flex-col justify-center">
+                            <div className="w-20 h-20 bg-blue-50 dark:bg-blue-900/30 rounded-3xl flex items-center justify-center text-4xl mx-auto mb-6">
+                                🔒
                             </div>
+                            <h3 className="text-2xl font-black text-gray-900 dark:text-white mb-4">Secure Checkout</h3>
+                            <p className="text-gray-500 dark:text-gray-400 mb-10 leading-relaxed">
+                                Click the button below to open the secure Yoco payment portal and activate your <strong>{plan.name}</strong>.
+                            </p>
 
-                            <form onSubmit={handlePayment} className="space-y-5">
-                                <div>
-                                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Name on Card</label>
-                                    <input
-                                        type="text"
-                                        required
-                                        value={card.name}
-                                        onChange={e => setCard({ ...card, name: e.target.value })}
-                                        onFocus={() => setCardFocused('name')}
-                                        onBlur={() => setCardFocused(null)}
-                                        placeholder="e.g. George Faceprint"
-                                        className={`w-full bg-gray-50 dark:bg-gray-900 border rounded-xl px-4 py-3 text-gray-900 dark:text-white outline-none transition-all ${cardFocused === 'name' ? `${c.ring} ring-2 border-transparent` : 'border-gray-200 dark:border-gray-700'}`}
-                                    />
-                                </div>
+                            <button
+                                onClick={handlePayment}
+                                disabled={loading}
+                                className={`w-full py-5 ${c.btn} text-white rounded-2xl font-black text-xl shadow-xl transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3`}
+                            >
+                                {loading ? (
+                                    <>
+                                        <div className="w-6 h-6 border-4 border-white border-t-transparent rounded-full animate-spin" />
+                                        Opening Portal...
+                                    </>
+                                ) : (
+                                    <>Pay R{plan.price}.00 Now</>
+                                )}
+                            </button>
 
-                                <div>
-                                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Card Number</label>
-                                    <input
-                                        type="text"
-                                        required
-                                        value={card.number}
-                                        onChange={e => setCard({ ...card, number: formatCardNumber(e.target.value) })}
-                                        onFocus={() => setCardFocused('number')}
-                                        onBlur={() => setCardFocused(null)}
-                                        placeholder="4000 1234 5678 9010"
-                                        maxLength={19}
-                                        className={`w-full bg-gray-50 dark:bg-gray-900 border rounded-xl px-4 py-3 text-gray-900 dark:text-white font-mono outline-none transition-all ${cardFocused === 'number' ? `${c.ring} ring-2 border-transparent` : 'border-gray-200 dark:border-gray-700'}`}
-                                    />
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Expiry Date</label>
-                                        <input
-                                            type="text"
-                                            required
-                                            value={card.expiry}
-                                            onChange={e => setCard({ ...card, expiry: formatExpiry(e.target.value) })}
-                                            onFocus={() => setCardFocused('expiry')}
-                                            onBlur={() => setCardFocused(null)}
-                                            placeholder="MM/YY"
-                                            maxLength={5}
-                                            className={`w-full bg-gray-50 dark:bg-gray-900 border rounded-xl px-4 py-3 text-gray-900 dark:text-white font-mono outline-none transition-all ${cardFocused === 'expiry' ? `${c.ring} ring-2 border-transparent` : 'border-gray-200 dark:border-gray-700'}`}
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">CVV / CVC</label>
-                                        <input
-                                            type="password"
-                                            required
-                                            value={card.cvv}
-                                            onChange={e => setCard({ ...card, cvv: e.target.value.replace(/\D/g, '').slice(0, 4) })}
-                                            onFocus={() => setCardFocused('cvv')}
-                                            onBlur={() => setCardFocused(null)}
-                                            placeholder="•••"
-                                            maxLength={4}
-                                            className={`w-full bg-gray-50 dark:bg-gray-900 border rounded-xl px-4 py-3 text-gray-900 dark:text-white outline-none transition-all ${cardFocused === 'cvv' ? `${c.ring} ring-2 border-transparent` : 'border-gray-200 dark:border-gray-700'}`}
-                                        />
-                                    </div>
-                                </div>
-
-                                <button
-                                    type="submit"
-                                    disabled={loading}
-                                    className={`w-full py-4 ${c.btn} text-white rounded-2xl font-black text-lg shadow-xl transition-all active:scale-95 mt-4 disabled:opacity-50 flex items-center justify-center gap-3`}
-                                >
-                                    {loading ? (
-                                        <>
-                                            <div className="w-5 h-5 border-3 border-white border-t-transparent rounded-full animate-spin" />
-                                            Processing securely...
-                                        </>
-                                    ) : (
-                                        <>🔒 Pay R{plan.price}.00 / month</>
-                                    )}
-                                </button>
-                            </form>
+                            <div className="mt-8 flex items-center justify-center gap-6 opacity-30 grayscale">
+                                <span className="font-black text-xs uppercase tracking-widest">Visa</span>
+                                <span className="font-black text-xs uppercase tracking-widest">Mastercard</span>
+                                <span className="font-black text-xs uppercase tracking-widest">EFT</span>
+                            </div>
                         </div>
-
-                        <p className="text-center text-[10px] text-gray-400 uppercase font-bold tracking-tighter mt-4">
-                            256-bit SSL Encrypted · PCI DSS Compliant · Cancel Anytime
-                        </p>
                     </div>
                 </div>
             </div>
