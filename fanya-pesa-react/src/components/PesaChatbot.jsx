@@ -40,6 +40,12 @@ export default function PesaChatbot({ user }) {
         }, 800);
     };
 
+    const handleReset = () => {
+        setMessages([{ role: 'assistant', text: getInitialGreeting() }]);
+        setInput('');
+        setIsTyping(false);
+    };
+
     const getQuickQuestions = () => {
         if (role === 'SME') return [
             "How do I create an RFQ?",
@@ -77,10 +83,19 @@ export default function PesaChatbot({ user }) {
                                 <p className="text-[10px] uppercase font-black tracking-widest opacity-70">Platform Assistant</p>
                             </div>
                         </div>
-                        <button
-                            onClick={() => setIsOpen(false)}
-                            className="w-8 h-8 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 transition-colors"
-                        >×</button>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={handleReset}
+                                className="px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors flex items-center gap-1.5"
+                                title="Reset Conversation"
+                            >
+                                <span>🔄</span> Start Again
+                            </button>
+                            <button
+                                onClick={() => setIsOpen(false)}
+                                className="w-8 h-8 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 transition-colors"
+                            >×</button>
+                        </div>
                     </div>
 
                     {/* Messages */}
