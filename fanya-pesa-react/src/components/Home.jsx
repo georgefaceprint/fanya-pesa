@@ -5,7 +5,7 @@ export default function Home({ onNavigate }) {
         <div className="min-h-screen bg-gray-50 dark:bg-[#1a1a2e] text-gray-900 dark:text-gray-100 font-sans transition-colors duration-300">
             <nav className="flex justify-between items-center p-6 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-800/50 backdrop-blur-md sticky top-0 z-50">
                 <div className="text-xl font-bold cursor-pointer flex items-center gap-2" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-                    <span>💸</span> Fanya Pesa
+                    <span>💸</span> Elgen Funding
                 </div>
                 <div className="hidden md:flex gap-6 text-sm font-medium">
                     <a href="#how" className="hover:text-blue-600 transition">How it Works</a>
@@ -73,7 +73,7 @@ export default function Home({ onNavigate }) {
             <section id="how" className="py-24 bg-white dark:bg-gray-900/50">
                 <div className="max-w-7xl mx-auto px-6">
                     <div className="text-center mb-16">
-                        <h2 className="text-4xl font-black text-gray-900 dark:text-white mb-4">How Fanya Pesa Works</h2>
+                        <h2 className="text-4xl font-black text-gray-900 dark:text-white mb-4">How Elgen Funding Works</h2>
                         <p className="text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">A seamless 3-step process to bridge the capital gap for South African businesses.</p>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -171,7 +171,7 @@ export default function Home({ onNavigate }) {
                 <div className="max-w-7xl mx-auto px-6">
                     <div className="text-center mb-16">
                         <h2 className="text-4xl font-black text-gray-900 dark:text-white mb-4">Success Stories</h2>
-                        <p className="text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">Hear from the businesses and suppliers growing with Fanya Pesa.</p>
+                        <p className="text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">Hear from the businesses and suppliers growing with Elgen Funding.</p>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -180,7 +180,7 @@ export default function Home({ onNavigate }) {
                                 type: 'SME',
                                 name: 'Thabo Mndau',
                                 role: 'Director, BuildSA Construction',
-                                text: 'Fanya Pesa transformed our procurement process. We got funded for a R500,000 construction tender in under 48 hours. Absolute game changer.',
+                                text: 'Elgen Funding transformed our procurement process. We got funded for a R500,000 construction tender in under 48 hours. Absolute game changer.',
                                 icon: '🏗️'
                             },
                             {
@@ -215,7 +215,7 @@ export default function Home({ onNavigate }) {
                                 type: 'Supplier',
                                 name: 'Elena Venter',
                                 role: 'Head of Sales, AgriWholesale',
-                                text: 'Fanya Pesa connects us with funded, serious businesses. It eliminates the risk of late payments and bad debt entirely.',
+                                text: 'Elgen Funding connects us with funded, serious businesses. It eliminates the risk of late payments and bad debt entirely.',
                                 icon: '🌾'
                             }
                         ].map((t, i) => (
@@ -242,7 +242,7 @@ export default function Home({ onNavigate }) {
 
             <footer className="text-center p-8 border-t border-gray-200 dark:border-gray-800">
                 <p className="text-gray-500 text-sm">
-                    &copy; {new Date().getFullYear()} Fanya Pesa.
+                    &copy; {new Date().getFullYear()} Elgen Funding.
                     <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('auth', 'ADMIN'); }} className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 ml-4 font-medium transition-colors">
                         Admin Portal Access
                     </a>

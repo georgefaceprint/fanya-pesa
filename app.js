@@ -1,4 +1,4 @@
-/* Fanya Pesa Engine - Version 12.67 */
+/* Elgen Funding Engine - Version 12.67 */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
 import { getFirestore, collection, getDocs, addDoc, setDoc, doc, onSnapshot, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
@@ -7,9 +7,9 @@ import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "http
 // TODO: Replace this with your actual Firebase config from the console
 const firebaseConfig = {
     apiKey: "AIzaSyCmoiuwbDodIELIj-TptuEYlIJbVSAKkuQ",
-    authDomain: "fanya-pesa.firebaseapp.com",
-    projectId: "fanya-pesa",
-    storageBucket: "fanya-pesa.firebasestorage.app",
+    authDomain: "elgen-funding.firebaseapp.com",
+    projectId: "elgen-funding",
+    storageBucket: "elgen-funding.firebasestorage.app",
     messagingSenderId: "719005341578",
     appId: "1:719005341578:web:da45b21b454c52a7671a73",
     measurementId: "G-KXN6S8DXB9"
@@ -81,7 +81,7 @@ const app = {
                 emailjs.send("YOUR_SERVICE_ID", "YOUR_TEMPLATE_ID", {
                     to_email: email,
                     message: message,
-                    subject: "Fanya Pesa: New Notification"
+                    subject: "Elgen Funding: New Notification"
                 }).then(() => {
                     console.log(`Email successfully dispatched via EmailJS to ${email}`);
                 }).catch((err) => {
@@ -148,7 +148,7 @@ const app = {
                 if (docSnap.exists()) {
                     this.notifications = docSnap.data().data;
                 } else {
-                    this.notifications = [{ id: 1, text: "Welcome to Fanya Pesa! Complete your profile to get started.", read: false, time: "Just now" }];
+                    this.notifications = [{ id: 1, text: "Welcome to Elgen Funding! Complete your profile to get started.", read: false, time: "Just now" }];
                     this.saveNotifications();
                 }
                 this.renderNavbar();
@@ -360,7 +360,7 @@ const app = {
             
             <footer style="text-align: center; padding: 2rem; border-top: 1px solid var(--border); margin-top: 4rem;">
                 <p class="subtext">
-                    &copy; 2026 Fanya Pesa. <a href="#" onclick="event.preventDefault(); app.showAuth('ADMIN')" style="color: var(--primary); text-decoration: none; margin-left: 1rem;">Admin Portal Access</a>
+                    &copy; 2026 Elgen Funding. <a href="#" onclick="event.preventDefault(); app.showAuth('ADMIN')" style="color: var(--primary); text-decoration: none; margin-left: 1rem;">Admin Portal Access</a>
                 </p>
             </footer>
         `);
@@ -370,7 +370,7 @@ const app = {
         if (!intentType) {
             this.setView(`
             <div class="auth-wrapper hero-enter" style="max-width: 600px; margin: 4rem auto; text-align: center;">
-                <h2 style="margin-bottom: 0.5rem; font-size: 2rem; font-family: var(--font-heading);">Welcome to Fanya Pesa</h2>
+                <h2 style="margin-bottom: 0.5rem; font-size: 2rem; font-family: var(--font-heading);">Welcome to Elgen Funding</h2>
                 <p style="color: var(--text-muted); margin-bottom: 2rem; font-size: 1rem;">Please select how you want to use the platform to continue.</p>
                 
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
@@ -430,7 +430,7 @@ const app = {
                 <button class="btn btn-secondary btn-sm" style="margin-bottom: 2rem;" onclick="app.showAuth()">&larr; Change Role</button>
                 <h2 style="margin-bottom: 0.5rem; font-size: 2rem; font-family: var(--font-heading);">Sign In / Join</h2>
                 <div class="badge" style="margin-bottom: 1.5rem; background: rgba(59,130,246,0.1); color: var(--primary);">Accessing as: ${intentType}</div>
-                <p style="color: var(--text-muted); margin-bottom: 2rem; font-size: 0.9rem;">Please choose an authentication method to log into your Fanya Pesa account.</p>
+                <p style="color: var(--text-muted); margin-bottom: 2rem; font-size: 0.9rem;">Please choose an authentication method to log into your Elgen Funding account.</p>
                 
                 <div class="glass-card" style="text-align: center; padding: 3rem 2rem;">
                     
@@ -657,7 +657,7 @@ const app = {
             localStorage.setItem(STORE_KEY, JSON.stringify(this.user));
 
             if (this.user.onboardingComplete) {
-                alert("Welcome aboard! Your Fanya Pesa profile is now live.");
+                alert("Welcome aboard! Your Elgen Funding profile is now live.");
                 this.showDashboard();
             } else {
                 this.showOnboarding(this.user.onboardingStep);
@@ -820,7 +820,7 @@ const app = {
                                 <span class="subtext">Official Email</span> <span>${this.user.email}</span>
                             </div>
                             <div style="display: flex; justify-content: space-between; font-size: 0.9rem;">
-                                <span class="subtext">Fanya ID</span> <span style="font-family: monospace; font-size: 0.8rem;">FP-${this.user.id.substring(0, 8).toUpperCase()}</span>
+                                <span class="subtext">Elgen ID</span> <span style="font-family: monospace; font-size: 0.8rem;">FP-${this.user.id.substring(0, 8).toUpperCase()}</span>
                             </div>
                         </div>
                         <div style="display: flex; gap: 1rem; margin-top: 2rem;">
@@ -844,7 +844,7 @@ const app = {
                                         <ul style="margin: 1.5rem 0; padding-left: 1.5rem; text-align: left; line-height: 1.8;">
                                             <li>Unlimited quote requests</li>
                                             <li>Direct funding facility applications</li>
-                                            <li>Fanya Pesa milestone tracking mapping</li>
+                                            <li>Elgen Funding milestone tracking mapping</li>
                                         </ul>
                                         <button class="btn btn-primary" style="width: 100%;" onclick="app.user.subscribed = true; app.showDashboard();">Subscribe Now</button>
                                     </div>
@@ -919,7 +919,7 @@ const app = {
                         <div class="glass-card" style="grid-column: 1 / -1; margin-top: 1rem;">
                             <div style="text-align: center; padding: 2rem 1rem; background: var(--secondary); border-radius: 8px;">
                                 <h2 style="margin-bottom: 1rem;">Start Quoting on Tenders</h2>
-                                <p style="margin-bottom: 2rem; max-width: 400px; margin-inline: auto;">Subscribe as a Verified Supplier to receive direct quotation requests from funded SMEs and secure guaranteed payouts via Fanya Pesa escrow.</p>
+                                <p style="margin-bottom: 2rem; max-width: 400px; margin-inline: auto;">Subscribe as a Verified Supplier to receive direct quotation requests from funded SMEs and secure guaranteed payouts via Elgen Funding escrow.</p>
                                 
                                 <div style="display: flex; justify-content: center; gap: 2rem; flex-wrap: wrap;">
                                     <div class="glass-card" style="text-align: left; min-width: 250px;">
@@ -1053,7 +1053,7 @@ const app = {
                 ` : ''}
 
                     <div style="margin-top: 4rem; grid-column: 1 / -1; text-align: center; border-top: 1px solid var(--border); padding-top: 2rem;">
-                        <p class="subtext" style="font-size: 0.8rem; margin-bottom: 1.5rem;">Fanya Pesa Engine v12.66 &bull; Status: Operational</p>
+                        <p class="subtext" style="font-size: 0.8rem; margin-bottom: 1.5rem;">Elgen Funding Engine v12.66 &bull; Status: Operational</p>
                         <div style="display: flex; justify-content: center; gap: 1rem;">
                             <button class="btn btn-outline btn-sm" onclick="app.logout()" style="color: #ef4444; border-color: rgba(239,68,68,0.2);">Sign Out</button>
                             <button class="btn btn-outline btn-sm" onclick="if(confirm('This will reload the latest platform engine and clear temporary data. Proceed?')){ localStorage.clear(); sessionStorage.clear(); location.reload(true); }">Hard Refresh Engine</button>
@@ -1235,7 +1235,7 @@ const app = {
                     <div style="background: #10b981; color: white; padding: 2rem; text-align: center;">
                         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-bottom: 0.5rem;"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v2M3 13h18M5 17h14a2 2 0 0 0 2-2v-4H3v4a2 2 0 0 0 2 2z"/></svg>
                         <h2 style="font-family: var(--font-heading); margin-bottom: 0.5rem; color: white;">PayFast Secure</h2>
-                        <p style="opacity: 0.9; font-size: 0.9rem;">Fanya Pesa Supplier Subscription</p>
+                        <p style="opacity: 0.9; font-size: 0.9rem;">Elgen Funding Supplier Subscription</p>
                         <h1 style="color: white; margin-top: 1rem; font-weight: 800; font-family: monospace;">ZAR 499.00</h1>
                     </div>
                     
@@ -1382,7 +1382,7 @@ const app = {
                 <button class="btn btn-secondary" style="margin-bottom: 2rem;" onclick="app.showDashboard()">&larr; Back to Dashboard</button>
                 
                 <h2>Active Funding & Payments</h2>
-                <p class="subtext" style="margin-bottom: 2rem;">Fanya Pesa ensures security mapping. Your allocated funds go directly to the verified supplier as project milestones are met.</p>
+                <p class="subtext" style="margin-bottom: 2rem;">Elgen Funding ensures security mapping. Your allocated funds go directly to the verified supplier as project milestones are met.</p>
 
                 <div class="glass-card">
                     <div style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid var(--border); padding-bottom: 1rem; margin-bottom: 1rem;">
@@ -1470,11 +1470,11 @@ const app = {
                         <div class="form-group" style="margin-top: 1rem;">
                             <label>Default Terms & Conditions Appendage</label>
                             <div style="padding: 1rem; border: 1px solid var(--border); background: var(--secondary); border-radius: 8px; font-size: 0.85rem; height: 100px; overflow-y: auto;">
-                                1. Fanya Pesa acts as the escrow layer. <br>
+                                1. Elgen Funding acts as the escrow layer. <br>
                                 2. Upon execution, Funder pays 30% upfront to the Supplier.<br>
                                 3. Funder pays 40% upon Waybill completion.<br>
                                 4. Funder pays 30% upon final delivery sign-off by the SME.<br>
-                                5. SME cedes the government/corporate tender invoice payment directly into the designated Fanya Pesa joint-account until the facility is settled.
+                                5. SME cedes the government/corporate tender invoice payment directly into the designated Elgen Funding joint-account until the facility is settled.
                             </div>
                         </div>
 
@@ -1520,7 +1520,7 @@ const app = {
                 const smeDoc = await getDoc(doc(db, "users", deal.smeId));
                 if (smeDoc.exists()) {
                     const smeEmail = smeDoc.data().email;
-                    await this.sendNotification(deal.smeId, smeEmail, `🎉 Deal APPROVED! ${this.user.name} has secured R${Number(principal).toLocaleString()} in Fanya Pesa escrow for your contract.`);
+                    await this.sendNotification(deal.smeId, smeEmail, `🎉 Deal APPROVED! ${this.user.name} has secured R${Number(principal).toLocaleString()} in Elgen Funding escrow for your contract.`);
                 }
             }
 
@@ -1538,7 +1538,7 @@ const app = {
                     
                     <div style="text-align: center; margin-bottom: 3rem;">
                         <h1 style="font-family: serif; color: black; font-size: 2rem;">Funding Facility Agreement</h1>
-                        <p style="color: #666; margin-top: 0.5rem;">Auto-generated via Fanya Pesa Engine on ${new Date().toLocaleDateString()}</p>
+                        <p style="color: #666; margin-top: 0.5rem;">Auto-generated via Elgen Funding Engine on ${new Date().toLocaleDateString()}</p>
                     </div>
 
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 3rem; font-family: serif;">
@@ -1597,7 +1597,7 @@ const app = {
                 const element = document.getElementById('fanya-contract-doc');
                 const opt = {
                     margin: [0.5, 0.5, 0.5, 0.5],
-                    filename: 'Fanya_Pesa_Contract.pdf',
+                    filename: 'Elgen_Pesa_Contract.pdf',
                     image: { type: 'jpeg', quality: 0.98 },
                     html2canvas: { scale: 2 },
                     jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
@@ -2188,7 +2188,7 @@ const app = {
                 <button class="btn btn-secondary" style="margin-bottom: 2rem;" onclick="app.showDashboard()">&larr; Back to Dashboard</button>
                 
                 <h2>Secure Document Vault</h2>
-                <p class="subtext" style="margin-bottom: 2rem;">Upload your required compliance documents here. These are stored securely via Fanya Pesa and are shared with Funders structured in your active deals.</p>
+                <p class="subtext" style="margin-bottom: 2rem;">Upload your required compliance documents here. These are stored securely via Elgen Funding and are shared with Funders structured in your active deals.</p>
 
                 <div class="glass-card">
                     <div style="margin-bottom: 2rem;">
@@ -2260,7 +2260,7 @@ const app = {
         this.setView(`
     <div class="hero-enter" style = "max-width: 800px; margin: 2rem auto;">
                 <button class="btn btn-secondary" style="margin-bottom: 2rem;" onclick="app.renderHome()">&larr; Home</button>
-                <h2>How Fanya Pesa Works</h2>
+                <h2>How Elgen Funding Works</h2>
                 <p class="subtext" style="margin-bottom: 2rem;">A seamless ecosystem empowering SMEs, connecting Funders, and managing Verified Suppliers built on escrow security.</p>
                 
                 <div style="display: grid; gap: 1.5rem; grid-template-columns: 1fr;">
@@ -2274,7 +2274,7 @@ const app = {
                     </div>
                     <div class="glass-card">
                         <h3 style="color: #f59e0b;">3. Milestone Payments & Escrow</h3>
-                        <p class="subtext">Capital is locked into Fanya Pesa escrow. Instead of cash hitting the SME's account, Fanya Pesa directly pays the Verified Supplier upon proof of dispatch/waybill upload, neutralizing fund mismanagement.</p>
+                        <p class="subtext">Capital is locked into Elgen Funding escrow. Instead of cash hitting the SME's account, Elgen Funding directly pays the Verified Supplier upon proof of dispatch/waybill upload, neutralizing fund mismanagement.</p>
                     </div>
                 </div>
             </div>
@@ -2286,7 +2286,7 @@ const app = {
     <div class="hero-enter" style = "max-width: 800px; margin: 2rem auto;">
                 <button class="btn btn-secondary" style="margin-bottom: 2rem;" onclick="app.renderHome()">&larr; Home</button>
                 <h2>Funding Categories</h2>
-                <p class="subtext" style="margin-bottom: 2rem;">Explore the capital structures and mandates available on the Fanya Pesa platform.</p>
+                <p class="subtext" style="margin-bottom: 2rem;">Explore the capital structures and mandates available on the Elgen Funding platform.</p>
                 
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
                     <div class="glass-card" style="background: var(--bg-color);">
@@ -2516,7 +2516,7 @@ const app = {
             await setDoc(userRef, { verified: true }, { merge: true });
 
             // Automated Email Pipeline
-            await this.sendNotification(uid, email, `✅ PROFILE VERIFIED: Your Fanya Pesa account has been fully verified by the Admin. An automated confirmation email has been dispatched to ${email}.`);
+            await this.sendNotification(uid, email, `✅ PROFILE VERIFIED: Your Elgen Funding account has been fully verified by the Admin. An automated confirmation email has been dispatched to ${email}.`);
 
             alert(`Success! Profile marked as VERIFIED.\n\n[MOCK EMAIL TRIGGERED to ${email}]`);
             this.showAdminUsers();
@@ -2532,7 +2532,7 @@ const app = {
             await setDoc(userRef, { verified: true }, { merge: true });
             const funderDoc = await getDoc(userRef);
             if (funderDoc.exists()) {
-                await this.sendNotification(uid, funderDoc.data().email, "✅ FUNDER VERIFIED: Your entity has been approved to structure deals on Fanya Pesa.");
+                await this.sendNotification(uid, funderDoc.data().email, "✅ FUNDER VERIFIED: Your entity has been approved to structure deals on Elgen Funding.");
             }
             alert("Verification Success: Funder is now active and can structure deals!");
             this.showAdminFunderApproval();

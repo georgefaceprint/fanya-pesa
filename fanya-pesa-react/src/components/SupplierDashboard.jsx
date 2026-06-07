@@ -131,7 +131,7 @@ export default function SupplierDashboard({ user, onNavigate }) {
                     <div className="max-w-md mx-auto">
                         <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Start Quoting on Tenders</h2>
                         <p className="text-gray-500 dark:text-gray-400 mb-8 leading-relaxed">
-                            Subscribe as a Verified Supplier to receive direct quotation requests from funded SMEs and secure guaranteed payouts via Fanya Pesa escrow.
+                            Subscribe as a Verified Supplier to receive direct quotation requests from funded SMEs and secure guaranteed payouts via Elgen Funding escrow.
                         </p>
 
                         <div className="bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-3xl p-8 text-left">
@@ -315,7 +315,7 @@ export default function SupplierDashboard({ user, onNavigate }) {
                             <div className="absolute top-0 right-0 p-4 opacity-10 text-6xl">🔒</div>
                             <h4 className="text-lg font-bold mb-2">Guaranteed Payment</h4>
                             <p className="text-white/70 text-sm mb-6 leading-relaxed">
-                                All RFQs on Fanya Pesa are pre-funded or backed by verified funding facilities. Your payment is held in escrow from the moment you accept a contract.
+                                All RFQs on Elgen Funding are pre-funded or backed by verified funding facilities. Your payment is held in escrow from the moment you accept a contract.
                             </p>
                             <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-white/50">
                                 <span>Secure Escrow v2.4</span>

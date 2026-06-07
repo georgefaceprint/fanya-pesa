@@ -8,7 +8,7 @@ export default function PesaChatbot({ user, liveContext }) {
     const getInitialGreeting = () => {
         if (role === 'SME') return `Sawubona! I'm Pesa. How can I help with your business funding or RFQs today?`;
         if (role === 'SUPPLIER') return `Sawubona! I'm Pesa. Need help with your quotes or escrow payouts?`;
-        return `Sawubona! I'm Pesa, your Fanya Pesa assistant. How can I help you today?`;
+        return `Sawubona! I'm Pesa, your Elgen Funding assistant. How can I help you today?`;
     };
 
     const [messages, setMessages] = useState([

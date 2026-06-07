@@ -25,21 +25,21 @@ exports.onUserVerified = functions.firestore.document('users/{userId}')
             const name = newValue.name || 'User';
 
             const mailOptions = {
-                from: '"Fanya Pesa" <noreply@fanyapesa.co.za>',
+                from: '"Elgen Funding" <noreply@elgenfunding.co.za>',
                 to: email,
-                subject: 'Fanya Pesa - Profile Verified ✅',
-                text: `Hello ${name},\n\nGood news! Your profile has been successfully verified by a Fanya Pesa admin.\n\nYou can now fully utilize the platform to matching with funders and requesting quotes.\n\nBest Regards,\nThe Fanya Pesa Team`,
+                subject: 'Elgen Funding - Profile Verified ✅',
+                text: `Hello ${name},\n\nGood news! Your profile has been successfully verified by a Elgen Funding admin.\n\nYou can now fully utilize the platform to matching with funders and requesting quotes.\n\nBest Regards,\nThe Elgen Funding Team`,
                 html: `
           <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
             <h2 style="color: #3b82f6;">Profile Verified! ✅</h2>
             <p>Hello <strong>${name}</strong>,</p>
-            <p>Good news! Your profile has been successfully verified by a Fanya Pesa admin.</p>
+            <p>Good news! Your profile has been successfully verified by a Elgen Funding admin.</p>
             <p>You can now fully utilize the platform to match with funders and request quotes from our national database.</p>
             <br/>
-            <a href="https://fanya-pesa.vercel.app" style="background:#3b82f6;color:white;padding:10px 20px;text-decoration:none;border-radius:5px;">Go to Dashboard</a>
+            <a href="https://elgen-funding.vercel.app" style="background:#3b82f6;color:white;padding:10px 20px;text-decoration:none;border-radius:5px;">Go to Dashboard</a>
             <br/><br/>
             <p>Best Regards,</p>
-            <p><strong>The Fanya Pesa Team</strong></p>
+            <p><strong>The Elgen Funding Team</strong></p>
           </div>
         `
             };
@@ -69,9 +69,9 @@ exports.onDealCreated = functions.firestore.document('deals/{dealId}')
         const smeName = smeSnap.data().name || 'User';
 
         const mailOptions = {
-            from: '"Fanya Pesa" <noreply@fanyapesa.co.za>',
+            from: '"Elgen Funding" <noreply@elgenfunding.co.za>',
             to: [smeEmail, 'faceprint@icloud.com'], // Send to SME and test email
-            subject: 'Fanya Pesa - Funding Request Submitted 💰',
+            subject: 'Elgen Funding - Funding Request Submitted 💰',
             html: `
           <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
             <h2 style="color: #3b82f6;">Funding Request Received! 💰</h2>
@@ -80,7 +80,7 @@ exports.onDealCreated = functions.firestore.document('deals/{dealId}')
             <p>We will notify you as soon as a funder starts reviewing your application.</p>
             <br/>
             <p>Best Regards,</p>
-            <p><strong>The Fanya Pesa Team</strong></p>
+            <p><strong>The Elgen Funding Team</strong></p>
           </div>
         `
         };
@@ -110,9 +110,9 @@ exports.onRfqAccepted = functions.firestore.document('rfqs/{rfqId}')
             const amount = newValue.acceptedQuote?.amount || 0;
 
             const mailOptions = {
-                from: '"Fanya Pesa" <noreply@fanyapesa.co.za>',
+                from: '"Elgen Funding" <noreply@elgenfunding.co.za>',
                 to: [smeEmail, 'faceprint@icloud.com'], // Send to SME and test email
-                subject: 'Fanya Pesa - Quote Accepted! 🤝',
+                subject: 'Elgen Funding - Quote Accepted! 🤝',
                 html: `
           <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
             <h2 style="color: #10b981;">Quote Selection Confirmed! 🤝</h2>
@@ -120,10 +120,10 @@ exports.onRfqAccepted = functions.firestore.document('rfqs/{rfqId}')
             <p>You have successfully accepted <strong>${supplierName}</strong>'s quote for <strong>R${Number(amount).toLocaleString()}</strong>.</p>
             <p>You can now proceed to <strong>Phase 3: Deal Securitization</strong> in your dashboard to secure funding for this contract.</p>
             <br/>
-            <a href="https://fanya-pesa.vercel.app" style="background:#10b981;color:white;padding:10px 20px;text-decoration:none;border-radius:5px;">Proceed to Funding</a>
+            <a href="https://elgen-funding.vercel.app" style="background:#10b981;color:white;padding:10px 20px;text-decoration:none;border-radius:5px;">Proceed to Funding</a>
             <br/><br/>
             <p>Best Regards,</p>
-            <p><strong>The Fanya Pesa Team</strong></p>
+            <p><strong>The Elgen Funding Team</strong></p>
           </div>
         `
             };
@@ -140,9 +140,9 @@ exports.onRfqAccepted = functions.firestore.document('rfqs/{rfqId}')
 
 exports.testEmailSystem = functions.https.onCall(async (data, context) => {
     const mailOptions = {
-        from: '"Fanya Pesa System" <noreply@fanyapesa.co.za>',
+        from: '"Elgen Funding System" <noreply@elgenfunding.co.za>',
         to: 'faceprint@icloud.com',
-        subject: 'Fanya Pesa - SMTP System Diagnosis 🧪',
+        subject: 'Elgen Funding - SMTP System Diagnosis 🧪',
         html: `
       <div style="font-family: Arial, sans-serif; padding: 20px; color: #333; border: 1px solid #ddd; border-radius: 10px;">
         <h3 style="color: #6366f1;">SMTP System Diagnosis 🧪</h3>
@@ -155,7 +155,7 @@ exports.testEmailSystem = functions.https.onCall(async (data, context) => {
           If you received this email, the SMTP configuration and Cloud Functions are live.
         </p>
         <p>Best Regards,</p>
-        <p><strong>The Fanya Pesa Engine</strong></p>
+        <p><strong>The Elgen Funding Engine</strong></p>
       </div>
     `
     };

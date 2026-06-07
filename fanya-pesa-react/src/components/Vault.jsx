@@ -269,7 +269,7 @@ export default function Vault({ user, onBack }) {
                     <div>
                         <h4 className="font-black text-blue-900 dark:text-blue-300 uppercase tracking-tighter text-sm mb-2">Vault Security Protocol</h4>
                         <p className="text-sm text-blue-800/70 dark:text-blue-400/70 leading-relaxed">
-                            Fanya Pesa utilizes Google Cloud KMS for encryption management. All uploads are hashed to ensure data integrity. Funders can only access these documents once a deal is structured and signed via the platform's escrow service.
+                            Elgen Funding utilizes Google Cloud KMS for encryption management. All uploads are hashed to ensure data integrity. Funders can only access these documents once a deal is structured and signed via the platform's escrow service.
                         </p>
                     </div>
                 </div>

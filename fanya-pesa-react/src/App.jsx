@@ -132,7 +132,7 @@ export default function App() {
       <div className="w-full min-h-screen bg-[#1a1a2e] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-gray-400 font-bold uppercase tracking-widest text-[10px]">Synchronizing Fanya Pesa...</p>
+          <p className="text-gray-400 font-bold uppercase tracking-widest text-[10px]">Synchronizing Elgen Funding...</p>
         </div>
       </div>
     );
