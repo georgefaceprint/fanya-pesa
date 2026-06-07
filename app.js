@@ -2576,6 +2576,81 @@ const app = {
         `);
     },
 
+    renderSuggestiveActions() {
+        const u = this.user;
+        let actions = [];
+
+        if (u.type === 'SME') {
+            if (!u.subscribed) {
+                actions.push({
+                    title: "Unlock Marketplace",
+                    text: "Subscribe to start requesting quotes and applying for funding.",
+                    btnText: "View SME Plans",
+                    action: "app.showDashboard()"
+                });
+            } else if (!u.industry || (Array.isArray(u.industry) && u.industry.length === 0)) {
+                actions.push({
+                    title: "Target Your Industry",
+                    text: "Complete your profile industries to get accurate supplier matches.",
+                    btnText: "Update Industries",
+                    action: "app.showProfileEdit()"
+                });
+            } else if (this.rfqs.filter(r => r.smeId === u.id).length === 0) {
+                actions.push({
+                    title: "First RFQ Request",
+                    text: "Ready to buy? Broadcast your first quote request to verified suppliers.",
+                    btnText: "Broadcast RFQ",
+                    action: "app.showQuoteRequest()"
+                });
+            }
+        }
+
+        if (u.type === 'SUPPLIER') {
+            if (!u.subscribed) {
+                actions.push({
+                    title: "Become Verified",
+                    text: "Verified suppliers get instant RFQ pings and guaranteed payouts.",
+                    btnText: "Verify Now",
+                    action: "app.showSubscriptionCheckout()"
+                });
+            } else if (!u.industry || (Array.isArray(u.industry) && u.industry.length === 0)) {
+                actions.push({
+                    title: "Add Service Categories",
+                    text: "Tell us what you sell to start receiving matched quotation requests.",
+                    btnText: "Add Categories",
+                    action: "app.showProfileEdit()"
+                });
+            } else if (u.verified !== true) {
+                 actions.push({
+                    title: "Vault Verification",
+                    text: "Admin check is pending. Ensure your Tax & CSD docs are uploaded.",
+                    btnText: "Go to Vault",
+                    action: "app.showDocumentRepo()"
+                });
+            }
+        }
+
+        if (actions.length === 0) return '';
+
+        return `
+            <div class="glass-card" style="grid-column: 1 / -1; border: 1px solid var(--primary); border-left: 5px solid var(--primary); background: rgba(59, 130, 246, 0.03);">
+                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                    <div class="icon-circle" style="background: var(--primary); color: white; margin: 0; width: 32px; height: 32px; font-size: 0.9rem;">🚀</div>
+                    <h4 style="margin: 0;">Priority Next Steps</h4>
+                </div>
+                <div style="display: flex; gap: 1.5rem; flex-wrap: wrap;">
+                    ${actions.map(a => `
+                        <div style="flex: 1; min-width: 250px;">
+                            <h5 style="margin: 0 0 0.25rem 0; color: var(--primary);">${a.title}</h5>
+                            <p class="subtext" style="font-size: 0.85rem; margin-bottom: 1rem;">${a.text}</p>
+                            <button class="btn btn-primary btn-sm" onclick="${a.action}">${a.btnText}</button>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    },
+
     showAdminAPIKeys() {
         this.setView(`
             <div class="hero-enter" style="max-width: 600px; margin: 4rem auto;">
