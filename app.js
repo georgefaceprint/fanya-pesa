@@ -7,9 +7,9 @@ import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "http
 // TODO: Replace this with your actual Firebase config from the console
 const firebaseConfig = {
     apiKey: "AIzaSyCmoiuwbDodIELIj-TptuEYlIJbVSAKkuQ",
-    authDomain: "elgen-funding.firebaseapp.com",
-    projectId: "elgen-funding",
-    storageBucket: "elgen-funding.firebasestorage.app",
+    authDomain: "fanya-pesa.firebaseapp.com",
+    projectId: "fanya-pesa",
+    storageBucket: "fanya-pesa.firebasestorage.app",
     messagingSenderId: "719005341578",
     appId: "1:719005341578:web:da45b21b454c52a7671a73",
     measurementId: "G-KXN6S8DXB9"
